@@ -1,41 +1,52 @@
-import numpy as np
+import os
+import itertools
+
 import matplotlib.pyplot as plt
-from skimage.color import rgb2gray
-from skimage import data
-from skimage.filters import gaussian
-from skimage.segmentation import active_contour
-from skimage import io
-from skimage.filters import threshold_otsu
+from skimage import io, feature
+from skimage import filters
+from joblib import Parallel, delayed
+
+
+def extract_canny(image, i, gaussian_blur_sigma=1, sigma=20):
+    slice = filters.gaussian(image, gaussian_blur_sigma)
+
+    print(i)
+    print(slice.shape)
+
+    # Compute the Canny filter for two values of sigma
+    edges = feature.canny(slice, sigma=sigma)
+
+    # display results
+    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(13, 8),
+                                   sharex=True, sharey=True)
+
+    ax1.imshow(slice, cmap=plt.cm.gray)
+    ax1.axis('off')
+    ax1.set_title(f'Slice {i}', fontsize=20)
+
+    ax2.imshow(edges, cmap=plt.cm.gray)
+    ax2.axis('off')
+    ax2.set_title(r'Canny filter, $\sigma={}$'.format(sigma), fontsize=20)
+
+    out_folder = f"/tmp/canny/{sigma}"
+
+    os.makedirs(out_folder, exist_ok=True)
+    fig.savefig(f"{out_folder}/{i}.png")
+    plt.close(fig)
+
 
 if __name__ == "__main__":
-
     tiffile = "/tmp/MNS_M897_115.tif"
 
-    img = io.imread(tiffile)[200].astype("float64")
+    parallel = Parallel(n_jobs=2)
 
-    # img = data.astronaut()
-    # img = rgb2gray(img)
+    opt_data = io.imread(tiffile).astype("float64")
 
-    height, width = img.shape
+    with parallel:
+        sigmas = [10, 15, 20, 25]
+        args = itertools.product(list(range(511)), sigmas)
 
-    thresh = threshold_otsu(img)
-    bool_img = img > thresh
-
-    s = np.linspace(0, 2*np.pi, 400)
-    r = height / 2 * (1 + 0.85 * np.sin(s))
-    c = width / 2 * (1 + 0.85 * np.cos(s))
-    init = np.array([r, c]).T
-
-    snake = active_contour(gaussian(img, 3),
-                           init, alpha=1.5, beta=1,
-                           w_line=0, w_edge=50, gamma=0.001,
-                           bc=None, max_px_move=1.0)
-
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.imshow(img, cmap=plt.cm.gray)
-    ax.plot(init[:, 1], init[:, 0], '--r', lw=3)
-    ax.plot(snake[:, 1], snake[:, 0], '-b', lw=3)
-    ax.set_xticks([]), ax.set_yticks([])
-    ax.axis([0, img.shape[1], img.shape[0], 0])
-
-    plt.show()
+        parallel(delayed(extract_canny)(opt_data[i], i,
+                                        gaussian_blur_sigma=1,
+                                        sigma=sigma)
+                 for (i, sigma) in args)
