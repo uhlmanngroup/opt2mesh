@@ -1,11 +1,13 @@
 import os
 import itertools
 
+import igl
 import matplotlib.pyplot as plt
 from skimage import io, feature
 from skimage import filters
 from skimage.filters import gaussian
 from skimage.segmentation import flood, flood_fill
+from skimage.measure import marching_cubes
 from joblib import Parallel, delayed
 
 
@@ -67,7 +69,7 @@ def extract_sobel_flood(image, i, gaussian_blur_sigma=1, tolerance=2):
     plt.close(fig)
 
 
-def canny_filter():
+def canny_filter(opt_data):
     parallel = Parallel(n_jobs=3)
 
     sigmas = [5, 10, 15, 20, 25]
@@ -81,10 +83,10 @@ def canny_filter():
                  for (i, sigma) in args)
 
 
-def sobel_flood():
+def sobel_flood(opt_data):
     parallel = Parallel(n_jobs=3)
 
-    tolerances = [1.5, 2, 5]
+    tolerances = [7.5, 10, 15]
 
     with parallel:
         args = itertools.product(list(range(511)), tolerances)
@@ -99,4 +101,22 @@ if __name__ == "__main__":
     tiffile = "/tmp/MNS_M897_115.tif"
 
     opt_data = io.imread(tiffile).astype("float64")
-    sobel_flood()
+
+    for method in ['lorensen', 'lewiner']:
+        for level in [25, 50, 100, 150, 200]:
+            print(method, level)
+            v, f, normals, values = marching_cubes(opt_data,
+                                                   level=level,
+                                                   spacing=(1.0, 1.0, 1.0),
+                                                   gradient_direction='descent',
+                                                   step_size=1,
+                                                   allow_degenerate=True,
+                                                   method=method,
+                                                   mask=None)
+
+            out_folder = f"/home/jsquared/Downloads/mc/{level}/"
+
+            os.makedirs(out_folder, exist_ok=True)
+
+            outfilepath = os.path.join(out_folder, method + ".stl")
+            igl.write_triangle_mesh(outfilepath, v, f)
