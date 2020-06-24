@@ -8,7 +8,6 @@ https://github.com/PyMesh/PyMesh/blob/master/scripts/fix_mesh.py
 """
 
 import argparse
-import numpy as np
 from numpy.linalg import norm
 
 import pymesh
@@ -26,27 +25,30 @@ def fix_mesh(mesh, detail="normal"):
     print("Target resolution: {} mm".format(target_len))
 
     count = 0
-    mesh, __ = pymesh.remove_degenerated_triangles(mesh, 100)
+    mesh, __ = pymesh.remove_degenerated_triangles(mesh, num_iterations=100)
     mesh, __ = pymesh.split_long_edges(mesh, target_len)
     num_vertices = mesh.num_vertices
     while True:
-        mesh, __ = pymesh.collapse_short_edges(mesh, 1e-6)
-        mesh, __ = pymesh.collapse_short_edges(mesh, target_len,
+        mesh, __ = pymesh.collapse_short_edges(mesh, abs_threshold=1e-6)
+        mesh, __ = pymesh.collapse_short_edges(mesh, abs_threshold=target_len,
                                                preserve_feature=True)
-        mesh, __ = pymesh.remove_obtuse_triangles(mesh, 150.0, 100)
+        mesh, __ = pymesh.remove_obtuse_triangles(mesh, max_angle=150.0,
+                                                  max_iterations=100)
         if mesh.num_vertices == num_vertices:
             break
 
         num_vertices = mesh.num_vertices
         print("#v: {}".format(num_vertices))
         count += 1
-        if count > 10: break
+        if count > 10:
+            break
 
     mesh = pymesh.resolve_self_intersection(mesh)
     mesh, __ = pymesh.remove_duplicated_faces(mesh)
     mesh = pymesh.compute_outer_hull(mesh)
     mesh, __ = pymesh.remove_duplicated_faces(mesh)
-    mesh, __ = pymesh.remove_obtuse_triangles(mesh, 179.0, 5)
+    mesh, __ = pymesh.remove_obtuse_triangles(mesh, max_angle=179.0,
+                                              max_iterations=5)
     mesh, __ = pymesh.remove_isolated_vertices(mesh)
 
     return mesh
