@@ -62,6 +62,7 @@ def tif2morphsnakes_halves(tif_file, iterations=150, smoothing=1,
     print(h.heap())
 
     # TODO: the half_size index should adapt to the data shape
+    # the cube has a size of (511,512,512)
     half_size_index = 256
 
     for suffix in ["x_front", "x_back", "y_front", "y_back", "z_front", "z_back"]:
@@ -129,6 +130,7 @@ def morphsnakes_halves2surface(tif_file, save_reshaped_halves=True):
     logging.debug(f"x_back.shape          : {x_back.shape}")
 
     # TODO: make this general                      v
+    # the cube has a size of (511,512,512)
     x_front_reshaped = np.concatenate((x_front, np.zeros((255, 512, 512), dtype='int8')), axis=0)
     x_back_reshaped = np.concatenate((np.zeros((256, 512, 512), dtype='int8'), x_back), axis=0)
 
@@ -241,9 +243,9 @@ if __name__ == "__main__":
 
     logging.debug(f" → Input file: {tif_file}")
 
-    # logging.debug(f" → Starting Morphological Chan Vese on halves")
-    # tif2morphsnakes_halves(tif_file)
-    # logging.debug(f" → Done Morphological Chan Vese on halves")
+    logging.debug(f" → Starting Morphological Chan Vese on halves")
+    tif2morphsnakes_halves(tif_file)
+    logging.debug(f" → Done Morphological Chan Vese on halves")
 
     full = morphsnakes_halves2surface(tif_file, save_reshaped_halves=True)
     io.imsave(tif_file.replace(".tif", "_surface.tif"), full)
