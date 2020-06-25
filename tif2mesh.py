@@ -220,6 +220,7 @@ def save_connected_components(tif_file, v, f):
 
     logging.info(f" → Splitting mesh in connected components")
     meshes = pymesh.separate_mesh(mesh, connectivity_type='auto')
+    meshes = sorted(meshes, key=lambda x: x.faces, reverse=True)
     logging.info(f"    → {len(meshes)} connected components")
 
     clean_mesh_file = tif_file.replace(".tif", "_cleaned_mesh.stl")

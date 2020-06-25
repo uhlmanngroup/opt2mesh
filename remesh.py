@@ -51,7 +51,12 @@ def fix_mesh(mesh, detail="normal"):
                                               max_iterations=5)
     mesh, __ = pymesh.remove_isolated_vertices(mesh)
 
-    return mesh
+    meshes = pymesh.separate_mesh(mesh, connectivity_type='auto')
+    meshes = sorted(meshes, key=lambda x: x.faces, reverse=True)
+
+    first_component = meshes[0]
+
+    return first_component
 
 
 def parse_args():
