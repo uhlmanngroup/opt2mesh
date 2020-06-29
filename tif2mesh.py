@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import argparse
+import sys
 from datetime import datetime
 import logging
 import os
@@ -51,7 +52,7 @@ class TIF2Mesh:
 
     def __init__(self, on_halves=True,
                  save_temp=True,
-                 iterations=150,
+                 iterations=50,
                  smoothing=1,
                  lambda1=1,
                  lambda2=2,
@@ -174,8 +175,8 @@ class TIF2Mesh:
         """
 
         h = hpy()
-        print("→ Loading the data")
-        print(h.heap())
+        logging.info("→ Before loading the data")
+        logging.info(str(h.heap()))
 
         # TODO: the half_size index should adapt to the data shape
         # the cube has a size of (511,512,512)
@@ -202,7 +203,7 @@ class TIF2Mesh:
                 raise RuntimeError(f"{suffix} is a wrong suffix")
 
             logging.info(f" → Loaded half {suffix}")
-            print(h.heap())
+            logging.info(str(h.heap()))
 
             # Initialization of the level-set.
             init_ls = ms.circle_level_set(opt_data.shape)
@@ -334,7 +335,7 @@ class TIF2Mesh:
             target_len = diag_len * 2.5e-3
         elif self.detail == "low":
             target_len = diag_len * 1e-2
-        print("Target resolution: {} mm".format(target_len))
+        logging.info(" → Target resolution: {} mm".format(target_len))
 
         count = 0
         mesh, __ = pymesh.remove_degenerated_triangles(mesh, num_iterations=100)
@@ -350,7 +351,7 @@ class TIF2Mesh:
                 break
 
             num_vertices = mesh.num_vertices
-            print("#v: {}".format(num_vertices))
+            logging.info(" → # Number of vertices: {}".format(num_vertices))
             count += 1
             if count > 10:
                 break
@@ -384,13 +385,12 @@ def parse_args():
     parser.add_argument("--on_halves", help="Adapt pipeline to be run the processing on "
                                             "halves instead on the full input tif stack",
                         action="store_true")
-
     parser.add_argument("--save_temp", help="Save temporary results",
                         action="store_true")
     parser.add_argument("--timing", help="Print timing info", action="store_true")
 
     # Morphosnakes parameters
-    parser.add_argument("--iterations", help="Morphosnakes: number of iterations", default=150)
+    parser.add_argument("--iterations", help="Morphosnakes: number of iterations", default=50)
     parser.add_argument("--smoothing", help="Morphosnakes: number of smoothing iteration (µ)", default=1)
     parser.add_argument("--lambda1", help="Morphosnakes: weight parameter for the outer region", default=1)
     parser.add_argument("--lambda2", help="Morphosnakes: weight parameter for the inner region", default=2)
@@ -401,7 +401,7 @@ def parse_args():
     parser.add_argument("--gradient_direction", help="Marching Cubes: spacing between voxels", default="descent")
     parser.add_argument("--step_size", help="Marching Cubes: step size for marching cube", default=1)
 
-    # Denoising
+    # Mesh simplification parameters
     parser.add_argument("--detail", help="Mesh simplification: Level of detail to preserve",
                         choices=["low", "normal", "high"], default="normal")
 
@@ -433,9 +433,12 @@ def main():
             logging.StreamHandler()
         ]
     )
+    logging.info(" → CLI call:")
+    logging.info(" ".join(sys.argv))
 
-    for arg, value in sorted(vars(args).items()):
-        logging.info("Argument %s: %r", arg, value)
+    logging.info(" → Arguments got ")
+    for arg, value in vars(args).items():
+        logging.info("   → %s: %r", arg, value)
 
     tif2mesh_pipeline = TIF2Mesh(on_halves=args.on_halves,
                                  save_temp=args.save_temp,
@@ -450,6 +453,9 @@ def main():
                                  timing=args.timing,
                                  detail=args.detail)
 
+    logging.info(f" → Starting TIF2Mesh pipeline")
+    logging.info(f"   → Input TIF stack: {args.in_tif}")
+    logging.info(f"   → Out folder: {out_folder}")
     tif2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=out_folder)
 
 
