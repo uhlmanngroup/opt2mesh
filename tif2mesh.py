@@ -394,16 +394,16 @@ def parse_args():
     parser.add_argument("--timing", help="Print timing info", action="store_true")
 
     # Morphosnakes parameters
-    parser.add_argument("--iterations", help="Morphosnakes: number of iterations", default=50)
-    parser.add_argument("--smoothing", help="Morphosnakes: number of smoothing iteration (µ)", default=1)
-    parser.add_argument("--lambda1", help="Morphosnakes: weight parameter for the outer region", default=1)
-    parser.add_argument("--lambda2", help="Morphosnakes: weight parameter for the inner region", default=2)
+    parser.add_argument("--iterations", type=int, help="Morphosnakes: number of iterations", default=50)
+    parser.add_argument("--smoothing", type=int, help="Morphosnakes: number of smoothing iteration (µ)", default=1)
+    parser.add_argument("--lambda1", type=int, help="Morphosnakes: weight parameter for the outer region", default=1)
+    parser.add_argument("--lambda2", type=int, help="Morphosnakes: weight parameter for the inner region", default=2)
 
     # Marching cubes parameters
-    parser.add_argument("--level", help="Marching Cubes: isolevel of the surface for marching cube", default=0.999)
-    parser.add_argument("--spacing", help="Marching Cubes: spacing between voxels for marching cube", default=1.0)
-    parser.add_argument("--gradient_direction", help="Marching Cubes: spacing between voxels", default="descent")
-    parser.add_argument("--step_size", help="Marching Cubes: step size for marching cube", default=1)
+    parser.add_argument("--level", type=float, help="Marching Cubes: isolevel of the surface for marching cube", default=0.999)
+    parser.add_argument("--spacing", type=float, help="Marching Cubes: spacing between voxels for marching cube", default=1.0)
+    parser.add_argument("--gradient_direction", type=str, help="Marching Cubes: spacing between voxels", default="descent")
+    parser.add_argument("--step_size", type=int, help="Marching Cubes: step size for marching cube", default=1)
 
     # Mesh simplification parameters
     parser.add_argument("--detail", help="Mesh simplification: Level of detail to preserve",
