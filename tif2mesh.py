@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run",
                         default=os.path.join(OUT_FOLDER, "tif2mesh"))
-    parser.add_argument("--detail", help="Surface extraction method",
+    parser.add_argument("--method", help="Surface extraction method",
                         choices=["acwe", "gac"], default="acwe")
 
     # Data wise
