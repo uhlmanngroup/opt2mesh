@@ -337,12 +337,12 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
     """
     h = hpy()
 
-    logging.info("→ Start of morphological_chan_vese")
+    logging.info("Start of morphological_chan_vese")
     logging.info(str(h.heap()))
 
     init_level_set = _init_level_set(init_level_set, image.shape)
 
-    logging.info("→ After init level_set")
+    logging.info("After init level_set")
     logging.info(str(h.heap()))
 
     _check_input(image, init_level_set)
@@ -353,7 +353,7 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
 
     for _ in range(iterations):
 
-        logging.info(f"→ Iteration {_}")
+        logging.info(f"Iteration {_}")
         logging.info(str(h.heap()))
 
         # inside = u > 0

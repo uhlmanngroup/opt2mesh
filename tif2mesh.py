@@ -47,7 +47,7 @@ def _canonical_representation(v: np.array, f: np.array):
 class TIF2Mesh:
     """
     Pipeline to convert TIF stacks of images to a STL mesh file.
-    
+
     """
 
     def __init__(self, on_halves=True,
@@ -78,28 +78,28 @@ class TIF2Mesh:
     def run(self, tif_stack_file, out_folder):
         os.makedirs(out_folder, exist_ok=True)
 
-        # path/to/file.name.ext → file.name
+        # path/to/file.name.ext file.name
         basename = ".".join(tif_stack_file.split(os.sep)[-1].split(".")[:-1])
 
         base_out_file = os.path.join(out_folder, basename)
 
-        logging.info(f" → Input file: {tif_stack_file}")
+        logging.info(f"Input file: {tif_stack_file}")
 
         if self.on_halves:
-            logging.info(f" → Starting Morphological Chan Vese on halves")
+            logging.info(f"Starting Morphological Chan Vese on halves")
             self._tif2morphsnakes_halves(tif_stack_file, base_out_file)
-            logging.info(f" → Done Morphological Chan Vese on halves")
+            logging.info(f"Done Morphological Chan Vese on halves")
             full_surface = self._morphsnakes_halves2surface(base_out_file)
         else:
-            logging.info(f" → Starting Morphological Chan Vese on the full dataset")
-            logging.info(f" → Loading full data")
+            logging.info(f"Starting Morphological Chan Vese on the full dataset")
+            logging.info(f"Loading full data")
             opt_data = io.imread(tif_stack_file)
-            logging.info(f" → Loaded full data")
+            logging.info(f"Loaded full data")
 
             # Initialization of the level-set.
             init_ls = ms.circle_level_set(opt_data.shape)
 
-            logging.info(f" → Running Morphological Chan Vese on full")
+            logging.info(f"Running Morphological Chan Vese on full")
 
             start = time.time()
 
@@ -111,7 +111,7 @@ class TIF2Mesh:
                                                       lambda2=self.lambda2)
 
             end = time.time()
-            logging.info(f" → Done Morphological Chan Vese on full in {(end - start) / 1000}s")
+            logging.info(f"Done Morphological Chan Vese on full in {(end - start) / 1000}s")
             del opt_data, init_ls
 
         io.imsave(base_out_file + "_surface.tif", full_surface)
@@ -132,36 +132,40 @@ class TIF2Mesh:
 
         clean_mesh_file = base_out_file + "_cleaned_mesh.stl"
 
-        logging.info(f" → Saving clean mesh in: {clean_mesh_file}")
+        logging.info(f"Saving clean mesh in: {clean_mesh_file}")
         igl.write_triangle_mesh(clean_mesh_file, v, f)
 
         mesh = pymesh.meshio.form_mesh(v, f)
 
-        logging.info(f" → Splitting mesh in connected components")
+        logging.info(f"Splitting mesh in connected components")
         meshes = pymesh.separate_mesh(mesh, connectivity_type='auto')
-        meshes = sorted(meshes, key=lambda x: x.faces, reverse=True)
-        logging.info(f"    → {len(meshes)} connected components")
+        #meshes = sorted(meshes, key=lambda x: x.faces, reverse=True)
+        logging.info(f"  {len(meshes)} connected components")
 
         for i, m in enumerate(meshes):
             vi = m.vertices
             fi = m.faces
             cc_mesh_file = clean_mesh_file.replace(".stl", f"_{i}.stl")
 
-            logging.info(f" → {i + 1}th connected component ")
-            logging.info(f"   → Vertices: {len(vi)}")
-            logging.info(f"   → Faces: {len(fi)}")
+            logging.info(f"{i + 1}th connected component ")
+            logging.info(f" Vertices: {len(vi)}")
+            logging.info(f" Faces: {len(fi)}")
             logging.info('')
             if self.save_temp:
-                logging.info(f" → Saving connected components #{i}: {cc_mesh_file}")
+                logging.info(f"Saving connected components #{i}: {cc_mesh_file}")
                 igl.write_triangle_mesh(cc_mesh_file, vi, fi)
 
         # Taking the main mesh
         mesh_to_simplify = meshes[0]
 
-        logging.info(f" → Final mesh simplification")
+        logging.info(f"Final mesh simplification")
         final_output_mesh = self._mesh_simplification(mesh_to_simplify)
 
-        pymesh.meshio.save_mesh(basename + "_final.stl", final_output_mesh)
+        final_mesh_file = base_out_file + "_cleaned_mesh.stl"
+        logging.info(f"Saving final simplified mesh in: {final_mesh_file}")
+        pymesh.meshio.save_mesh(final_mesh_file, final_output_mesh)
+        logging.info(f"Saved final simplified mesh !")
+        logging.info("Pipeline done!")
 
     def _tif2morphsnakes_halves(self, tif_stack_file, base_out_file):
         """
@@ -175,7 +179,7 @@ class TIF2Mesh:
         """
 
         h = hpy()
-        logging.info("→ Before loading the data")
+        logging.info("Before loading the data")
         logging.info(str(h.heap()))
 
         # TODO: the half_size index should adapt to the data shape
@@ -184,7 +188,7 @@ class TIF2Mesh:
 
         for suffix in ["x_front", "x_back", "y_front", "y_back", "z_front", "z_back"]:
 
-            logging.info(f" → Loading the data for half {suffix}")
+            logging.info(f"Loading the data for half {suffix}")
 
             # This is ugly, I haven't found something better
             if suffix == "x_front":
@@ -202,16 +206,16 @@ class TIF2Mesh:
             else:
                 raise RuntimeError(f"{suffix} is a wrong suffix")
 
-            logging.info(f" → Loaded half {suffix}")
+            logging.info(f"Loaded half {suffix}")
             logging.info(str(h.heap()))
 
             # Initialization of the level-set.
             init_ls = ms.circle_level_set(opt_data.shape)
 
             # Morphological Chan-Vese (or ACWE)
-            logging.info(f" → Loaded half {suffix}")
+            logging.info(f"Loaded half {suffix}")
 
-            logging.info(f" → Running Morphological Chan Vese on {suffix}")
+            logging.info(f"Running Morphological Chan Vese on {suffix}")
 
             start = time.time()
 
@@ -223,11 +227,11 @@ class TIF2Mesh:
                                                       lambda2=self.lambda2)
 
             end = time.time()
-            logging.info(f" → Done Morphological Chan Vese on {suffix} in {(end - start) / 1000}s")
+            logging.info(f"Done Morphological Chan Vese on {suffix} in {(end - start) / 1000}s")
 
             half_surface_file = base_out_file + f"_{suffix}.tif"
 
-            logging.info(f" → Saving half {suffix} in: {half_surface_file}")
+            logging.info(f"Saving half {suffix} in: {half_surface_file}")
             io.imsave(half_surface_file, half_surface)
 
     def _morphsnakes_halves2surface(self, base_out_file):
@@ -301,21 +305,21 @@ class TIF2Mesh:
         :param f: array of faces
         :return:
         """
-        logging.info(f" → Input mesh")
-        logging.info(f"   → Vertices: {len(v)}")
-        logging.info(f"   → Faces: {len(f)}")
+        logging.info(f"Input mesh")
+        logging.info(f"  Vertices: {len(v)}")
+        logging.info(f"  Faces: {len(f)}")
 
-        logging.info(f" → Removing isolated vertices")
+        logging.info(f"Removing isolated vertices")
         v, f, info = pymesh.remove_isolated_vertices_raw(v, f)
-        logging.info(f"   → Num vertex removed: {info['num_vertex_removed']}")
+        logging.info(f"  Num vertex removed: {info['num_vertex_removed']}")
 
-        logging.info(f" → Removing duplicated vertices")
+        logging.info(f"Removing duplicated vertices")
         v, f, info = pymesh.remove_duplicated_vertices_raw(v, f)
-        logging.info(f"   → Num vertex merged: {info['num_vertex_merged']}")
+        logging.info(f"  Num vertex merged: {info['num_vertex_merged']}")
 
-        logging.info("f → Output mesh")
-        logging.info(f"   → Vertices: {len(v)}")
-        logging.info(f"   → Faces: {len(f)}")
+        logging.info("f Output mesh")
+        logging.info(f"  Vertices: {len(v)}")
+        logging.info(f"  Faces: {len(f)}")
         logging.info('')
 
         return v, f
@@ -335,7 +339,7 @@ class TIF2Mesh:
             target_len = diag_len * 2.5e-3
         elif self.detail == "low":
             target_len = diag_len * 1e-2
-        logging.info(" → Target resolution: {} mm".format(target_len))
+        logging.info("Target resolution: {} mm".format(target_len))
 
         count = 0
         mesh, __ = pymesh.remove_degenerated_triangles(mesh, num_iterations=100)
@@ -351,7 +355,7 @@ class TIF2Mesh:
                 break
 
             num_vertices = mesh.num_vertices
-            logging.info(" → # Number of vertices: {}".format(num_vertices))
+            logging.info("# Number of vertices: {}".format(num_vertices))
             count += 1
             if count > 10:
                 break
@@ -365,7 +369,7 @@ class TIF2Mesh:
         mesh, __ = pymesh.remove_isolated_vertices(mesh)
 
         meshes = pymesh.separate_mesh(mesh, connectivity_type='auto')
-        meshes = sorted(meshes, key=lambda x: x.faces, reverse=True)
+        # meshes = sorted(meshes, key=lambda x: x.faces, reverse=True)
 
         # Once again, we take the first connected component
         final_mesh = meshes[0]
@@ -433,12 +437,12 @@ def main():
             logging.StreamHandler()
         ]
     )
-    logging.info(" → CLI call:")
-    logging.info(" ".join(sys.argv))
+    logging.info("CLI call:")
+    logging.info("".join(sys.argv))
 
-    logging.info(" → Arguments got ")
+    logging.info("Arguments got ")
     for arg, value in vars(args).items():
-        logging.info("   → %s: %r", arg, value)
+        logging.info("  %s: %r", arg, value)
 
     tif2mesh_pipeline = TIF2Mesh(on_halves=args.on_halves,
                                  save_temp=args.save_temp,
@@ -453,10 +457,12 @@ def main():
                                  timing=args.timing,
                                  detail=args.detail)
 
-    logging.info(f" → Starting TIF2Mesh pipeline")
-    logging.info(f"   → Input TIF stack: {args.in_tif}")
-    logging.info(f"   → Out folder: {out_folder}")
+    logging.info(f"Starting TIF2Mesh pipeline")
+    logging.info(f"  Input TIF stack: {args.in_tif}")
+    logging.info(f"  Out folder: {out_folder}")
     tif2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=out_folder)
+
+    logging.info("End of TIF2Mesh pipeline")
 
 
 if __name__ == "__main__":
