@@ -1,14 +1,13 @@
 #! /usr/bin/env python
 import argparse
-import sys
-from datetime import datetime
 import logging
 import os
+import sys
+from datetime import datetime
 
 import numpy as np
-from numpy.linalg import norm
 
-from pipeline import TIF2MeshPipeline, ACWEPipeline, GACPipeline
+from pipeline import ACWEPipeline, GACPipeline
 from settings import OUT_FOLDER
 
 
