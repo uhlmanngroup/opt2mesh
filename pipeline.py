@@ -34,7 +34,7 @@ class TIF2MeshPipeline(ABC):
                  step_size=1,
                  timing=True,
                  detail="high",
-                 save_temp=True):
+                 save_temp=False):
         self.iterations: int = iterations
         self.level: float = level
         self.spacing: int = spacing
@@ -84,8 +84,9 @@ class TIF2MeshPipeline(ABC):
 
         clean_mesh_file = base_out_file + "_cleaned_mesh.stl"
 
-        logging.info(f"Saving clean mesh in: {clean_mesh_file}")
-        igl.write_triangle_mesh(clean_mesh_file, v, f)
+        if self.save_temp:
+            logging.info(f"Saving clean mesh in: {clean_mesh_file}")
+            igl.write_triangle_mesh(clean_mesh_file, v, f)
 
         mesh = pymesh.meshio.form_mesh(v, f)
 
@@ -201,7 +202,7 @@ class TIF2MeshPipeline(ABC):
 class GACPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
-                 detail="high", iterations=50, level=0.999, spacing=1, save_temp=True,
+                 detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
                  # GAC specifics
                  smoothing=1, threshold="auto", balloon=1, alpha=1000, sigma=5):
         super().__init__(iterations=iterations, level=level, spacing=spacing,
@@ -249,7 +250,7 @@ class GACPipeline(TIF2MeshPipeline):
 class ACWEPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
-                 detail="high", iterations=50, level=0.999, spacing=1, save_temp=True,
+                 detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
                  # ACWE specific
                  on_halves=True, smoothing=1, lambda1=1, lambda2=2):
 
