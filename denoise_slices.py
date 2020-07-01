@@ -8,7 +8,7 @@ import os
 import numpy as np
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
-from skimage import io, restoration
+from skimage import io, restoration, filters
 from skimage.restoration import estimate_sigma
 
 from settings import OUT_FOLDER
@@ -22,16 +22,10 @@ def parse_args():
     parser.add_argument("out_folder", help="General output folder for this run",
                         default=os.path.join(OUT_FOLDER, "denoised"))
 
+    parser.add_argument("--n_jobs", help="Number of parallel jobs",
+                        type=int, default=4)
+
     return parser.parse_args()
-
-
-def now_string():
-    """
-    Return a string of the current datetime.
-
-    :return:
-    """
-    return datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 
 def denoise_and_save_slice(slice, slice_index, out_folder, basename):
@@ -51,10 +45,36 @@ def denoise_and_save_slice(slice, slice_index, out_folder, basename):
                                                   fast_mode=False,
                                                   **patch_kw)
 
-    # slice_denoised = restoration.denoise_tv_chambolle(slice)
     filename = os.path.join(out_folder, basename + "_" + str(slice_index).zfill(4) + '.png')
     plt.imsave(filename, slice_denoised)
     plt.close()
+
+
+def denoise_nl_means(slice):
+    sigma_est = np.mean(estimate_sigma(slice))
+
+    patch_kw = dict(patch_size=5,  # 5x5 patches
+                    patch_distance=6)  # 13x13 search area
+
+    # slow algorithm
+    slice_denoised = restoration.denoise_nl_means(slice,
+                                                  h=1.15 * sigma_est,
+                                                  fast_mode=False,
+                                                  preserve_range=True,
+                                                  **patch_kw)
+
+    return slice_denoised
+
+
+def parallel_denoising(joblib_parallel, opt_data, denoise_function, method):
+    logging.info(f"Starting {method}")
+    denoised_opt_data = joblib_parallel(delayed(denoise_function)(img)
+                                        for img in opt_data)
+    logging.info(f"Done with {method}")
+    denoised_opt_data = np.array(denoised_opt_data)
+    assert denoised_opt_data.shape == opt_data.shape
+
+    return denoised_opt_data
 
 
 def main():
@@ -75,8 +95,27 @@ def main():
         ]
     )
 
-    Parallel(n_jobs=2)(delayed(denoise_and_save_slice)(slice, 286 + i, args.out_folder, basename)
-                       for i, slice in enumerate(opt_data[286:, :, :]))
+    with Parallel(n_jobs=args.n_jobs, backend="loky") as parallel:
+        filename = os.path.join(args.out_folder, basename + "_tv_denoised.tif")
+        denoised_opt_data = parallel_denoising(parallel, opt_data,
+                                               method="TV-L1 denoising (Chambolle pock)",
+                                               denoise_function=restoration.denoise_tv_chambolle)
+        logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
+        io.imsave(filename, denoised_opt_data)
+
+        filename = os.path.join(args.out_folder, basename + "_median_denoised.tif")
+        denoised_opt_data = parallel_denoising(parallel, opt_data,
+                                               method="median filtering",
+                                               denoise_function=filters.median)
+        logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
+        io.imsave(filename, denoised_opt_data)
+
+        filename = os.path.join(args.out_folder, basename + "_nl_means_denoised.tif")
+        denoised_opt_data = parallel_denoising(parallel, opt_data,
+                                               method="non linear means denoising",
+                                               denoise_function=denoise_nl_means)
+        logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
+        io.imsave(filename, denoised_opt_data)
 
 
 if __name__ == "__main__":
