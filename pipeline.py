@@ -76,9 +76,10 @@ class TIF2MeshPipeline(ABC):
                                                        allow_degenerate=True,
                                                        mask=None)
 
-        raw_mesh_file = base_out_file + "_raw_mesh.stl"
-        logging.info(f"Saving extracted mesh in: {raw_mesh_file}")
-        igl.write_triangle_mesh(raw_mesh_file, v, f)
+        if self.save_temp:
+            raw_mesh_file = base_out_file + "_raw_mesh.stl"
+            logging.info(f"Saving extracted mesh in: {raw_mesh_file}")
+            igl.write_triangle_mesh(raw_mesh_file, v, f)
 
         v, f = self.clean_mesh(v, f)
 
