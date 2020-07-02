@@ -253,13 +253,14 @@ class ACWEPipeline(TIF2MeshPipeline):
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
                  # ACWE specific
-                 on_halves=True, smoothing=1, lambda1=1, lambda2=2):
+                 on_halves=False, on_slices=False, smoothing=1, lambda1=1, lambda2=2):
 
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
                          timing=timing, detail=detail, save_temp=save_temp)
 
         self.on_halves: bool = on_halves
+        self.on_slices: bool = on_slices
         self.lambda1: int = lambda1
         self.lambda2: int = lambda2
         self.smoothing: int = smoothing
@@ -270,6 +271,10 @@ class ACWEPipeline(TIF2MeshPipeline):
             self._tif2morphsnakes_halves(tif_stack_file, base_out_file)
             logging.info(f"Done Morphological Chan Vese on halves")
             full_surface = self._morphsnakes_halves2surface(base_out_file)
+        elif self.on_slices:
+            logging.info(f"Starting Morphological Chan Vese on slices")
+            full_surface = self._tif2morphsnakes_slices(base_out_file)
+            logging.info(f"Done Morphological Chan Vese on slices")
         else:
             logging.info(f"Starting Morphological Chan Vese on the full image")
             logging.info(f"Loading full data")
@@ -361,6 +366,39 @@ class ACWEPipeline(TIF2MeshPipeline):
 
             logging.info(f"Saving half {suffix} in: {half_surface_file}")
             io.imsave(half_surface_file, half_surface)
+
+    def _tif2morphsnakes_slices(self, tif_stack_file):
+        """
+        Create morphsnakes surfaces on each slices of the cubes independently.
+
+        :param tif_stack_file: path to the TIF stack to process
+        """
+
+        h = hpy()
+        logging.info("Before loading the data")
+        logging.info(str(h.heap()))
+
+        opt_data = io.imread(tif_stack_file)
+        full_surface = np.zeros(opt_data.shape)
+
+        init_ls = ms.circle_level_set(opt_data[0].shape)
+
+        start = time.time()
+        logging.info(f"Starting Morphological Chan Vese on slices")
+        for i, slice in enumerate(opt_data):
+            logging.info(f"Running Morphological Chan Vese on slice {i}")
+
+            full_surface[i, :, :] = ms.morphological_chan_vese(slice,
+                                                               init_level_set=init_ls,
+                                                               iterations=self.iterations,
+                                                               smoothing=self.smoothing,
+                                                               lambda1=self.lambda1,
+                                                               lambda2=self.lambda2)
+
+        end = time.time()
+        logging.info(f"Done Morphological Chan Vese on slices in {(end - start) / 1000}s")
+
+        return full_surface
 
     def _morphsnakes_halves2surface(self, base_out_file):
         """

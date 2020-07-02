@@ -67,6 +67,9 @@ def parse_args():
     parser.add_argument("--on_halves", help="Adapt pipeline to be run the processing on "
                                             "halves instead on the full input tif stack",
                         action="store_true")
+    parser.add_argument("--on_slices", help="Adapt pipeline to be run the processing on "
+                                            "slices instead on the full input tif stack",
+                        action="store_true")
     parser.add_argument("--lambda1", type=int, help="ACWE: weight parameter for the outer region", default=1)
     parser.add_argument("--lambda2", type=int, help="ACWE: weight parameter for the inner region", default=2)
 
@@ -152,6 +155,7 @@ def main():
                                          save_temp=args.save_temp,
                                          # ACWE specifics
                                          on_halves=args.on_halves,
+                                         on_slices=args.on_slices,
                                          smoothing=args.smoothing,
                                          lambda1=args.lambda1,
                                          lambda2=args.lambda2)
