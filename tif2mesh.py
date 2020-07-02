@@ -70,8 +70,8 @@ def parse_args():
     parser.add_argument("--on_slices", help="Adapt pipeline to be run the processing on "
                                             "slices instead on the full input tif stack",
                         action="store_true")
-    parser.add_argument("--lambda1", type=int, help="ACWE: weight parameter for the outer region", default=1)
-    parser.add_argument("--lambda2", type=int, help="ACWE: weight parameter for the inner region", default=2)
+    parser.add_argument("--lambda1", type=float, help="ACWE: weight parameter for the outer region", default=1)
+    parser.add_argument("--lambda2", type=float, help="ACWE: weight parameter for the inner region", default=2)
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, help="Marching Cubes: isolevel of the surface for marching cube",
