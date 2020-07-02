@@ -227,23 +227,44 @@ class GACPipeline(TIF2MeshPipeline):
                                                       alpha=self.alpha,
                                                       sigma=self.sigma)
 
-        # Initialization of the level-set.
-        init_ls = ms.circle_level_set(opt_data.shape)
+        if self.on_slices:
+            full_surface = np.zeros(gradient_image.shape)
 
-        logging.info(f"Running Morphological Geodesic Active Contour on full")
+            init_ls = ms.circle_level_set(gradient_image[0].shape)
 
-        start = time.time()
+            start = time.time()
+            logging.info(f"Starting Morphological Geodesic Active Contour on slices")
+            for i, slice in enumerate(gradient_image):
+                logging.info(f"Running Morphological Geodesic Active Contour on slice {i}")
 
-        # MorphGAC.
-        full_surface = ms.morphological_geodesic_active_contour(gradient_image,
-                                                                iterations=self.iterations,
-                                                                init_level_set=init_ls,
-                                                                smoothing=self.iterations,
-                                                                threshold=self.threshold,
-                                                                balloon=self.balloon)
-        end = time.time()
-        logging.info(f"Done Morphological Geodesic Active Contour on full in {(end - start) / 1000}s")
-        del opt_data, init_ls
+                full_surface[i, :, :] = \
+                    ms.morphological_geodesic_active_contour(slice,
+                                                             iterations=self.iterations,
+                                                             init_level_set=init_ls,
+                                                             smoothing=self.smoothing,
+                                                             threshold=self.threshold,
+                                                             balloon=self.balloon)
+
+            end = time.time()
+            logging.info(f"Done Morphological Geodesic Active Contour on slices in {(end - start) / 1000}s")
+        else:
+            # Initialization of the level-set.
+            init_ls = ms.circle_level_set(opt_data.shape)
+
+            logging.info(f"Running Morphological Geodesic Active Contour on full")
+
+            start = time.time()
+
+            # MorphGAC
+            full_surface = ms.morphological_geodesic_active_contour(gradient_image,
+                                                                    iterations=self.iterations,
+                                                                    init_level_set=init_ls,
+                                                                    smoothing=self.smoothing,
+                                                                    threshold=self.threshold,
+                                                                    balloon=self.balloon)
+            end = time.time()
+            logging.info(f"Done Morphological Geodesic Active Contour on full in {(end - start) / 1000}s")
+            del opt_data, init_ls
 
         return full_surface
 
