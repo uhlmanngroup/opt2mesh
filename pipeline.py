@@ -34,7 +34,9 @@ class TIF2MeshPipeline(ABC):
                  step_size=1,
                  timing=True,
                  detail="high",
-                 save_temp=False):
+                 save_temp=False,
+                 on_slices=False
+                 ):
         self.iterations: int = iterations
         self.level: float = level
         self.spacing: int = spacing
@@ -43,6 +45,7 @@ class TIF2MeshPipeline(ABC):
         self.timing: bool = timing
         self.detail: str = detail
         self.save_temp: bool = save_temp
+        self.on_slices: bool = on_slices
 
     @abstractmethod
     def _extract_full_surface(self, tif_stack_file, base_out_file):
@@ -204,11 +207,12 @@ class GACPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
+                 on_slices=False,
                  # GAC specifics
                  smoothing=1, threshold="auto", balloon=1, alpha=1000, sigma=5):
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
-                         timing=timing, detail=detail, save_temp=save_temp)
+                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices)
 
         self.smoothing = smoothing
         self.threshold = threshold
@@ -273,15 +277,15 @@ class ACWEPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
+                 on_slices=False,
                  # ACWE specific
-                 on_halves=False, on_slices=False, smoothing=1, lambda1=1, lambda2=2):
+                 on_halves=False, smoothing=1, lambda1=1, lambda2=2):
 
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
-                         timing=timing, detail=detail, save_temp=save_temp)
+                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices)
 
         self.on_halves: bool = on_halves
-        self.on_slices: bool = on_slices
         self.lambda1: int = lambda1
         self.lambda2: int = lambda2
         self.smoothing: int = smoothing

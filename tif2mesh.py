@@ -137,7 +137,9 @@ def main():
                                         gradient_direction=args.gradient_direction,
                                         step_size=args.step_size,
                                         timing=args.timing,
-                                        detail=args.detail, save_temp=True,
+                                        detail=args.detail,
+                                        save_temp=args.save_temp,
+                                        on_slices=args.on_slices,
                                         # GAC specifics
                                         smoothing=args.smoothing,
                                         threshold=args.threshold,
@@ -153,9 +155,9 @@ def main():
                                          timing=args.timing,
                                          detail=args.detail,
                                          save_temp=args.save_temp,
+                                         on_slices=args.on_slices,
                                          # ACWE specifics
                                          on_halves=args.on_halves,
-                                         on_slices=args.on_slices,
                                          smoothing=args.smoothing,
                                          lambda1=args.lambda1,
                                          lambda2=args.lambda2)
