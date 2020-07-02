@@ -273,7 +273,7 @@ class ACWEPipeline(TIF2MeshPipeline):
             full_surface = self._morphsnakes_halves2surface(base_out_file)
         elif self.on_slices:
             logging.info(f"Starting Morphological Chan Vese on slices")
-            full_surface = self._tif2morphsnakes_slices(base_out_file)
+            full_surface = self._tif2morphsnakes_slices(tif_stack_file)
             logging.info(f"Done Morphological Chan Vese on slices")
         else:
             logging.info(f"Starting Morphological Chan Vese on the full image")
