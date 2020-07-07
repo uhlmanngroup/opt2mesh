@@ -32,7 +32,7 @@ def parse_args():
 
     # Geodesic active contour parameters
     parser.add_argument("--threshold", help="GAC: number of smoothing iteration (µ)", default="auto")
-    parser.add_argument("--balloon", help="GAC: ballon force", default=1)
+    parser.add_argument("--balloon", help="GAC: ballon force", default=-1)
     parser.add_argument("--alpha", type=int, help="GAC: inverse gradient transform alpha", default=1000)
     parser.add_argument("--sigma", type=float, help="GAC: inverse gradient transform sigma", default=5)
 
