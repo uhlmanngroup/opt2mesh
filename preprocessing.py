@@ -52,7 +52,7 @@ def __parallel_denoising(joblib_parallel, opt_data, denoise_function, method):
 
 def downsample(opt_data, file_basename):
     opt_data_downsampled = opt_data[::2, ::2, ::2]
-    filename = file_basename + "_eq.tif"
+    filename = file_basename + "_downsampled.tif"
     logging.info(f"Saving at {filename} (shape: {opt_data_downsampled.shape})")
     io.imsave(filename, opt_data_downsampled)
 
