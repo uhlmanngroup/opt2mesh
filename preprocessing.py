@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
-__doc__ = """Short pipeline for the pre-processing of TIF stacks pipeline.
+__doc__ = """Short pipeline for the pre-processing of TIF stacks pipeline.\n\n
 
-Can be used to perform:
- - contrast equalization
- - downsampling stack
- - denoising of stacks
- - extract all the slices
+Can be used to perform:\n
+ - contrast equalization\n
+ - downsampling stack\n
+ - denoising of stacks\n
+ - extract all the slices\n
 """
 
 import argparse
@@ -17,6 +17,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from skimage import io, restoration, filters, exposure
 from skimage.restoration import estimate_sigma
+from matplotlib import pyplot as plt
 
 
 def denoise_nl_means(slice):
@@ -119,24 +120,28 @@ def contrast(opt_data, file_basename):
     io.imsave(filename, opt_data_adapt_eq)
 
 
-def __extract(opt_data, file_basename, extension):
-    for slice_index, slice in enumerate(opt_data):
-        filename = file_basename + "_" + str(slice_index).zfill(4) + extension
-        io.imsave(filename, slice)
-
-
 def extract_png(opt_data, file_basename):
     """
     Extract all the slices and save them as png images.
     """
-    __extract(opt_data, file_basename, ".png")
+    for slice_index, slice in enumerate(opt_data):
+        logging.info(f"Extracting slice {slice_index} as a png image")
+        filename = file_basename + "_" + str(slice_index).zfill(4) + ".png"
+        plt.axis('off')
+        plt.tight_layout()
+        plt.imshow(slice)
+        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        plt.close('all')
 
 
 def extract_tif(opt_data, file_basename):
     """
     Extract all the slices and save them as tif images.
     """
-    __extract(opt_data, file_basename, ".tif")
+    for slice_index, slice in enumerate(opt_data):
+        logging.info(f"Extracting slice {slice_index} as a tif image")
+        filename = file_basename + "_" + str(slice_index).zfill(4) + ".tif"
+        io.imsave(filename, slice)
 
 
 commands = {func.__name__: func for func in [
@@ -172,6 +177,7 @@ def main():
 
     os.makedirs(args.out_folder, exist_ok=True)
 
+    # Convert a path like '/path/to/file.name.ext' to 'file.name'
     basename = ".".join(tif_stack_file.split(os.sep)[-1].split(".")[:-1])
 
     logging.basicConfig(
@@ -184,6 +190,7 @@ def main():
 
     file_basename = os.path.join(args.out_folder, basename)
     processing = commands[args.step]
+
     processing(opt_data, file_basename)
 
 
