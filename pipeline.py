@@ -144,7 +144,7 @@ class TIF2MeshPipeline(ABC):
         v, f, info = pymesh.remove_duplicated_vertices_raw(v, f)
         logging.info(f"  Num vertex merged: {info['num_vertex_merged']}")
 
-        logging.info("f Output mesh")
+        logging.info("Output mesh")
         logging.info(f"  Vertices: {len(v)}")
         logging.info(f"  Faces: {len(f)}")
         logging.info('')
@@ -250,7 +250,7 @@ class GACPipeline(TIF2MeshPipeline):
                                                              balloon=self.balloon)
 
             end = time.time()
-            logging.info(f"Done Morphological Geodesic Active Contour on slices in {(end - start) / 1000}s")
+            logging.info(f"Done Morphological Geodesic Active Contour on slices in {(end - start)}s")
         else:
             # Initialization of the level-set.
             init_ls = ms.circle_level_set(opt_data.shape)
@@ -267,7 +267,7 @@ class GACPipeline(TIF2MeshPipeline):
                                                                     threshold=self.threshold,
                                                                     balloon=self.balloon)
             end = time.time()
-            logging.info(f"Done Morphological Geodesic Active Contour on full in {(end - start) / 1000}s")
+            logging.info(f"Done Morphological Geodesic Active Contour on full in {(end - start)}s")
             del opt_data, init_ls
 
         return full_surface
@@ -320,7 +320,7 @@ class ACWEPipeline(TIF2MeshPipeline):
                                                       lambda1=self.lambda1,
                                                       lambda2=self.lambda2)
             end = time.time()
-            logging.info(f"Done Morphological Chan Vese on full in {(end - start) / 1000}s")
+            logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
             del opt_data, init_ls
 
         return full_surface
@@ -385,7 +385,7 @@ class ACWEPipeline(TIF2MeshPipeline):
                                                       lambda2=self.lambda2)
 
             end = time.time()
-            logging.info(f"Done Morphological Chan Vese on {suffix} in {(end - start) / 1000}s")
+            logging.info(f"Done Morphological Chan Vese on {suffix} in {(end - start)}s")
 
             half_surface_file = base_out_file + f"_{suffix}.tif"
 
@@ -421,7 +421,7 @@ class ACWEPipeline(TIF2MeshPipeline):
                                                                lambda2=self.lambda2)
 
         end = time.time()
-        logging.info(f"Done Morphological Chan Vese on slices in {(end - start) / 1000}s")
+        logging.info(f"Done Morphological Chan Vese on slices in {(end - start)}s")
 
         return full_surface
 
