@@ -93,15 +93,21 @@ def main():
         ]
     )
     logging.info("CLI call:")
-    logging.info("".join(sys.argv))
+    logging.info(" ".join(sys.argv))
 
     logging.info("Arguments got ")
     for arg, value in vars(args).items():
         logging.info(f"  {arg}: {value}")
 
     logging.info("LSF environnement:")
-    for env_var in ["LSB_BIND_CPU_LIST", "LSB_HOSTS", "LSB_QUEUE", "LSB_JOBNAME", "LSB_JOB_CWD"]:
-        logging.info(f"  {env_var}: {os.getenv(env_var, 'Not set')}")
+    # Env variables set by LSF:
+    # https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.2/lsf_config_ref/lsf_envars_job_exec.html
+    for lsf_env_var in ["LSB_BIND_CPU_LIST", "LSB_HOSTS", "LSB_QUEUE", "LSB_JOBNAME", "LSB_JOB_CWD"]:
+        logging.info(f"  {lsf_env_var}: {os.getenv(lsf_env_var, 'Not set')}")
+
+    logging.info("VCS context:")
+    last_commit_message = os.popen("git log -1").read()
+    logging.info(last_commit_message)
 
     if args.method.lower() == "gac":
         tif2mesh_pipeline = GACPipeline(iterations=args.iterations,
