@@ -11,33 +11,6 @@ from pipeline import ACWEPipeline, GACPipeline
 from settings import OUT_FOLDER
 
 
-def _canonical_representation(v: np.array, f: np.array):
-    """
-    Convert a mesh to a canonical representation using
-    PCA rotation matrix.
-
-    :param v: input vertices array
-    :param f: input vertices
-    :return:
-    """
-
-    centered_v = v - np.mean(v, axis=0)
-
-    # Getting the rotation matrix by diagonalizing the
-    # covariance matrix of the centered protein coordinates
-    cov_matrix = np.cov(centered_v.T)
-    assert cov_matrix.shape == (3, 3)
-    eigen_vals, rotation_mat = np.linalg.eig(cov_matrix)
-
-    # Applying this rotation matrix on all points
-    # Note : we should not transpose the rotation matrix (tested)
-    logging.info("Rotation matrix:")
-    logging.info(rotation_mat)
-    v_rot = centered_v.dot(rotation_mat)
-
-    return v_rot, f
-
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Run the pipeline ")
 
