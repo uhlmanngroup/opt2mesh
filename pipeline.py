@@ -276,10 +276,10 @@ class GACPipeline(TIF2MeshPipeline):
 class ACWEPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
-                 detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
+                 detail="high", iterations=150, level=0.999, spacing=1, save_temp=False,
                  on_slices=False,
                  # ACWE specific
-                 on_halves=False, smoothing=1, lambda1=1, lambda2=2):
+                 on_halves=False, smoothing=1, lambda1=3, lambda2=1):
 
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,

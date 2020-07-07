@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument("--timing", help="Print timing info", action="store_true")
 
     # Active contour general parameters
-    parser.add_argument("--iterations", type=int, help="ACWE & GAC: number of iterations", default=50)
+    parser.add_argument("--iterations", type=int, help="ACWE & GAC: number of iterations", default=150)
     parser.add_argument("--smoothing", type=int, help="ACWE & GAC: number of smoothing iteration (µ)", default=1)
 
     # Geodesic active contour parameters
@@ -43,8 +43,8 @@ def parse_args():
     parser.add_argument("--on_slices", help="Adapt pipeline to be run the processing on "
                                             "slices instead on the full input tif stack",
                         action="store_true")
-    parser.add_argument("--lambda1", type=float, help="ACWE: weight parameter for the outer region", default=1)
-    parser.add_argument("--lambda2", type=float, help="ACWE: weight parameter for the inner region", default=2)
+    parser.add_argument("--lambda1", type=float, help="ACWE: weight parameter for the outer region", default=3)
+    parser.add_argument("--lambda2", type=float, help="ACWE: weight parameter for the inner region", default=1)
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, help="Marching Cubes: isolevel of the surface for marching cube",
