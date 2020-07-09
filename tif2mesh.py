@@ -10,7 +10,7 @@ from pipeline import ACWEPipeline, GACPipeline
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run the pipeline ")
+    parser = argparse.ArgumentParser(description="Run the pipeline")
 
     # Argument
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
@@ -18,20 +18,22 @@ def parse_args():
     parser.add_argument("--method", help="Surface extraction method",
                         choices=["acwe", "gac"], default="acwe")
 
-    # Data wise
+    # General settings
     parser.add_argument("--save_temp", help="Save temporary results",
                         action="store_true")
     parser.add_argument("--timing", help="Print timing info", action="store_true")
+    parser.add_argument("--n_jobs", type=int, default=0,
+                        help="Number of jobs to use for parallel execution")
 
     # Active contour general parameters
-    parser.add_argument("--iterations", type=int, help="ACWE & GAC: number of iterations", default=150)
-    parser.add_argument("--smoothing", type=int, help="ACWE & GAC: number of smoothing iteration (µ)", default=1)
+    parser.add_argument("--iterations", type=int, default=150, help="ACWE & GAC: number of iterations")
+    parser.add_argument("--smoothing", type=int, default=1, help="ACWE & GAC: number of smoothing iteration (µ)")
 
     # Geodesic active contour parameters
     parser.add_argument("--threshold", help="GAC: number of smoothing iteration (µ)", default="auto")
-    parser.add_argument("--balloon", help="GAC: ballon force", default=-1)
-    parser.add_argument("--alpha", type=int, help="GAC: inverse gradient transform alpha", default=1000)
-    parser.add_argument("--sigma", type=float, help="GAC: inverse gradient transform sigma", default=5)
+    parser.add_argument("--balloon", default=-1, help="GAC: ballon force")
+    parser.add_argument("--alpha", type=int, default=1000, help="GAC: inverse gradient transform alpha")
+    parser.add_argument("--sigma", type=float, default=5, help="GAC: inverse gradient transform sigma")
 
     # Active contour without edges Morphosnakes parameters
     parser.add_argument("--on_halves", help="Adapt pipeline to be run the processing on "
@@ -40,17 +42,17 @@ def parse_args():
     parser.add_argument("--on_slices", help="Adapt pipeline to be run the processing on "
                                             "slices instead on the full input tif stack",
                         action="store_true")
-    parser.add_argument("--lambda1", type=float, help="ACWE: weight parameter for the outer region", default=3)
-    parser.add_argument("--lambda2", type=float, help="ACWE: weight parameter for the inner region", default=1)
+    parser.add_argument("--lambda1", type=float, default=3, help="ACWE: weight parameter for the outer region")
+    parser.add_argument("--lambda2", type=float, default=1, help="ACWE: weight parameter for the inner region")
 
     # Marching cubes parameters
-    parser.add_argument("--level", type=float, help="Marching Cubes: isolevel of the surface for marching cube",
-                        default=0.999)
-    parser.add_argument("--spacing", type=float, help="Marching Cubes: spacing between voxels for marching cube",
-                        default=1.0)
+    parser.add_argument("--level", type=float, default=0.999,
+                        help="Marching Cubes: isolevel of the surface for marching cube")
+    parser.add_argument("--spacing", type=float, default=1.0,
+                        help="Marching Cubes: spacing between voxels for marching cube")
     parser.add_argument("--gradient_direction", type=str, help="Marching Cubes: spacing between voxels",
                         default="descent")
-    parser.add_argument("--step_size", type=int, help="Marching Cubes: step size for marching cube", default=1)
+    parser.add_argument("--step_size", type=int, default=1, help="Marching Cubes: step size for marching cube")
 
     # Mesh simplification parameters
     parser.add_argument("--detail", help="Mesh simplification: Level of detail to preserve",
@@ -102,6 +104,12 @@ def main():
     for lsf_env_var in ["LSB_BIND_CPU_LIST", "LSB_HOSTS", "LSB_QUEUE", "LSB_JOBNAME", "LSB_JOB_CWD"]:
         logging.info(f"  {lsf_env_var}: {os.getenv(lsf_env_var, 'Not set')}")
 
+    # Adapt the number of jobs if not set
+    if args.n_jobs <= 0:
+        # LSB_BIND_CPU_LIST of the form: "13,23,24,71"
+        args.n_jobs = len(os.getenv("LSB_BIND_CPU_LIST", '').split(','))
+        logging.info(f"Adapting the number of jobs to number of available CPU {args.n_jobs}")
+
     logging.info("VCS context:")
     last_commit_message = os.popen("git log -1").read()
     logging.info(last_commit_message)
@@ -116,6 +124,7 @@ def main():
                                         detail=args.detail,
                                         save_temp=args.save_temp,
                                         on_slices=args.on_slices,
+                                        n_jobs=args.n_jobs,
                                         # GAC specifics
                                         smoothing=args.smoothing,
                                         threshold=args.threshold,
@@ -132,6 +141,7 @@ def main():
                                          detail=args.detail,
                                          save_temp=args.save_temp,
                                          on_slices=args.on_slices,
+                                         n_jobs=args.n_jobs,
                                          # ACWE specifics
                                          on_halves=args.on_halves,
                                          smoothing=args.smoothing,

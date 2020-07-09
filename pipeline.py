@@ -7,6 +7,7 @@ import igl
 import pymesh
 import numpy as np
 from guppy import hpy
+from joblib import Parallel, delayed
 from scipy.linalg import norm
 from skimage import io, measure
 
@@ -35,7 +36,8 @@ class TIF2MeshPipeline(ABC):
                  timing=True,
                  detail="high",
                  save_temp=False,
-                 on_slices=False
+                 on_slices=False,
+                 n_jobs=-1
                  ):
         self.iterations: int = iterations
         self.level: float = level
@@ -46,9 +48,10 @@ class TIF2MeshPipeline(ABC):
         self.detail: str = detail
         self.save_temp: bool = save_temp
         self.on_slices: bool = on_slices
+        self.n_jobs: int = n_jobs
 
     @abstractmethod
-    def _extract_full_surface(self, tif_stack_file, base_out_file):
+    def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         raise NotImplementedError()
 
     def run(self, tif_stack_file, out_folder):
@@ -62,15 +65,15 @@ class TIF2MeshPipeline(ABC):
         logging.info(f"Input file: {tif_stack_file}")
 
         logging.info(f"Extracting surface")
-        full_surface = self._extract_full_surface(tif_stack_file, base_out_file)
+        occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
 
         surface_file = base_out_file + "_surface.tif"
         logging.info(f"Saving extracted surface in: {surface_file}")
 
-        io.imsave(surface_file, full_surface)
+        io.imsave(surface_file, occupancy_map)
 
         logging.info(f"Extracting mesh from surface")
-        v, f, normals, values = measure.marching_cubes(full_surface,
+        v, f, normals, values = measure.marching_cubes(occupancy_map,
                                                        level=self.level,
                                                        spacing=(self.spacing, self.spacing, self.spacing),
                                                        gradient_direction=self.gradient_direction,
@@ -157,6 +160,8 @@ class TIF2MeshPipeline(ABC):
 
         Taken and adapted from:
         https://github.com/PyMesh/PyMesh/blob/master/scripts/fix_mesh.py
+
+        TODO: to adapt and calibrate
         """
         bbox_min, bbox_max = mesh.bbox
         diag_len = norm(bbox_max - bbox_min)
@@ -166,7 +171,7 @@ class TIF2MeshPipeline(ABC):
             target_len = diag_len * 2.5e-3
         elif self.detail == "low":
             target_len = diag_len * 1e-2
-        logging.info("Target resolution: {} mm".format(target_len))
+        logging.info(f"Target resolution: {target_len} mm")
 
         count = 0
         mesh, __ = pymesh.remove_degenerated_triangles(mesh, num_iterations=100)
@@ -207,12 +212,13 @@ class GACPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=50, level=0.999, spacing=1, save_temp=False,
-                 on_slices=False,
+                 on_slices=False, n_jobs=-1,
                  # GAC specifics
                  smoothing=1, threshold="auto", balloon=1, alpha=1000, sigma=5):
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
-                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices)
+                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices,
+                         n_jobs=n_jobs)
 
         self.smoothing = smoothing
         self.threshold = threshold
@@ -220,19 +226,18 @@ class GACPipeline(TIF2MeshPipeline):
         self.alpha = alpha
         self.sigma = sigma
 
-    def _extract_full_surface(self, tif_stack_file, base_out_file):
+    def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         logging.info(f"Starting Morphological Geodesic Active Contour on the full image")
         logging.info(f"Loading full data")
         opt_data = io.imread(tif_stack_file) / 255.0
         logging.info(f"Loaded full data")
 
-        # g(I)
         gradient_image = ms.inverse_gaussian_gradient(opt_data,
                                                       alpha=self.alpha,
                                                       sigma=self.sigma)
 
         if self.on_slices:
-            full_surface = np.zeros(gradient_image.shape)
+            occupancy_map = np.zeros(gradient_image.shape)
 
             init_ls = ms.circle_level_set(gradient_image[0].shape)
 
@@ -241,7 +246,7 @@ class GACPipeline(TIF2MeshPipeline):
             for i, slice in enumerate(gradient_image):
                 logging.info(f"Running Morphological Geodesic Active Contour on slice {i}")
 
-                full_surface[i, :, :] = \
+                occupancy_map[i, :, :] = \
                     ms.morphological_geodesic_active_contour(slice,
                                                              iterations=self.iterations,
                                                              init_level_set=init_ls,
@@ -260,45 +265,46 @@ class GACPipeline(TIF2MeshPipeline):
             start = time.time()
 
             # MorphGAC
-            full_surface = ms.morphological_geodesic_active_contour(gradient_image,
-                                                                    iterations=self.iterations,
-                                                                    init_level_set=init_ls,
-                                                                    smoothing=self.smoothing,
-                                                                    threshold=self.threshold,
-                                                                    balloon=self.balloon)
+            occupancy_map = ms.morphological_geodesic_active_contour(gradient_image,
+                                                                     iterations=self.iterations,
+                                                                     init_level_set=init_ls,
+                                                                     smoothing=self.smoothing,
+                                                                     threshold=self.threshold,
+                                                                     balloon=self.balloon)
             end = time.time()
             logging.info(f"Done Morphological Geodesic Active Contour on full in {(end - start)}s")
             del opt_data, init_ls
 
-        return full_surface
+        return occupancy_map
 
 
 class ACWEPipeline(TIF2MeshPipeline):
 
     def __init__(self, gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=150, level=0.999, spacing=1, save_temp=False,
-                 on_slices=False,
+                 on_slices=False, n_jobs=-1,
                  # ACWE specific
                  on_halves=False, smoothing=1, lambda1=3, lambda2=1):
 
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
-                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices)
+                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices,
+                         n_jobs=n_jobs)
 
         self.on_halves: bool = on_halves
         self.lambda1: int = lambda1
         self.lambda2: int = lambda2
         self.smoothing: int = smoothing
 
-    def _extract_full_surface(self, tif_stack_file, base_out_file):
+    def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         if self.on_halves:
             logging.info(f"Starting Morphological Chan Vese on halves")
             self._tif2morphsnakes_halves(tif_stack_file, base_out_file)
             logging.info(f"Done Morphological Chan Vese on halves")
-            full_surface = self._morphsnakes_halves2surface(base_out_file)
+            occupancy_map = self._morphsnakes_halves2surface(base_out_file)
         elif self.on_slices:
             logging.info(f"Starting Morphological Chan Vese on slices")
-            full_surface = self._tif2morphsnakes_slices(tif_stack_file)
+            occupancy_map = self._tif2morphsnakes_slices(tif_stack_file)
             logging.info(f"Done Morphological Chan Vese on slices")
         else:
             logging.info(f"Starting Morphological Chan Vese on the full image")
@@ -313,17 +319,68 @@ class ACWEPipeline(TIF2MeshPipeline):
 
             start = time.time()
 
-            full_surface = ms.morphological_chan_vese(opt_data,
-                                                      init_level_set=init_ls,
-                                                      iterations=self.iterations,
-                                                      smoothing=self.smoothing,
-                                                      lambda1=self.lambda1,
-                                                      lambda2=self.lambda2)
+            occupancy_map = ms.morphological_chan_vese(opt_data,
+                                                       init_level_set=init_ls,
+                                                       iterations=self.iterations,
+                                                       smoothing=self.smoothing,
+                                                       lambda1=self.lambda1,
+                                                       lambda2=self.lambda2)
             end = time.time()
             logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
             del opt_data, init_ls
 
-        return full_surface
+        return occupancy_map
+
+    def __acwe_on_one_half(self, tif_stack_file, base_out_file, suffix):
+
+        # TODO: the half_size index should adapt to the data shape
+        # the cube has a size of (511,512,512)
+        half_size_index = 256
+
+        logging.info(f"Loading the data for half {suffix}")
+
+        # This is ugly, I haven't found something better
+        if suffix == "x_front":
+            opt_data = io.imread(tif_stack_file)[:half_size_index, :, :]
+        elif suffix == "x_back":
+            opt_data = io.imread(tif_stack_file)[half_size_index:, :, :]
+        elif suffix == "y_front":
+            opt_data = io.imread(tif_stack_file)[:, :half_size_index, :]
+        elif suffix == "y_back":
+            opt_data = io.imread(tif_stack_file)[:, half_size_index:, :]
+        elif suffix == "z_front":
+            opt_data = io.imread(tif_stack_file)[:, :, :half_size_index]
+        elif suffix == "z_back":
+            opt_data = io.imread(tif_stack_file)[:, :, half_size_index:]
+        else:
+            raise RuntimeError(f"{suffix} is a wrong suffix")
+
+        logging.info(f"Loaded half {suffix}")
+
+        # Initialization of the level-set.
+        init_ls = ms.circle_level_set(opt_data.shape)
+
+        # Morphological Chan-Vese (or ACWE)
+        logging.info(f"Loaded half {suffix}")
+
+        logging.info(f"Running Morphological Chan Vese on {suffix}")
+
+        start = time.time()
+
+        half_surface = ms.morphological_chan_vese(opt_data,
+                                                  init_level_set=init_ls,
+                                                  iterations=self.iterations,
+                                                  smoothing=self.smoothing,
+                                                  lambda1=self.lambda1,
+                                                  lambda2=self.lambda2)
+
+        end = time.time()
+        logging.info(f"Done Morphological Chan Vese on {suffix} in {(end - start)}s")
+
+        half_surface_file = base_out_file + f"_{suffix}.tif"
+
+        logging.info(f"Saving half {suffix} in: {half_surface_file}")
+        io.imsave(half_surface_file, half_surface)
 
     def _tif2morphsnakes_halves(self, tif_stack_file, base_out_file):
         """
@@ -340,57 +397,11 @@ class ACWEPipeline(TIF2MeshPipeline):
         logging.info("Before loading the data")
         logging.info(str(h.heap()))
 
-        # TODO: the half_size index should adapt to the data shape
-        # the cube has a size of (511,512,512)
-        half_size_index = 256
-
-        for suffix in ["x_front", "x_back", "y_front", "y_back", "z_front", "z_back"]:
-
-            logging.info(f"Loading the data for half {suffix}")
-
-            # This is ugly, I haven't found something better
-            if suffix == "x_front":
-                opt_data = io.imread(tif_stack_file)[:half_size_index, :, :]
-            elif suffix == "x_back":
-                opt_data = io.imread(tif_stack_file)[half_size_index:, :, :]
-            elif suffix == "y_front":
-                opt_data = io.imread(tif_stack_file)[:, :half_size_index, :]
-            elif suffix == "y_back":
-                opt_data = io.imread(tif_stack_file)[:, half_size_index:, :]
-            elif suffix == "z_front":
-                opt_data = io.imread(tif_stack_file)[:, :, :half_size_index]
-            elif suffix == "z_back":
-                opt_data = io.imread(tif_stack_file)[:, :, half_size_index:]
-            else:
-                raise RuntimeError(f"{suffix} is a wrong suffix")
-
-            logging.info(f"Loaded half {suffix}")
-            logging.info(str(h.heap()))
-
-            # Initialization of the level-set.
-            init_ls = ms.circle_level_set(opt_data.shape)
-
-            # Morphological Chan-Vese (or ACWE)
-            logging.info(f"Loaded half {suffix}")
-
-            logging.info(f"Running Morphological Chan Vese on {suffix}")
-
-            start = time.time()
-
-            half_surface = ms.morphological_chan_vese(opt_data,
-                                                      init_level_set=init_ls,
-                                                      iterations=self.iterations,
-                                                      smoothing=self.smoothing,
-                                                      lambda1=self.lambda1,
-                                                      lambda2=self.lambda2)
-
-            end = time.time()
-            logging.info(f"Done Morphological Chan Vese on {suffix} in {(end - start)}s")
-
-            half_surface_file = base_out_file + f"_{suffix}.tif"
-
-            logging.info(f"Saving half {suffix} in: {half_surface_file}")
-            io.imsave(half_surface_file, half_surface)
+        Parallel(n_jobs=self.n_jobs, backend="multiprocessing")(
+            delayed(self.__acwe_on_one_half(
+                tif_stack_file, base_out_file, suffix)) for suffix in
+            ["x_front", "x_back", "y_front", "y_back", "z_front", "z_back"]
+        )
 
     def _tif2morphsnakes_slices(self, tif_stack_file):
         """
@@ -404,7 +415,7 @@ class ACWEPipeline(TIF2MeshPipeline):
         logging.info(str(h.heap()))
 
         opt_data = io.imread(tif_stack_file)
-        full_surface = np.zeros(opt_data.shape)
+        occupancy_map = np.zeros(opt_data.shape)
 
         init_ls = ms.circle_level_set(opt_data[0].shape)
 
@@ -413,17 +424,17 @@ class ACWEPipeline(TIF2MeshPipeline):
         for i, slice in enumerate(opt_data):
             logging.info(f"Running Morphological Chan Vese on slice {i}")
 
-            full_surface[i, :, :] = ms.morphological_chan_vese(slice,
-                                                               init_level_set=init_ls,
-                                                               iterations=self.iterations,
-                                                               smoothing=self.smoothing,
-                                                               lambda1=self.lambda1,
-                                                               lambda2=self.lambda2)
+            occupancy_map[i, :, :] = ms.morphological_chan_vese(slice,
+                                                                init_level_set=init_ls,
+                                                                iterations=self.iterations,
+                                                                smoothing=self.smoothing,
+                                                                lambda1=self.lambda1,
+                                                                lambda2=self.lambda2)
 
         end = time.time()
         logging.info(f"Done Morphological Chan Vese on slices in {(end - start)}s")
 
-        return full_surface
+        return occupancy_map
 
     def _morphsnakes_halves2surface(self, base_out_file):
         """
@@ -472,8 +483,8 @@ class ACWEPipeline(TIF2MeshPipeline):
         logging.info(f"z_back_reshaped.shape : {z_back_reshaped.shape}")
 
         # The full segmentation surface
-        full_surface = (x_front_reshaped + x_back_reshaped + y_back_reshaped
-                        + y_front_reshaped + z_back_reshaped + z_front_reshaped).clip(0, 1)
+        occupancy_map = (x_front_reshaped + x_back_reshaped + y_back_reshaped
+                         + y_front_reshaped + z_back_reshaped + z_front_reshaped).clip(0, 1)
 
         if self.save_temp:
             io.imsave(base_out_file + "_x_front_reshaped.tif", x_front_reshaped)
@@ -485,4 +496,4 @@ class ACWEPipeline(TIF2MeshPipeline):
             io.imsave(base_out_file + "_z_front_reshaped.tif", z_front_reshaped)
             io.imsave(base_out_file + "_z_back_reshaped.tif", z_back_reshaped)
 
-        return full_surface
+        return occupancy_map
