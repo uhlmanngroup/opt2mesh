@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import uuid
 from abc import abstractmethod, ABC
 
 import igl
@@ -53,6 +54,29 @@ class TIF2MeshPipeline(ABC):
     @abstractmethod
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         raise NotImplementedError()
+
+    def get_mesh_statistics(self, v, f):
+        """
+        Return the statistics of a mesh as a python dictionary
+
+        TODO: We use the cpp program to get the mesh statistics as of now
+        before PyMesh/PyMesh#247  being integrated in upstream
+        this is a quick hack as of now.
+
+        """
+        mesh_file = os.path.join("/tmp", str(uuid.uuid4()) + ".stl")
+        igl.write_triangle_mesh(mesh_file, v, f)
+        cout_mesh_statistics = os.popen(f"mesh_statistics -i {mesh_file}").read().split("\n")[:-1]
+        # cout_mesh statistics is a list of string of the form:
+        # Name of statistic: value
+        # here we parse it to get a dictionary of the item:
+        #  {"name_of_statistic": value, …}
+        mesh_statistics = {
+            t[0].strip().lower().replace(" ", "_"): float(t[1]) for
+            t in map(lambda x: x.split(":"), cout_mesh_statistics)
+        }
+
+        return mesh_statistics
 
     def run(self, tif_stack_file, out_folder):
         os.makedirs(out_folder, exist_ok=True)
@@ -124,6 +148,11 @@ class TIF2MeshPipeline(ABC):
         logging.info(f"Saving final simplified mesh in: {final_mesh_file}")
         pymesh.meshio.save_mesh(final_mesh_file, final_output_mesh)
         logging.info(f"Saved final simplified mesh !")
+        stats = self.get_mesh_statistics(mesh_to_simplify.vertices, mesh_to_simplify.faces)
+        logging.info("Statistics of final simplified mesh:")
+        for k, v in stats:
+            logging.info(f"{k}: {v}")
+
         logging.info("Pipeline done!")
 
     @staticmethod
