@@ -16,17 +16,17 @@ def parse_args():
     parser.add_argument("out_folder", help="General output folder for this run")
 
     # CRF3D arguments
-    parser.add_argument("--max_iter", help="Number of parallel jobs",
+    parser.add_argument("--max_iter", help="Maximum number of iterations to use",
                         type=int, default=2)
 
-    parser.add_argument("--std_pos", help="Number of parallel jobs",
+    parser.add_argument("--std_pos", help="Standard deviation",
                         type=float, default=3.0)
-    parser.add_argument("--weight_pos", help="Number of parallel jobs",
+    parser.add_argument("--weight_pos", help="Weight",
                         type=float, default=10.0)
 
-    parser.add_argument("--std_bilat", help="Number of parallel jobs",
+    parser.add_argument("--std_bilat", help="Standard deviation (bileteral)",
                         type=float, default=3.0)
-    parser.add_argument("--weight_bilat", help="Number of parallel jobs",
+    parser.add_argument("--weight_bilat", help="Weight (bilateral)",
                         type=float, default=15.0)
 
     return parser.parse_args()

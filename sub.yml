@@ -1,0 +1,15 @@
+python_exec: /homes/jerphanion/.miniconda3/envs/ec/bin/python
+file: /homes/jerphanion/mesh-processing-pipeline/src/python/crf.py
+batch_job_name: crf
+memory: 20000
+cpus: 4
+parameters:
+  - /homes/jerphanion/mesh-processing-pipeline/data/original/MNS_M897_115.tif
+  - /homes/jerphanion/mesh-processing-pipeline/out/crf
+
+options:
+  - max_iter: [2]
+  - std_pos: [3.0]
+  - weight_pos: [10.0]
+  - std_bilat: [3.0]
+  - weight_bilat: [15.0]
