@@ -58,8 +58,14 @@ if __name__ == "__main__":
     with open(yaml_file, 'r') as stream:
         try:
             command = yaml.safe_load(stream)
+            raw = stream.read()
         except yaml.YAMLError as exc:
             print(exc)
+
+    print(f"Content of {yaml_file}")
+    print("```yaml")
+    print(raw)
+    print("```")
 
     python_exec = command["python_exec"]
     file = command["file"]
@@ -97,6 +103,10 @@ if __name__ == "__main__":
 
             bsub_commands.append(std_out_command)
 
-    for i, command in enumerate(bsub_commands):
-        print(i)
-        std_out_command = os.popen(command.replace('\ \n', '')).read()
+    n_jobs = len(bsub_commands)
+    print(f"You are going to submit {n_jobs} jobs")
+
+    if input("Confirm by entering 'y'").lower() == 'y':
+        for i, command in enumerate(bsub_commands):
+            print(f"Submitting job {i + 1} / {n_jobs}")
+            std_out_command = os.popen(command.replace('\ \n', '')).read()
