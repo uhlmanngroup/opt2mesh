@@ -55,10 +55,17 @@ def bsub_command(python_exec, file, batch_job_name,
 
 if __name__ == "__main__":
     yaml_file = sys.argv[1]
+
+    with open(yaml_file, 'r') as stream:
+        try:
+            raw = stream.read()
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
     with open(yaml_file, 'r') as stream:
         try:
             command = yaml.safe_load(stream)
-            raw = stream.read()
         except yaml.YAMLError as exc:
             print(exc)
 
@@ -91,6 +98,8 @@ if __name__ == "__main__":
         # Submitting all the jobs possible on the cartesian product of options
         for values in itertools.product(*options_vals):
             options = dict(zip(options_keys, values))
+
+            print(options)
 
             std_out_command = bsub_command(python_exec,
                                            file,
