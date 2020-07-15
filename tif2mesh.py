@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 import argparse
+import collections
 import logging
 import os
 import sys
+import yaml
 from datetime import datetime
 
 
@@ -73,15 +75,19 @@ def now_string():
 def main():
     args = parse_args()
 
+    # We first get informations about the context of execution
+
     # Env variables set by LSF:
     # https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.2/lsf_config_ref/lsf_envars_job_exec.html
     job_id = os.getenv('LSB_JOBID', 0)
+    job_batch_name = os.getenv('LSB_JOBNAME', 'unknown_job_batch_name')
+    job_out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string())
+    last_commit_message = os.popen("git log -1").read()
+    last_commit = os.popen('git log -1 --pretty="%h"').read()
+    cli_call = " ".join(sys.argv)
 
-    out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string())
-
-    os.makedirs(out_folder)
-
-    logfile = os.path.join(out_folder, "run.log")
+    os.makedirs(job_out_folder)
+    logfile = os.path.join(job_out_folder, f"{job_id}.log")
 
     logging.basicConfig(
         level=logging.INFO,
@@ -91,8 +97,39 @@ def main():
             logging.StreamHandler()
         ]
     )
+
+    # Keep in this order:
+    #     job_id: 39492343
+    #     job_batch_name: embryos
+    #     input_file: …
+    #     out_folder: …
+    #     git_commit: …
+    #     vsc_context: …
+    #     cli_call: …
+    #     arguments:
+    #      - …
+    #      - …
+    #      - …
+
+    context = collections.OrderedDict()
+    context["job_id"] = job_id
+    context["job_batch_name"] = job_batch_name
+    context["input_file"] = args.in_tif
+    context["out_folder"] = job_out_folder
+    context["git_commit"] = last_commit
+    context["vsc_context"] = last_commit_message
+    context["cli_call"] = cli_call
+
+    context["arguments"]: dict = args
+
+    job_informations = os.path.join(job_out_folder, f"{job_id}_context.yml")
+
+    with open(job_informations, "w") as fp:
+        yaml.dump(context, fp, sort_keys=False)
+
+    # Logging the context
     logging.info("CLI call:")
-    logging.info(" ".join(sys.argv))
+    logging.info(cli_call)
 
     logging.info("Arguments got ")
     for arg, value in vars(args).items():
@@ -111,8 +148,9 @@ def main():
         logging.info(f"Adapting the number of jobs to number of available CPU {args.n_jobs}")
 
     logging.info("VCS context:")
-    last_commit_message = os.popen("git log -1").read()
     logging.info(last_commit_message)
+
+    ###
 
     if args.method.lower() == "gac":
         tif2mesh_pipeline = GACPipeline(iterations=args.iterations,
@@ -152,8 +190,8 @@ def main():
 
     logging.info(f"Starting TIF2Mesh pipeline")
     logging.info(f"  Input TIF stack: {args.in_tif}")
-    logging.info(f"  Out folder: {out_folder}")
-    tif2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=out_folder)
+    logging.info(f"  Out folder: {job_out_folder}")
+    tif2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=job_out_folder)
 
     logging.info("End of TIF2Mesh pipeline")
 
