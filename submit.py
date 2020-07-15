@@ -99,4 +99,4 @@ if __name__ == "__main__":
 
     for i, command in enumerate(bsub_commands):
         print(i)
-        std_out_command = os.popen(f"{command}").read()
+        std_out_command = os.popen(command.replace('\ \n', '')).read()
