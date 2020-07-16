@@ -111,7 +111,7 @@ def main():
     #      - …
     #      - …
 
-    context = collections.OrderedDict()
+    context = dict()
     context["job_id"] = job_id
     context["job_batch_name"] = job_batch_name
     context["input_file"] = args.in_tif
@@ -120,7 +120,7 @@ def main():
     context["vsc_context"] = last_commit_message
     context["cli_call"] = cli_call
 
-    context["arguments"]: dict = args
+    context["arguments"]: dict = vars(args)
 
     job_informations = os.path.join(job_out_folder, f"{job_id}_context.yml")
 
