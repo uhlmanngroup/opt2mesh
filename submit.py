@@ -62,7 +62,6 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             print(exc)
 
-
     with open(yaml_file, 'r') as stream:
         try:
             command = yaml.safe_load(stream)
@@ -109,6 +108,17 @@ if __name__ == "__main__":
                                            input_file,
                                            output_folder,
                                            options)
+
+            bsub_commands.append(std_out_command)
+        else:
+            std_out_command = bsub_command(python_exec,
+                                           file,
+                                           batch_job_name,
+                                           memory,
+                                           cpus,
+                                           input_file,
+                                           output_folder,
+                                           dict())
 
             bsub_commands.append(std_out_command)
 
