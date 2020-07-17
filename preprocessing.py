@@ -88,6 +88,8 @@ def denoise(opt_data, file_basename, joblib_parallel=None):
             denoised_opt_data = __parallel_denoising(joblib_parallel, opt_data,
                                                      method="TV-L1 denoising (Chambolle pock)",
                                                      denoise_function=restoration.denoise_tv_chambolle)
+            # Range and type conversion
+            denoised_opt_data = (denoised_opt_data * 255).astype(np.uint8)
             logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
             io.imsave(filename, denoised_opt_data)
 
@@ -108,6 +110,8 @@ def denoise(opt_data, file_basename, joblib_parallel=None):
         filename = file_basename + "_tv_denoised.tif"
         denoised_opt_data = restoration.denoise_tv_chambolle(opt_data,
                                                              multichannel=False)
+        # Range and type conversion
+        denoised_opt_data = (denoised_opt_data * 255).astype(np.uint8)
         logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
         io.imsave(filename, denoised_opt_data)
 
