@@ -142,23 +142,26 @@ def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
     p2, p98 = np.percentile(opt_data, (2, 98))
     opt_data_rescale = exposure.rescale_intensity(opt_data, in_range=(p2, p98))
     _log_nd_array_info(opt_data_rescale)
-    filename = file_basename + "_rescale.tif"
+    filename = file_basename + "_rescaled_int.tif"
     logging.info(f"Saving at {filename} (shape: {opt_data_rescale.shape})")
     io.imsave(filename, opt_data_rescale)
 
     logging.info("Histogram Equalization")
     opt_data_eq = exposure.equalize_hist(opt_data)
     _log_nd_array_info(opt_data_eq)
+    # Range and type conversion
     opt_data_eq = (opt_data_eq * 255).astype(np.uint8)
     _log_nd_array_info(opt_data_eq)
-    filename = file_basename + "_eq.tif"
+    filename = file_basename + "_hist_eq.tif"
     logging.info(f"Saving at {filename} (shape: {opt_data_eq.shape})")
     io.imsave(filename, opt_data_eq)
 
     logging.info("Contrast Limited Adaptive Histogram Equalization")
     opt_data_adapt_eq = exposure.equalize_adapthist(opt_data, clip_limit=0.03)
+    # Range and type conversion
+    opt_data_adapt_eq = (opt_data_adapt_eq * 255).astype(np.uint8)
     _log_nd_array_info(opt_data_adapt_eq)
-    filename = file_basename + "_adapt_eq.tif"
+    filename = file_basename + "_clahe.tif"
     logging.info(f"Saving at {filename} (shape: {opt_data_adapt_eq.shape})")
     io.imsave(filename, opt_data_adapt_eq)
 
