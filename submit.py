@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     python_exec = command["python_exec"]
     file = command["file"]
-    batch_job_name = command["batch_job_name"]
+    job_batch_name = command["job_batch_name"]
     memory = command["memory"]
     cpus = command["cpus"]
     inputs_list = command["input_files"]
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
             std_out_command = bsub_command(python_exec,
                                            file,
-                                           batch_job_name,
+                                           job_batch_name,
                                            memory,
                                            cpus,
                                            input_file,
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         else:
             std_out_command = bsub_command(python_exec,
                                            file,
-                                           batch_job_name,
+                                           job_batch_name,
                                            memory,
                                            cpus,
                                            input_file,
