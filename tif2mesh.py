@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument("--lambda2", type=float, default=1, help="ACWE: weight parameter for the inner region")
 
     # Auto-context segmentation parameters
-    parser.add_argument("--autocontext", type=str, help="Autocontext: path to the Ilastik folder")
+    parser.add_argument("--autocontext", type=str, help="Autocontext: path to the Ilastik project")
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, default=0.999,
