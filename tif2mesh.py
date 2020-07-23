@@ -187,7 +187,7 @@ def main():
                                          lambda1=args.lambda1,
                                          lambda2=args.lambda2)
     elif args.method.lower() == "autocontext":
-        tif2mesh_pipeline = AutoContextPipeline(project=args.project,
+        tif2mesh_pipeline = AutoContextPipeline(project=args.autocontext,
                                                 iterations=args.iterations,
                                                 level=args.level,
                                                 spacing=args.spacing,
