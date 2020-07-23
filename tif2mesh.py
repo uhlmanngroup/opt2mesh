@@ -1,14 +1,12 @@
 #! /usr/bin/env python
 import argparse
-import collections
 import logging
 import os
 import sys
 import yaml
 from datetime import datetime
 
-
-from pipeline import ACWEPipeline, GACPipeline
+from pipeline import ACWEPipeline, GACPipeline, AutoContextPipeline
 
 
 def parse_args():
@@ -18,7 +16,7 @@ def parse_args():
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run")
     parser.add_argument("--method", help="Surface extraction method",
-                        choices=["acwe", "gac"], default="acwe")
+                        choices=["acwe", "gac", "autocontext"], default="acwe")
 
     # General settings
     parser.add_argument("--save_temp", help="Save temporary results",
@@ -46,6 +44,9 @@ def parse_args():
                         action="store_true")
     parser.add_argument("--lambda1", type=float, default=3, help="ACWE: weight parameter for the outer region")
     parser.add_argument("--lambda2", type=float, default=1, help="ACWE: weight parameter for the inner region")
+
+    # Auto-context segmentation parameters
+    parser.add_argument("--autocontext", type=str, help="Autocontext: path to the Ilastik folder")
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, default=0.999,
@@ -185,6 +186,18 @@ def main():
                                          smoothing=args.smoothing,
                                          lambda1=args.lambda1,
                                          lambda2=args.lambda2)
+    elif args.method.lower() == "autocontext":
+        tif2mesh_pipeline = AutoContextPipeline(project=args.project,
+                                                iterations=args.iterations,
+                                                level=args.level,
+                                                spacing=args.spacing,
+                                                gradient_direction=args.gradient_direction,
+                                                step_size=args.step_size,
+                                                timing=args.timing,
+                                                detail=args.detail,
+                                                save_temp=args.save_temp,
+                                                on_slices=args.on_slices,
+                                                n_jobs=args.n_jobs)
     else:
         raise RuntimeError(f"Method {args.method} is not recongnised")
 
