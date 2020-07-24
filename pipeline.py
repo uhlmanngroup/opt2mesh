@@ -573,7 +573,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
         # /base_out_file}/autocontext/slices/OPTfile_*.tif"
         input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
 
-        output_filename_format = f"{base_out_file}/autocontext/slices/" + "{nickname}{slice_index}_pred.tif "
+        output_filename_format = f"{base_out_file}/autocontext/" + "{nickname}/{nickname}{slice_index}_pred.tif "
 
         # Need some config to have it accessible here
         command = "ilastik "
