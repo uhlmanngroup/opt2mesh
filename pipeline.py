@@ -13,6 +13,7 @@ from scipy.linalg import norm
 from skimage import io, measure
 
 import morphsnakes as ms
+from preprocessing import extract_tif
 
 
 class TIF2MeshPipeline(ABC):
@@ -536,7 +537,6 @@ class AutoContextPipeline(TIF2MeshPipeline):
                  save_temp=False, on_slices=False, n_jobs=-1,
                  # Autocontext specific
                  on_halves=False):
-
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
                          timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices,
@@ -544,41 +544,59 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         self.on_halves: bool = on_halves
         self.project: str = project
-        self.output_filename_format: str = "/tmp/{nickname}/{nickname}{slice_index}_pred.tif "
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
         self._output_format = 'tif sequence'
 
-    @property
-    def _ilastik_out_folder(self):
-        # /path/to/folder/file.ext → /path/to/folder/
-        return os.sep.join(self.output_filename_format.split(os.sep)[:-1])
+        self._id = uuid.uuid4()
 
-    def _extract_occupancy_map(self, tif_stack_file, base_out_file):
+    def _dump_slices_on_disk(self, tif_file):
+        """
+
+        @param tif_file: 3D tif file to use
+        @return: the pattern of full path of the slices files
+        """
+
+        opt_data = io.imread(tif_file)
+        basename = tif_file.split(os.sep)[-1].split(".")[0]
+        slices_folder = f"/tmp/{str(self._id)}/{basename}"
+        file_basename = f"{slices_folder}/{basename}"
+        extract_tif(opt_data, file_basename=file_basename)
+
+        return slices_folder
+
+    def _extract_occupancy_map(self, tif_file, base_out_file):
+        # /full/path/to/OPTfile/OPTfile_*.tif"
+        input_slices_pattern = self._dump_slices_on_disk(tif_file)
+
+        output_filename_format = "/tmp/" + str(self._id) + "/{nickname}/{nickname}{slice_index}_pred.tif "
 
         # Need some config to have it accessible here
         command = "ilastik "
         command += "--headless "
         command += f"--project={self.project} "
         command += f"--output_format={self._output_format} "
-        command += f"--output_filename_format={self.output_filename_format} "
+        command += f"--output_filename_format={output_filename_format} "
         command += f"--export_dtype={self._dtype} "
         command += f'--export_drange={self._drange} '
         command += f'--pipeline_result_drange={self._drange} '
 
-        # /full/path/to/MNS_M897_115_clahe_nl_means_denoised_*.tif"
-        command += tif_stack_file
+        command += input_slices_pattern
 
+        # Running the segmentation on ilastik
         out_ilastik = os.popen(command).read()
-
         logging.info("Ilastik cout:")
         logging.info(out_ilastik)
 
-        # Slices have been dropped on disc here, we are performing some
-        # reconstruction here to get access to the segmentation then
-        ilastik_out_folder = os.sep.join(self.output_filename_format.split(os.sep)[:-1])
-        files = sorted(os.listdir(ilastik_out_folder))
+        # Slices have been saved on disk according to output_filename_format
+        # We are performing some reconstruction here to get access to the segmentation then
+        nickname = tif_file.split(os.sep)[-1].split("*")[0] + "0"
+
+        # see output_filename_format
+        ilastik_output_folder = "/tmp/" + str(self._id) + f"/{nickname}/"
+
+        files = sorted(os.listdir(ilastik_output_folder))
         occupancy_map = np.array([io.imread(f) for f in files], dtype=np.uint8)
 
         return occupancy_map
