@@ -566,10 +566,14 @@ class AutoContextPipeline(TIF2MeshPipeline):
         return slices_folder
 
     def _extract_occupancy_map(self, tif_file, base_out_file):
-        # /full/path/to/OPTfile/OPTfile_*.tif"
-        input_slices_pattern = self._dump_slices_on_disk(tif_file, base_out_file)
 
-        output_filename_format = f"{base_out_file}/autocontext/" + "{nickname}/{nickname}{slice_index}_pred.tif "
+        # /base_out_file}/autocontext/slices
+        slices_folder = self._dump_slices_on_disk(tif_file, base_out_file)
+        basename = tif_file.split(os.sep)[-1].split(".")[0]
+        # /base_out_file}/autocontext/slices/OPTfile_*.tif"
+        input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
+
+        output_filename_format = f"{base_out_file}/autocontext/slices/" + "{nickname}{slice_index}_pred.tif "
 
         # Need some config to have it accessible here
         command = "ilastik "
