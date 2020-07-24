@@ -65,7 +65,7 @@ class TIF2MeshPipeline(ABC):
         this is a quick hack as of now.
 
         """
-        mesh_file = os.path.join("/tmp", str(uuid.uuid4()) + ".stl")
+            mesh_file = os.path.join("/tmp", str(uuid.uuid4()) + ".stl")
         igl.write_triangle_mesh(mesh_file, v, f)
         cout_mesh_statistics = os.popen(f"mesh_statistics -i {mesh_file}").read().split("\n")[:-1]
         # cout_mesh statistics is a list of string of the form:
@@ -560,7 +560,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         opt_data = io.imread(tif_file)
         basename = tif_file.split(os.sep)[-1].split(".")[0]
-        slices_folder = f"{base_out_file}/autocontext/{str(self._id)}/{basename}"
+        slices_folder = f"/autocontext/slices"
         file_basename = f"{slices_folder}/{basename}"
         os.makedirs(slices_folder, exist_ok=True)
         extract_tif(opt_data, file_basename=file_basename)
@@ -585,6 +585,10 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         command += input_slices_pattern
 
+        logging.info("Lauching Ilastik")
+        logging.info("CLI command:")
+        logging.info(command)
+
         # Running the segmentation on ilastik
         out_ilastik = os.popen(command).read()
         logging.info("Ilastik cout:")
@@ -592,7 +596,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         # Slices have been saved on disk according to output_filename_format
         # We are performing some reconstruction here to get access to the segmentation then
-        nickname = tif_file.split(os.sep)[-1].split("*")[0] + "0"
+        nickname = tif_file.split(os.sep)[-1].split("*")[0]
 
         # see output_filename_format
         ilastik_output_folder = f"{base_out_file}/autocontext/" + str(self._id) + f"/{nickname}/"
