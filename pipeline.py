@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import time
@@ -547,7 +548,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
-        self._output_format = '"tif sequence"'
+        self._output_format = '"tif"'
 
     def _dump_slices_on_disk(self, tif_file, base_out_file):
         """
@@ -567,15 +568,14 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
     def _extract_occupancy_map(self, tif_file, base_out_file):
 
-        # /base_out_file}/autocontext/slices
+        # base_out_file/autocontext/slices
         slices_folder = self._dump_slices_on_disk(tif_file, base_out_file)
         basename = tif_file.split(os.sep)[-1].split(".")[0]
-        # /base_out_file}/autocontext/slices/OPTfile_*.tif"
-        input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
 
-        output_filename_format = f"{base_out_file}/autocontext/" + "{nickname}/{nickname}{slice_index}_pred.tif "
+        ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
+        output_filename_format = ilastik_output_folder + "/{nickname}_pred.tif "
 
-        # Need some config to have it accessible here
+        # Note: one may need some config to have ilastik accessible in PATH
         command = "ilastik "
         command += "--headless "
         command += f"--project={self.project} "
@@ -585,7 +585,10 @@ class AutoContextPipeline(TIF2MeshPipeline):
         command += f'--export_drange={self._drange} '
         command += f'--pipeline_result_drange={self._drange} '
 
-        command += input_slices_pattern
+        # autocontext/slices/OPTfile_*.tif"
+        input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
+
+        command += " ".join(sorted(glob.glob(input_slices_pattern)))
 
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
@@ -598,11 +601,6 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         # Slices have been saved on disk according to output_filename_format
         # We are performing some reconstruction here to get access to the segmentation then
-        nickname = tif_file.split(os.sep)[-1].split("*")[0]
-
-        # see output_filename_format
-        ilastik_output_folder = f"{base_out_file}/autocontext/{nickname}/"
-
         files = sorted(os.listdir(ilastik_output_folder))
         occupancy_map = np.array([io.imread(f) for f in files], dtype=np.uint8)
 
