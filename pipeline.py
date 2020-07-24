@@ -597,7 +597,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
         nickname = tif_file.split(os.sep)[-1].split("*")[0]
 
         # see output_filename_format
-        ilastik_output_folder = f"{base_out_file}/autocontext/" + str(self._id) + f"/{nickname}/"
+        ilastik_output_folder = f"{base_out_file}/autocontext/{nickname}/"
 
         files = sorted(os.listdir(ilastik_output_folder))
         occupancy_map = np.array([io.imread(f) for f in files], dtype=np.uint8)
