@@ -547,7 +547,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
-        self._output_format = 'tif sequence'
+        self._output_format = '"tif sequence"'
 
     def _dump_slices_on_disk(self, tif_file, base_out_file):
         """
