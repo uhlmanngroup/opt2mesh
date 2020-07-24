@@ -560,7 +560,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         opt_data = io.imread(tif_file)
         basename = tif_file.split(os.sep)[-1].split(".")[0]
-        slices_folder = f"/autocontext/slices"
+        slices_folder = f"{base_out_file}/autocontext/slices"
         file_basename = f"{slices_folder}/{basename}"
         os.makedirs(slices_folder, exist_ok=True)
         extract_tif(opt_data, file_basename=file_basename)
