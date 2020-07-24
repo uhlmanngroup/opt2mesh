@@ -549,8 +549,6 @@ class AutoContextPipeline(TIF2MeshPipeline):
         self._dtype = "uint8"
         self._output_format = 'tif sequence'
 
-        self._id = uuid.uuid4()
-
     def _dump_slices_on_disk(self, tif_file, base_out_file):
         """
 
@@ -571,7 +569,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
         # /full/path/to/OPTfile/OPTfile_*.tif"
         input_slices_pattern = self._dump_slices_on_disk(tif_file, base_out_file)
 
-        output_filename_format = f"{base_out_file}/autocontext/" + str(self._id) + "/{nickname}/{nickname}{slice_index}_pred.tif "
+        output_filename_format = f"{base_out_file}/autocontext/" + "{nickname}/{nickname}{slice_index}_pred.tif "
 
         # Need some config to have it accessible here
         command = "ilastik "
