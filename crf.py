@@ -57,7 +57,7 @@ def main():
     unitaries = np.asarray([opt_data[100:450, 200:400, :]])
     unitaries = np.transpose(unitaries, [1, 2, 3, 0])
 
-    occupancy_probabilities = unitaries.astype("float32") / 255.0
+    occupancy_neg_log_probs = - np.log(unitaries.astype("float32") / 255.0)
 
     dense_crf_params = {
         'MaxIterations': args.max_iter,
@@ -78,7 +78,7 @@ def main():
     logging.info(f"Running CRF3D.densecrf3D on "
                  f"cropped version of shape {unitaries.shape}")
 
-    labels = densecrf3d(unitaries, occupancy_probabilities, dense_crf_params)
+    labels = densecrf3d(unitaries, occupancy_neg_log_probs, dense_crf_params)
 
     print(labels.shape, labels.dtype, )
     out_file = file_basename + f"_crf_surface" \
