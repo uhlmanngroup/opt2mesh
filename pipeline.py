@@ -599,9 +599,26 @@ class AutoContextPipeline(TIF2MeshPipeline):
         logging.info("Ilastik cout:")
         logging.info(out_ilastik)
 
+        def _load_tiff(file_path):
+            """
+            Adaptation to load tif file encoded
+
+            Fix error:
+              tifffile/tifffile.py", line 4347, in decode
+                    raise ValueError(f'TiffPage {self.index}: {exc}')
+              ValueError: TiffPage 0: <COMPRESSION.LZW: 5> requires the 'imagecodecs' package
+            @param file_path: path of the image
+            @return:
+            """
+            import rasterio as rio
+            with rio.open(file_path) as img:
+                np_image = img.read()
+
+            return np_image
+
         # Slices have been saved on disk according to output_filename_format
         # We are performing some reconstruction here to get access to the segmentation then
         files = sorted(os.listdir(ilastik_output_folder))
-        occupancy_map = np.array([io.imread(os.path.join(ilastik_output_folder, f)) for f in files], dtype=np.uint8)
+        occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f)) for f in files], dtype=np.uint8)
 
         return occupancy_map
