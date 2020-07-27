@@ -120,9 +120,7 @@ if __name__ == "__main__":
                                                output_folder,
                                                options)
                 print(std_out_command)
-
-
-            bsub_commands.append(std_out_command)
+                bsub_commands.append(std_out_command)
 
     n_jobs = len(bsub_commands)
     print(f"You are going to submit {n_jobs} jobs")
