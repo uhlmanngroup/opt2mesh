@@ -95,7 +95,7 @@ if __name__ == "__main__":
     for input_file in inputs_list:
 
         # Submitting all the jobs possible on the cartesian product of options
-        options_values = itertools.product(*options_vals)
+        options_values = list(itertools.product(*options_vals))
         if len(options_values) == 0:
             std_out_command = bsub_command(python_exec,
                                            file,
