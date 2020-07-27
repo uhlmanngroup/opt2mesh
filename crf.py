@@ -58,7 +58,7 @@ def main():
     unitaries = np.asarray([opt_data])
     unitaries = np.transpose(unitaries, [1, 2, 3, 0])
 
-    occupancy_neg_log_probs = - np.log(unitaries.astype("float32") / 255.0)
+    occupancy_neg_log_probs = - np.log(unitaries.astype("float32") / 255.0 + 10e-8)
 
     dense_crf_params = {
         'MaxIterations': args.max_iter,
