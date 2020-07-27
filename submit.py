@@ -98,8 +98,6 @@ if __name__ == "__main__":
         for values in itertools.product(*options_vals):
             options = dict(zip(options_keys, values))
 
-            print(options)
-
             std_out_command = bsub_command(python_exec,
                                            file,
                                            job_batch_name,
@@ -108,6 +106,7 @@ if __name__ == "__main__":
                                            input_file,
                                            output_folder,
                                            options)
+            print(std_out_command)
 
             bsub_commands.append(std_out_command)
         else:
@@ -119,6 +118,7 @@ if __name__ == "__main__":
                                            input_file,
                                            output_folder,
                                            dict())
+            print(std_out_command)
 
             bsub_commands.append(std_out_command)
 
