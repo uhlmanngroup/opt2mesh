@@ -95,21 +95,8 @@ if __name__ == "__main__":
     for input_file in inputs_list:
 
         # Submitting all the jobs possible on the cartesian product of options
-        for values in itertools.product(*options_vals):
-            options = dict(zip(options_keys, values))
-
-            std_out_command = bsub_command(python_exec,
-                                           file,
-                                           job_batch_name,
-                                           memory,
-                                           cpus,
-                                           input_file,
-                                           output_folder,
-                                           options)
-            print(std_out_command)
-
-            bsub_commands.append(std_out_command)
-        else:
+        options_values = itertools.product(*options_vals)
+        if len(options_values) == 0:
             std_out_command = bsub_command(python_exec,
                                            file,
                                            job_batch_name,
@@ -119,6 +106,21 @@ if __name__ == "__main__":
                                            output_folder,
                                            dict())
             print(std_out_command)
+            bsub_commands.append(std_out_command)
+        else:
+            for values in options_values:
+                options = dict(zip(options_keys, values))
+
+                std_out_command = bsub_command(python_exec,
+                                               file,
+                                               job_batch_name,
+                                               memory,
+                                               cpus,
+                                               input_file,
+                                               output_folder,
+                                               options)
+                print(std_out_command)
+
 
             bsub_commands.append(std_out_command)
 
