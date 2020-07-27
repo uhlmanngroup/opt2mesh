@@ -54,7 +54,8 @@ def main():
     file_basename = os.path.join(args.out_folder, basename)
 
     # TODO: cropped on the embryo here to be able to run on 8GioB
-    unitaries = np.asarray([opt_data[100:450, 200:400, :]])
+    # unitaries = np.asarray([opt_data[100:450, 200:400, :]])
+    unitaries = np.asarray([opt_data])
     unitaries = np.transpose(unitaries, [1, 2, 3, 0])
 
     occupancy_neg_log_probs = - np.log(unitaries.astype("float32") / 255.0)
