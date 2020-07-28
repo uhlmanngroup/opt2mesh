@@ -619,6 +619,9 @@ class AutoContextPipeline(TIF2MeshPipeline):
         # Slices have been saved on disk according to output_filename_format
         # We are performing some reconstruction here to get access to the segmentation then
         files = sorted(os.listdir(ilastik_output_folder))
-        occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f)) for f in files], dtype=np.uint8)
+
+        # Slices are stored as (n_labels, 512, 512)
+        # Here we are only interested in the last label (interior), hence the use of "[-1]"
+        occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f))[-1] for f in files], dtype=np.uint8)
 
         return occupancy_map
