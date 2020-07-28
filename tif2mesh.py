@@ -83,8 +83,8 @@ def main():
     job_id = os.getenv('LSB_JOBID', 0)
     job_batch_name = os.getenv('LSB_JOBNAME', 'unknown_job_batch_name')
     job_out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string())
-    last_commit_message = os.popen("git log -1").read()
-    last_commit = os.popen('git log -1 --pretty="%h"').read()
+    last_commit_message = os.popen("git log -1").read().strip()
+    last_commit = os.popen('git log -1 --pretty="%h"').read().strip()
     cli_call = " ".join(sys.argv)
 
     os.makedirs(job_out_folder)
