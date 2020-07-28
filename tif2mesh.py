@@ -47,6 +47,11 @@ def parse_args():
 
     # Auto-context segmentation parameters
     parser.add_argument("--autocontext", type=str, help="Autocontext: path to the Ilastik project")
+    parser.add_argument("--data_input_type",
+                        type=str,
+                        choices=["cube", "slices"],
+                        default="slices",
+                        help="Autocontext: specify is input data of the Ilastik project is a 3D cube or a set of 2D slices")
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, default=0.999,
@@ -188,7 +193,10 @@ def main():
                                          lambda1=args.lambda1,
                                          lambda2=args.lambda2)
     elif args.method.lower() == "autocontext":
-        tif2mesh_pipeline = AutoContextPipeline(project=args.autocontext,
+        tif2mesh_pipeline = AutoContextPipeline(# AutoContextSpecific
+                                                project=args.autocontext,
+                                                data_input_type=args.data_input_type,
+                                                ###
                                                 iterations=args.iterations,
                                                 level=args.level,
                                                 spacing=args.spacing,

@@ -531,24 +531,36 @@ class ACWEPipeline(TIF2MeshPipeline):
 
 
 class AutoContextPipeline(TIF2MeshPipeline):
+    """
+    Use ilastik for the segmentation using the headless mode.
 
-    def __init__(self, project,
+    All the options and some current problems are specified here:
+
+    https://www.ilastik.org/documentation/basics/headless
+    """
+
+    def __init__(self,
+                 # Autocontext specific
+                 project, data_input_type="2d",
+                 #
                  gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=150, level=0.999, spacing=1,
-                 save_temp=False, on_slices=False, n_jobs=-1,
-                 # Autocontext specific
-                 on_halves=False):
+                 save_temp=False, on_slices=False, n_jobs=-1):
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
                          timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices,
                          n_jobs=n_jobs)
 
-        self.on_halves: bool = on_halves
         self.project: str = project
+        self.data_input_type: str = data_input_type.lower()
+        assert self.data_input_type in ["2d", "3d"], "data_input_type not in ['2d', '3d']"
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
-        self._output_format = '"tif"'
+
+        # In the case of 2D, we process slices individually
+        # In the case of 3D, we process slices as a sequence
+        self._output_format = '"tif"' if self.data_input_type == "2d" else '"tif sequence"'
 
     def _dump_slices_on_disk(self, tif_file, base_out_file):
         """
@@ -588,7 +600,14 @@ class AutoContextPipeline(TIF2MeshPipeline):
         # autocontext/slices/OPTfile_*.tif"
         input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
 
-        command += " ".join(sorted(glob.glob(input_slices_pattern)))
+        if self.data_input_type == "2d":
+            # For 2d slices prediction, by experience it does not always work
+            # with the pattern
+            # We thus specify them all explicitly by expending the paths of slices
+            command += " ".join(sorted(glob.glob(input_slices_pattern)))
+        else:
+            # For 3D, the pattern works so we just use it
+            command += input_slices_pattern
 
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
