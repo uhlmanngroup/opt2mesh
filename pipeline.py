@@ -541,7 +541,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
     def __init__(self,
                  # Autocontext specific
-                 project, data_input_type="2d",
+                 project, data_input_type="slices",
                  #
                  gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=150, level=0.999, spacing=1,
@@ -553,14 +553,14 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         self.project: str = project
         self.data_input_type: str = data_input_type.lower()
-        assert self.data_input_type in ["2d", "3d"], "data_input_type not in ['2d', '3d']"
+        assert self.data_input_type in ["slices", "cube"], 'data_input_type not in ["slices", "cube"]'
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
 
         # In the case of 2D, we process slices individually
         # In the case of 3D, we process slices as a sequence
-        self._output_format = '"tif"' if self.data_input_type == "2d" else '"tif sequence"'
+        self._output_format = '"tif"' if self.data_input_type == "slices" else '"tif sequence"'
 
     def _dump_slices_on_disk(self, tif_file, base_out_file):
         """
@@ -600,12 +600,12 @@ class AutoContextPipeline(TIF2MeshPipeline):
         # autocontext/slices/OPTfile_*.tif"
         input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
 
-        if self.data_input_type == "2d":
+        if self.data_input_type == "slices":
             # For 2d slices prediction, by experience it does not always work
             # with the pattern
             # We thus specify them all explicitly by expending the paths of slices
             command += " ".join(sorted(glob.glob(input_slices_pattern)))
-        else:
+        else: # "cube"
             # For 3D, the pattern works so we just use it
             command += input_slices_pattern
 
