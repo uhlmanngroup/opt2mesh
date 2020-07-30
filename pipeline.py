@@ -581,17 +581,6 @@ class AutoContextPipeline(TIF2MeshPipeline):
     def _extract_occupancy_map(self, tif_file, base_out_file):
 
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
-        output_filename_format = ilastik_output_folder + "/{nickname}_pred.tif "
-
-        # Note: one may need some config to have ilastik accessible in PATH
-        command = "ilastik "
-        command += "--headless "
-        command += f"--project={self.project} "
-        command += f"--output_format={self._output_format} "
-        command += f"--output_filename_format={output_filename_format} "
-        command += f"--export_dtype={self._dtype} "
-        command += f'--export_drange={self._drange} '
-        command += f'--pipeline_result_drange={self._drange} '
 
         if self.data_input_type == "slices":
             # For individual 2D slices, we first need to dump them on disk
@@ -606,10 +595,24 @@ class AutoContextPipeline(TIF2MeshPipeline):
             # For 2d slices prediction, by experience it does not always work
             # with the pattern
             # We thus specify them all explicitly by expending the paths of slices
-            command += " ".join(sorted(glob.glob(input_slices_pattern)))
-        else: # "cube"
+            in_files = " ".join(sorted(glob.glob(input_slices_pattern)))
+
+            output_filename_format = ilastik_output_folder + "{nickname}_pred.tif "
+        else:  # "cube"
             # For 3D, the pattern works so we just use it
-            command += tif_file
+            in_files = tif_file
+            output_filename_format = ilastik_output_folder + "{nickname}_{slice_index}_pred.tif "
+
+        # Note: one may need some config to have ilastik accessible in PATH
+        command = "ilastik "
+        command += "--headless "
+        command += f"--project={self.project} "
+        command += f"--output_format={self._output_format} "
+        command += f"--output_filename_format={output_filename_format} "
+        command += f"--export_dtype={self._dtype} "
+        command += f'--export_drange={self._drange} '
+        command += f'--pipeline_result_drange={self._drange} '
+        command += in_files
 
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
@@ -643,6 +646,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         # Slices are stored as (n_labels, 512, 512)
         # Here we are only interested in the last label (interior), hence the use of "[-1]"
-        occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f))[-1] for f in files], dtype=np.uint8)
+        occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f))[-1] for f in files],
+                                 dtype=np.uint8)
 
         return occupancy_map
