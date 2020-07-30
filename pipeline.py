@@ -580,10 +580,6 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
     def _extract_occupancy_map(self, tif_file, base_out_file):
 
-        # base_out_file/autocontext/slices
-        slices_folder = self._dump_slices_on_disk(tif_file, base_out_file)
-        basename = tif_file.split(os.sep)[-1].split(".")[0]
-
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
         output_filename_format = ilastik_output_folder + "/{nickname}_pred.tif "
 
@@ -597,17 +593,23 @@ class AutoContextPipeline(TIF2MeshPipeline):
         command += f'--export_drange={self._drange} '
         command += f'--pipeline_result_drange={self._drange} '
 
-        # autocontext/slices/OPTfile_*.tif"
-        input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
-
         if self.data_input_type == "slices":
+            # For individual 2D slices, we first need to dump them on disk
+
+            # base_out_file/autocontext/slices
+            slices_folder = self._dump_slices_on_disk(tif_file, base_out_file)
+            basename = tif_file.split(os.sep)[-1].split(".")[0]
+
+            # autocontext/slices/OPTfile_*.tif"
+            input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
+
             # For 2d slices prediction, by experience it does not always work
             # with the pattern
             # We thus specify them all explicitly by expending the paths of slices
             command += " ".join(sorted(glob.glob(input_slices_pattern)))
         else: # "cube"
             # For 3D, the pattern works so we just use it
-            command += input_slices_pattern
+            command += tif_file
 
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
