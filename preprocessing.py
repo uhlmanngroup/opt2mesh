@@ -198,12 +198,27 @@ def extract_tif(opt_data, file_basename, joblib_parallel=None):
         io.imsave(filename, slice)
 
 
+def crop_cube(opt_data, file_basename, joblib_parallel=None):
+    """
+    Crop volume. Limit determined expirically.
+    """
+    x_min, x_max = 40, 440
+    y_min, y_max = 100, 450
+    z_min, z_max = 20, 512
+    croped_opt = opt_data[x_min:x_max, y_min:y_max, z_min:z_max]
+
+    filename = file_basename + f"_{x_min}:{x_max}_{y_min}:{y_max}_{z_min}:{z_max}.tif"
+
+    io.imsave(filename, croped_opt)
+
+
 commands = {func.__name__: func for func in [
     denoise,
     contrast,
     downsample,
     extract_png,
-    extract_tif
+    extract_tif,
+    crop_cube
 ]}
 
 
