@@ -207,7 +207,7 @@ def crop_cube(opt_data, file_basename, joblib_parallel=None):
     z_min, z_max = 20, 512
     croped_opt = opt_data[x_min:x_max, y_min:y_max, z_min:z_max]
 
-    filename = file_basename + f"_{x_min}:{x_max}_{y_min}:{y_max}_{z_min}:{z_max}.tif"
+    filename = file_basename + f"_{x_min}_{x_max}_{y_min}_{y_max}_{z_min}_{z_max}.tif"
 
     io.imsave(filename, croped_opt)
 
