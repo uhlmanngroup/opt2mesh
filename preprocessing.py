@@ -13,6 +13,7 @@ import argparse
 import logging
 import os
 
+import h5py
 import numpy as np
 from joblib import Parallel, delayed
 from skimage import io, restoration, filters, exposure
@@ -212,13 +213,23 @@ def crop_cube(opt_data, file_basename, joblib_parallel=None):
     io.imsave(filename, croped_opt)
 
 
+def to_hdf5(opt_data, file_basename, joblib_parallel=None):
+    """
+    Convert the example to hdf5
+    """
+    hf = h5py.File(f"{file_basename}.h5", 'w')
+    hf.create_dataset("dataset", data=opt_data)
+    hf.close()
+
+
 commands = {func.__name__: func for func in [
     denoise,
     contrast,
     downsample,
     extract_png,
     extract_tif,
-    crop_cube
+    crop_cube,
+    to_hdf5
 ]}
 
 
@@ -231,7 +242,6 @@ def parse_args():
                         choices=list(commands.keys()), default="contrast")
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run")
-
     parser.add_argument("--n_jobs", help="Number of parallel jobs",
                         type=int, default=0)
 
