@@ -5,6 +5,7 @@ import time
 import uuid
 from abc import abstractmethod, ABC
 
+import h5py
 import igl
 import pymesh
 import numpy as np
@@ -14,7 +15,7 @@ from scipy.linalg import norm
 from skimage import io, measure
 
 import morphsnakes as ms
-from preprocessing import extract_tif
+from preprocessing import extract_tif, to_hdf5
 
 
 class TIF2MeshPipeline(ABC):
@@ -553,14 +554,11 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         self.project: str = project
         self.data_input_type: str = data_input_type.lower()
-        assert self.data_input_type in ["slices", "cube"], 'data_input_type not in ["slices", "cube"]'
+        assert self.data_input_type in ["slices", "cube", "hdf5"], 'data_input_type not in ["slices", "cube", "hdf5"]'
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
 
-        # In the case of 2D, we process slices individually
-        # In the case of 3D, we process slices as a sequence
-        self._output_format = '"tif"' if self.data_input_type == "slices" else '"tif sequence"'
 
     def _dump_slices_on_disk(self, tif_file, base_out_file):
         """
@@ -578,13 +576,28 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         return slices_folder
 
+    def _dump_hdf5_on_disk(self, tif_file, base_out_file):
+        """
+
+        @param tif_file:
+        @param base_out_file:
+        @return:
+        """
+        opt_data = io.imread(tif_file)
+        basename = tif_file.split(os.sep)[-1].split(".")[0]
+        file_basename = f"{base_out_file}/autocontext/{basename}"
+        os.makedirs(f"{base_out_file}/autocontext/", exist_ok=True)
+        h5_file = to_hdf5(opt_data, file_basename=file_basename)
+
+        return h5_file
+
     def _extract_occupancy_map(self, tif_file, base_out_file):
 
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
 
         if self.data_input_type == "slices":
             # For individual 2D slices, we first need to dump them on disk
-
+            output_format = '"tif"'
             # base_out_file/autocontext/slices
             slices_folder = self._dump_slices_on_disk(tif_file, base_out_file)
             basename = tif_file.split(os.sep)[-1].split(".")[0]
@@ -598,16 +611,22 @@ class AutoContextPipeline(TIF2MeshPipeline):
             in_files = " ".join(sorted(glob.glob(input_slices_pattern)))
 
             output_filename_format = ilastik_output_folder + "{nickname}_pred.tif "
-        else:  # "cube"
+        elif self.data_input_type == "cube":  # "cube"
+            output_format = '"tif sequence"'
             # For 3D, the pattern works so we just use it
             in_files = tif_file
             output_filename_format = ilastik_output_folder + "{nickname}_{slice_index}_pred.tif "
+
+        else:  # hdf5
+            output_format = 'hdf5'
+            output_filename_format = ilastik_output_folder + "{nickname}_pred.h5 "
+            in_files = self._dump_hdf5_on_disk(tif_file, base_out_file)
 
         # Note: one may need some config to have ilastik accessible in PATH
         command = "ilastik "
         command += "--headless "
         command += f"--project={self.project} "
-        command += f"--output_format={self._output_format} "
+        command += f"--output_format={output_format} "
         command += f"--output_filename_format={output_filename_format} "
         command += f"--export_dtype={self._dtype} "
         command += f'--export_drange={self._drange} '
@@ -623,30 +642,35 @@ class AutoContextPipeline(TIF2MeshPipeline):
         logging.info("Ilastik cout:")
         logging.info(out_ilastik)
 
-        def _load_tiff(file_path):
-            """
-            Adaptation to load tif file encoded
+        if self.data_input_type in ["hdf5"]:
+            hf = h5py.File(in_files, 'r')
+            occupancy_map = np.array(hf["exported_dataset"])[..., -1]
+            hf.close()
+        else:
+            def _load_tiff(file_path):
+                """
+                Adaptation to load tif file encoded
 
-            Fix error:
-              tifffile/tifffile.py", line 4347, in decode
-                    raise ValueError(f'TiffPage {self.index}: {exc}')
-              ValueError: TiffPage 0: <COMPRESSION.LZW: 5> requires the 'imagecodecs' package
-            @param file_path: path of the image
-            @return:
-            """
-            import rasterio as rio
-            with rio.open(file_path) as img:
-                np_image = img.read()
+                Fix error:
+                  tifffile/tifffile.py", line 4347, in decode
+                        raise ValueError(f'TiffPage {self.index}: {exc}')
+                  ValueError: TiffPage 0: <COMPRESSION.LZW: 5> requires the 'imagecodecs' package
+                @param file_path: path of the image
+                @return:
+                """
+                import rasterio as rio
+                with rio.open(file_path) as img:
+                    np_image = img.read()
 
-            return np_image
+                return np_image
 
-        # Slices have been saved on disk according to output_filename_format
-        # We are performing some reconstruction here to get access to the segmentation then
-        files = sorted(os.listdir(ilastik_output_folder))
+            # Slices have been saved on disk according to output_filename_format
+            # We are performing some reconstruction here to get access to the segmentation then
+            files = sorted(os.listdir(ilastik_output_folder))
 
-        # Slices are stored as (n_labels, 512, 512)
-        # Here we are only interested in the last label (interior), hence the use of "[-1]"
-        occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f))[-1] for f in files],
-                                 dtype=np.uint8)
+            # Slices are stored as (n_labels, 512, 512)
+            # Here we are only interested in the last label (interior), hence the use of "[-1]"
+            occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f))[-1] for f in files],
+                                     dtype=np.uint8)
 
         return occupancy_map

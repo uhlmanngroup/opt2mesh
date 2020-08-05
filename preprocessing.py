@@ -217,9 +217,12 @@ def to_hdf5(opt_data, file_basename, joblib_parallel=None):
     """
     Convert the example to hdf5
     """
-    hf = h5py.File(f"{file_basename}.h5", 'w')
+    file_name = f"{file_basename}.h5"
+    hf = h5py.File(file_name, 'w')
     hf.create_dataset("dataset", data=opt_data)
     hf.close()
+
+    return file_name
 
 
 commands = {func.__name__: func for func in [

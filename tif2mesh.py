@@ -49,9 +49,10 @@ def parse_args():
     parser.add_argument("--autocontext", type=str, help="Autocontext: path to the Ilastik project")
     parser.add_argument("--data_input_type",
                         type=str,
-                        choices=["cube", "slices"],
+                        choices=["cube", "slices", "hdf5"],
                         default="slices",
-                        help="Autocontext: specify is input data of the Ilastik project is a 3D cube or a set of 2D slices")
+                        help="Autocontext: specify is input data of the Ilastik project "
+                             "is a 3D tif cube, a set of 2D tif slices or a hdf5 file")
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, default=0.999,
