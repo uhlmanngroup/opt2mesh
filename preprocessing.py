@@ -226,15 +226,11 @@ def to_hdf5(opt_data, file_basename, joblib_parallel=None):
     return file_name
 
 
-def _fill_inside_bin_image(im_slice):
-    """
-    Fill the inside of a binary image.
+def _fill_binary_image(im_slice):
+    postprocess_slice = im_slice
 
-    @param im_slice:
-    @return:
-    """
     # Copy the thresholded image.
-    im_floodfill = im_slice.copy()
+    im_floodfill = postprocess_slice.copy()
 
     # Mask used to flood filling.
     # Notice the size needs to be 2 pixels than the image.
@@ -253,10 +249,49 @@ def _fill_inside_bin_image(im_slice):
     return im_out
 
 
+def _morphological_post_processing(im_slice):
+    erode_shape = (3, 3)
+    dilate_shape = (3, 3)
+    postprocess_slice = (cv2.dilate(cv2.erode(cv2.GaussianBlur(im_slice,
+                                                               ksize=(3, 3),
+                                                               sigmaX=1,
+                                                               sigmaY=1),
+                                              np.ones(erode_shape)),
+                                    np.ones(dilate_shape)) > 255 / 2).astype(np.uint8)
+
+    return postprocess_slice
+
+
+def _post_process_binary_slice(im_slice, n_step=1):
+    """
+    Perform some erosion and dilation and then.
+
+    Fill the inside of a binary image.
+
+    @param im_slice:
+    @return:
+    """
+    im_out = im_slice
+    for _ in range(n_step):
+        im_out = _morphological_post_processing(_fill_binary_image(im_out))
+
+    return im_out
+
+
 def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
-    improved_seg_data = np.zeros_like(segmentation_data)
+    improved_seg_data_x = np.zeros_like(segmentation_data)
+    improved_seg_data_y = np.zeros_like(segmentation_data)
+    improved_seg_data_z = np.zeros_like(segmentation_data)
     for i in range(segmentation_data.shape[0]):
-        improved_seg_data[i, ...] = _fill_inside_bin_image(segmentation_data[i, ...])
+        improved_seg_data_x[i, :, :] = _post_process_binary_slice(segmentation_data[i, :, :])
+
+    for i in range(segmentation_data.shape[1]):
+        improved_seg_data_y[:, i, :] = _post_process_binary_slice(segmentation_data[:, i, :])
+
+    for i in range(segmentation_data.shape[2]):
+        improved_seg_data_z[:, :, i] = _post_process_binary_slice(segmentation_data[:, :, i])
+
+    improved_seg_data = ((improved_seg_data_x + improved_seg_data_y + improved_seg_data_z) / 3).astype(np.uint8)
 
     filename = file_basename + f"_cleaned.tif"
 
