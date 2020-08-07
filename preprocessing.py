@@ -13,6 +13,7 @@ import argparse
 import logging
 import os
 
+import cv2
 import h5py
 import numpy as np
 from joblib import Parallel, delayed
@@ -225,6 +226,43 @@ def to_hdf5(opt_data, file_basename, joblib_parallel=None):
     return file_name
 
 
+def _fill_inside_bin_image(im_slice):
+    """
+    Fill the inside of a binary image.
+
+    @param im_slice:
+    @return:
+    """
+    # Copy the thresholded image.
+    im_floodfill = im_slice.copy()
+
+    # Mask used to flood filling.
+    # Notice the size needs to be 2 pixels than the image.
+    h, w = im_slice.shape[:2]
+    mask = np.zeros((h + 2, w + 2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+
+    # Invert floodfilled image
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the foreground.
+    im_out = im_slice | im_floodfill_inv
+
+    return im_out
+
+
+def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
+    improved_seg_data = np.zeros_like(segmentation_data)
+    for i in range(segmentation_data.shape[0]):
+        improved_seg_data[i, ...] = _fill_inside_bin_image(segmentation_data[i, ...])
+
+    filename = file_basename + f"_cleaned.tif"
+
+    io.imsave(filename, improved_seg_data)
+
+
 commands = {func.__name__: func for func in [
     denoise,
     contrast,
@@ -232,7 +270,8 @@ commands = {func.__name__: func for func in [
     extract_png,
     extract_tif,
     crop_cube,
-    to_hdf5
+    to_hdf5,
+    clean_seg
 ]}
 
 
