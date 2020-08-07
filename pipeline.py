@@ -93,7 +93,7 @@ class TIF2MeshPipeline(ABC):
 
         logging.info(f"Input file: {tif_stack_file}")
 
-        logging.info(f"Extracting surface")
+        logging.info(f"Extracting binary occupancy map")
         occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
 
         surface_file = base_out_file + "_surface.tif"
@@ -567,11 +567,13 @@ class AutoContextPipeline(TIF2MeshPipeline):
         @param base_out_file: base name for the output file
         @return: the path to the file created
         """
+        logging.info(f"Converting {tif_file} to hdf5")
         opt_data = io.imread(tif_file)
         basename = tif_file.split(os.sep)[-1].split(".")[0]
         file_basename = f"{base_out_file}/autocontext/{basename}"
         os.makedirs(f"{base_out_file}/autocontext/", exist_ok=True)
         h5_file = to_hdf5(opt_data, file_basename=file_basename)
+        logging.info(f"Dumped hdf5 dataset to {h5_file}")
 
         return h5_file
 
@@ -614,13 +616,16 @@ class AutoContextPipeline(TIF2MeshPipeline):
         command += f'--pipeline_result_drange={self._drange} '
         command += in_files
 
+        # To have a dedicated file for Ilastik's standard output
+        command += f" | tee {ilastik_output_folder + 'ilastik_cli_call.log'}"
+
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
         logging.info(command)
 
         # Running the segmentation on ilastik
         out_ilastik = os.popen(command).read()
-        logging.info("Ilastik cout:")
+        logging.info("Ilastik CLI Call standard output:")
         logging.info(out_ilastik)
 
         # Here we are only interested in the last label (interior), hence the use of "[-1]"
@@ -635,8 +640,11 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         if self.save_temp:
             filename = segmentation_file.replace(".h5", f"_cleaned.tif")
+            logging.info(f"Saving post post-processed segmentation in {filename}")
             hf = h5py.File(filename, 'w')
             hf.create_dataset("exported_data", data=occupancy_map)
             hf.close()
+
+        logging.info(f"Done extracting the occupancy map with autocontext")
 
         return occupancy_map
