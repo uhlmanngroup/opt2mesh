@@ -629,7 +629,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
         logging.info(out_ilastik)
 
         # Here we are only interested in the last label (interior), hence the use of "[-1]"
-        segmentation_file = os.listdir(ilastik_output_folder)[0]
+        segmentation_file = os.path.join(ilastik_output_folder, os.listdir(ilastik_output_folder)[0])
         assert segmentation_file.endswith(".h5"), f"Not a correct hdf5 file : {segmentation_file}"
 
         hf = h5py.File(segmentation_file, 'r')
