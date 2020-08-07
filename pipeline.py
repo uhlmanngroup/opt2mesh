@@ -644,7 +644,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         if self.data_input_type in ["hdf5"]:
             hf = h5py.File(in_files, 'r')
-            occupancy_map = np.array(hf["exported_dataset"])[..., -1]
+            occupancy_map = np.array(hf["exported_data"])[..., -1]
             hf.close()
         else:
             def _load_tiff(file_path):
