@@ -285,7 +285,7 @@ def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
 
     # erode_shape = (3, 3, 3)
     # dilate_shape = (3, 3, 3)
-    improved_seg_data = (erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
+    improved_seg_data = dilation(erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
     for i in range(segmentation_data.shape[0]):
         improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
     #
