@@ -17,7 +17,9 @@ import cv2
 import h5py
 import numpy as np
 from joblib import Parallel, delayed
+from scipy.ndimage import gaussian_filter
 from skimage import io, restoration, filters, exposure
+from skimage.morphology import erosion, dilation
 from skimage.restoration import estimate_sigma
 from matplotlib import pyplot as plt
 
@@ -279,19 +281,21 @@ def _post_process_binary_slice(im_slice, n_step=1):
 
 
 def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
-    improved_seg_data_x = np.zeros_like(segmentation_data)
-    improved_seg_data_y = np.zeros_like(segmentation_data)
-    improved_seg_data_z = np.zeros_like(segmentation_data)
+    improved_seg_data = np.zeros_like(segmentation_data)
+
+    # erode_shape = (3, 3, 3)
+    # dilate_shape = (3, 3, 3)
+    improved_seg_data = (erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
     for i in range(segmentation_data.shape[0]):
-        improved_seg_data_x[i, :, :] = _post_process_binary_slice(segmentation_data[i, :, :])
-
-    for i in range(segmentation_data.shape[1]):
-        improved_seg_data_y[:, i, :] = _post_process_binary_slice(segmentation_data[:, i, :])
-
-    for i in range(segmentation_data.shape[2]):
-        improved_seg_data_z[:, :, i] = _post_process_binary_slice(segmentation_data[:, :, i])
-
-    improved_seg_data = ((improved_seg_data_x + improved_seg_data_y + improved_seg_data_z) / 3).astype(np.uint8)
+        improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
+    #
+    # for i in range(segmentation_data.shape[1]):
+    #     improved_seg_data_y[:, i, :] = _post_process_binary_slice(segmentation_data[:, i, :])
+    #
+    # for i in range(segmentation_data.shape[2]):
+    #     improved_seg_data_z[:, :, i] = _post_process_binary_slice(segmentation_data[:, :, i])
+    #
+    # improved_seg_data = ((improved_seg_data_x + improved_seg_data_y + improved_seg_data_z) / 3).astype(np.uint8)
 
     filename = file_basename + f"_cleaned.tif"
 
