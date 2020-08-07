@@ -102,7 +102,7 @@ def main():
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[
             logging.FileHandler(logfile),
-            logging.StreamHandler()
+            logging.StreamHandler(),
         ]
     )
 
