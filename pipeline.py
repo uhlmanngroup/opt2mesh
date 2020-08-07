@@ -12,10 +12,12 @@ import numpy as np
 from guppy import hpy
 from joblib import Parallel, delayed
 from scipy.linalg import norm
+from scipy.ndimage import gaussian_filter
 from skimage import io, measure
+from skimage.morphology import dilation, erosion
 
 import morphsnakes as ms
-from preprocessing import extract_tif, to_hdf5
+from preprocessing import extract_tif, to_hdf5, _fill_binary_image
 
 
 class TIF2MeshPipeline(ABC):
@@ -542,7 +544,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
     def __init__(self,
                  # Autocontext specific
-                 project, data_input_type="slices",
+                 project,
                  #
                  gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=150, level=0.999, spacing=1,
@@ -553,35 +555,17 @@ class AutoContextPipeline(TIF2MeshPipeline):
                          n_jobs=n_jobs)
 
         self.project: str = project
-        self.data_input_type: str = data_input_type.lower()
-        assert self.data_input_type in ["slices", "cube", "hdf5"], 'data_input_type not in ["slices", "cube", "hdf5"]'
 
         self._drange = '"(0,255)"'
         self._dtype = "uint8"
 
-
-    def _dump_slices_on_disk(self, tif_file, base_out_file):
-        """
-
-        @param tif_file: 3D tif file to use
-        @return: the pattern of full path of the slices files
-        """
-
-        opt_data = io.imread(tif_file)
-        basename = tif_file.split(os.sep)[-1].split(".")[0]
-        slices_folder = f"{base_out_file}/autocontext/slices"
-        file_basename = f"{slices_folder}/{basename}"
-        os.makedirs(slices_folder, exist_ok=True)
-        extract_tif(opt_data, file_basename=file_basename)
-
-        return slices_folder
-
     def _dump_hdf5_on_disk(self, tif_file, base_out_file):
         """
+        Convert a tif file to a hdf5 file.
 
-        @param tif_file:
-        @param base_out_file:
-        @return:
+        @param tif_file: path to the tif file
+        @param base_out_file: base name for the output file
+        @return: the path to the file created
         """
         opt_data = io.imread(tif_file)
         basename = tif_file.split(os.sep)[-1].split(".")[0]
@@ -591,36 +575,33 @@ class AutoContextPipeline(TIF2MeshPipeline):
 
         return h5_file
 
+    def _post_processing(self, interior_segmentation):
+        """
+        The result might be noisy after the prediction with Autocontext.
+        Hence, we perform some morphological operations on the segmentation
+        data.
+
+        @param interior_segmentation: 3D np.array of the segmentation
+
+        @return:
+        """
+        improved_seg_data = dilation(erosion(dilation(
+            gaussian_filter(interior_segmentation, sigma=0.1)))) \
+            .astype(np.uint8)
+        for i in range(improved_seg_data.shape[0]):
+            improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
+
+        return improved_seg_data
+
     def _extract_occupancy_map(self, tif_file, base_out_file):
 
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
 
-        if self.data_input_type == "slices":
-            # For individual 2D slices, we first need to dump them on disk
-            output_format = '"tif"'
-            # base_out_file/autocontext/slices
-            slices_folder = self._dump_slices_on_disk(tif_file, base_out_file)
-            basename = tif_file.split(os.sep)[-1].split(".")[0]
-
-            # autocontext/slices/OPTfile_*.tif"
-            input_slices_pattern = slices_folder + os.sep + basename + "*.tif"
-
-            # For 2d slices prediction, by experience it does not always work
-            # with the pattern
-            # We thus specify them all explicitly by expending the paths of slices
-            in_files = " ".join(sorted(glob.glob(input_slices_pattern)))
-
-            output_filename_format = ilastik_output_folder + "{nickname}_pred.tif "
-        elif self.data_input_type == "cube":  # "cube"
-            output_format = '"tif sequence"'
-            # For 3D, the pattern works so we just use it
-            in_files = tif_file
-            output_filename_format = ilastik_output_folder + "{nickname}_{slice_index}_pred.tif "
-
-        else:  # hdf5
-            output_format = 'hdf5'
-            output_filename_format = ilastik_output_folder + "{nickname}_pred.h5 "
-            in_files = self._dump_hdf5_on_disk(tif_file, base_out_file)
+        # We use h5 here because it is more memory efficient
+        # https://forum.image.sc/t/notable-memory-usage-difference-when-running-ilastik-in-headless-mode-on-different-machines/41144/4?u=jjerphan
+        output_format = 'hdf5'
+        output_filename_format = ilastik_output_folder + "{nickname}_pred.h5 "
+        in_files = self._dump_hdf5_on_disk(tif_file, base_out_file)
 
         # Note: one may need some config to have ilastik accessible in PATH
         command = "ilastik "
@@ -642,35 +623,20 @@ class AutoContextPipeline(TIF2MeshPipeline):
         logging.info("Ilastik cout:")
         logging.info(out_ilastik)
 
-        if self.data_input_type in ["hdf5"]:
-            hf = h5py.File(in_files, 'r')
-            occupancy_map = np.array(hf["exported_data"])[..., -1]
+        # Here we are only interested in the last label (interior), hence the use of "[-1]"
+        segmentation_file = os.listdir(ilastik_output_folder)[0]
+        assert segmentation_file.endswith(".h5"), f"Not a correct hdf5 file : {segmentation_file}"
+
+        hf = h5py.File(segmentation_file, 'r')
+        interior_segmentation = np.array(hf["exported_data"])[..., -1]
+        hf.close()
+
+        occupancy_map = self._post_processing(interior_segmentation)
+
+        if self.save_temp:
+            filename = segmentation_file.replace(".h5", f"_cleaned.tif")
+            hf = h5py.File(filename, 'w')
+            hf.create_dataset("exported_data", data=occupancy_map)
             hf.close()
-        else:
-            def _load_tiff(file_path):
-                """
-                Adaptation to load tif file encoded
-
-                Fix error:
-                  tifffile/tifffile.py", line 4347, in decode
-                        raise ValueError(f'TiffPage {self.index}: {exc}')
-                  ValueError: TiffPage 0: <COMPRESSION.LZW: 5> requires the 'imagecodecs' package
-                @param file_path: path of the image
-                @return:
-                """
-                import rasterio as rio
-                with rio.open(file_path) as img:
-                    np_image = img.read()
-
-                return np_image
-
-            # Slices have been saved on disk according to output_filename_format
-            # We are performing some reconstruction here to get access to the segmentation then
-            files = sorted(os.listdir(ilastik_output_folder))
-
-            # Slices are stored as (n_labels, 512, 512)
-            # Here we are only interested in the last label (interior), hence the use of "[-1]"
-            occupancy_map = np.array([_load_tiff(os.path.join(ilastik_output_folder, f))[-1] for f in files],
-                                     dtype=np.uint8)
 
         return occupancy_map
