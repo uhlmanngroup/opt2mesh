@@ -34,14 +34,17 @@ __doc__ = """
 """
 
 
-def bsub_command(python_exec, file, batch_job_name,
+def bsub_command(python_exec, file, batch_job_name, job_description,
                  memory, cpus, input_file, output_folder, options):
     options_str = ""
     for k, v in options.items():
         options_str += f" --{k} {v} \ \n"
 
+    job_description = job_description.replace("'", "")
+
     command = "bsub \ \n"
     command += f" -J {batch_job_name} \ \n"
+    command += f" -Jd '{job_description}' \ \n"
     command += f" -M {memory} \ \n"
     command += f' -R "rusage[mem={memory}]" \ \n'
     command += f' -n {cpus} \ \n'
@@ -76,6 +79,7 @@ if __name__ == "__main__":
     python_exec = command["python_exec"]
     file = command["file"]
     job_batch_name = command["job_batch_name"]
+    job_description = command["goal"]
     memory = command["memory"]
     cpus = command["cpus"]
     inputs_list = command["input_files"]
