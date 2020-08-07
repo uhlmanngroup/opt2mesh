@@ -119,6 +119,7 @@ if __name__ == "__main__":
                 std_out_command = bsub_command(python_exec,
                                                file,
                                                job_batch_name,
+                                               job_description,
                                                memory,
                                                cpus,
                                                input_file,
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     n_jobs = len(bsub_commands)
     print(f"You are going to submit {n_jobs} jobs")
 
-    if input("Confirm by entering 'y'").lower() == 'y':
+    if input("Confirm by entering 'y': ").lower() == 'y':
         for i, command in enumerate(bsub_commands):
             print(f"Submitting job {i + 1} / {n_jobs}")
             std_out_command = os.popen(command.replace('\ \n', '')).read()
