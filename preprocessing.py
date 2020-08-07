@@ -229,10 +229,9 @@ def to_hdf5(opt_data, file_basename, joblib_parallel=None):
 
 
 def _fill_binary_image(im_slice):
-    postprocess_slice = im_slice
 
     # Copy the thresholded image.
-    im_floodfill = postprocess_slice.copy()
+    im_floodfill = im_slice.copy()
 
     # Mask used to flood filling.
     # Notice the size needs to be 2 pixels than the image.
@@ -281,22 +280,9 @@ def _post_process_binary_slice(im_slice, n_step=1):
 
 
 def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
-    improved_seg_data = np.zeros_like(segmentation_data)
-
-    # erode_shape = (3, 3, 3)
-    # dilate_shape = (3, 3, 3)
     improved_seg_data = dilation(erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
     for i in range(segmentation_data.shape[0]):
         improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
-    #
-    # for i in range(segmentation_data.shape[1]):
-    #     improved_seg_data_y[:, i, :] = _post_process_binary_slice(segmentation_data[:, i, :])
-    #
-    # for i in range(segmentation_data.shape[2]):
-    #     improved_seg_data_z[:, :, i] = _post_process_binary_slice(segmentation_data[:, :, i])
-    #
-    # improved_seg_data = ((improved_seg_data_x + improved_seg_data_y + improved_seg_data_z) / 3).astype(np.uint8)
-
     filename = file_basename + f"_cleaned.tif"
 
     io.imsave(filename, improved_seg_data)
