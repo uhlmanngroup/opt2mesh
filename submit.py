@@ -104,6 +104,7 @@ if __name__ == "__main__":
             std_out_command = bsub_command(python_exec,
                                            file,
                                            job_batch_name,
+                                           job_description,
                                            memory,
                                            cpus,
                                            input_file,
