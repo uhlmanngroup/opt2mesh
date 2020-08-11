@@ -144,7 +144,9 @@ class TIF2MeshPipeline(ABC):
                 igl.write_triangle_mesh(cc_mesh_file, vi, fi)
 
         # Taking the main mesh
-        mesh_to_simplify = meshes[0]
+        # Once again, we take the first connected component
+        id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
+        mesh_to_simplify = meshes[id_main_component]
 
         logging.info(f"Final mesh simplification")
         final_output_mesh = self._mesh_simplification(mesh_to_simplify)
@@ -237,7 +239,8 @@ class TIF2MeshPipeline(ABC):
         meshes = pymesh.separate_mesh(mesh, connectivity_type='auto')
 
         # Once again, we take the first connected component
-        final_mesh = meshes[0]
+        id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
+        final_mesh = meshes[id_main_component]
 
         return final_mesh
 
