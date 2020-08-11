@@ -228,6 +228,44 @@ def to_hdf5(opt_data, file_basename, joblib_parallel=None):
     return file_name
 
 
+def full(opt_data, file_basename, joblib_parallel=None):
+    """
+    Perform the full preprocessing of the data.
+
+    @param opt_data:
+    @param file_basename: for the export
+    @param joblib_parallel:
+    @return:
+    """
+
+    logging.info(f"Performing full preprocessing on {file_basename.split(os.sep)[-1]}")
+    _log_nd_array_info(opt_data)
+
+    logging.info("Contrast Limited Adaptive Histogram Equalization")
+    opt_data_adapt_eq = exposure.equalize_adapthist(opt_data, clip_limit=0.03)
+    opt_data_adapt_eq = (opt_data_adapt_eq * 255).astype(np.uint8)
+    _log_nd_array_info(opt_data_adapt_eq)
+    filename = file_basename + "_clahe"
+    _log_nd_array_info(opt_data)
+
+    logging.info("Median filtering")
+    denoised_opt_data = filters.median(opt_data_adapt_eq)
+    filename += "_median_denoised"
+
+    logging.info(f"Cropping volume")
+    x_min, x_max = 0, 512
+    y_min, y_max = 100, 450
+    z_min, z_max = 40, 480
+    logging.info(f"  x: {x_min}, {x_max}")
+    logging.info(f"  y: {y_min}, {y_max}")
+    logging.info(f"  z: {z_min}, {z_max}")
+    cropped_opt = denoised_opt_data[x_min:x_max, y_min:y_max, z_min:z_max]
+    filename += f"_{x_min}_{x_max}_{y_min}_{y_max}_{z_min}_{z_max}.tif"
+
+    logging.info(f"Saving as tif: {filename}")
+    io.imsave(filename, cropped_opt)
+
+
 def _fill_binary_image(im_slice):
 
     # Copy the thresholded image.
@@ -296,7 +334,8 @@ commands = {func.__name__: func for func in [
     extract_tif,
     crop_cube,
     to_hdf5,
-    clean_seg
+    clean_seg,
+    full
 ]}
 
 
