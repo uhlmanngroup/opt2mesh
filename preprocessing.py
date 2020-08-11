@@ -24,12 +24,11 @@ from skimage.restoration import estimate_sigma
 from matplotlib import pyplot as plt
 
 
-def denoise_nl_means(slice):
+def __denoise_nl_means(slice):
     """
     Simple adaptation for parallelization.
 
     Taken and adapted from the documentation.
-
     """
     sigma_est = np.mean(estimate_sigma(slice))
 
@@ -79,6 +78,14 @@ def __parallel_denoising(joblib_parallel, opt_data, denoise_function, method):
 
 
 def downsample(opt_data, file_basename, joblib_parallel=None):
+    """
+    Downsample the data by a factor of 2.
+
+    @param opt_data:
+    @param file_basename:
+    @param joblib_parallel:
+    @return:
+    """
     opt_data_downsampled = opt_data[::2, ::2, ::2]
     filename = file_basename + "_downsampled.tif"
     logging.info(f"Saving at {filename} (shape: {opt_data_downsampled.shape})")
@@ -86,6 +93,20 @@ def downsample(opt_data, file_basename, joblib_parallel=None):
 
 
 def denoise(opt_data, file_basename, joblib_parallel=None):
+    """
+    Perform denoising and save results.
+
+    The denoising methods that are used are:
+        - TV-L1 denoising (Chambolle pock)
+        - Median filtering
+        - non linear means denoising
+
+    Taken and adapted from skimage's documentation.
+    @param opt_data:
+    @param file_basename:
+    @param joblib_parallel:
+    @return:
+    """
     if joblib_parallel is not None:
         with joblib_parallel:
             filename = file_basename + "_tv_denoised.tif"
@@ -107,7 +128,7 @@ def denoise(opt_data, file_basename, joblib_parallel=None):
             filename = file_basename + "_nl_means_denoised.tif"
             denoised_opt_data = __parallel_denoising(joblib_parallel, opt_data,
                                                      method="non linear means denoising",
-                                                     denoise_function=denoise_nl_means)
+                                                     denoise_function=__denoise_nl_means)
             logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
             io.imsave(filename, denoised_opt_data)
     else:
@@ -139,7 +160,7 @@ def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
         - Histogram Equalization
         - Contrast Limited Adaptive Histogram Equalization
 
-    Taken and adapted from the documentation.
+    Taken and adapted from skimage's documentation.
     """
     logging.info("Performing contrast equalization")
 
@@ -289,16 +310,22 @@ def _fill_binary_image(im_slice):
 
 
 def _morphological_post_processing(im_slice):
+    """
+    Experimental: clean the segmentation using morphological operations.
+
+    @param im_slice: 2D slice images
+    @return:
+    """
     erode_shape = (3, 3)
     dilate_shape = (3, 3)
-    postprocess_slice = (cv2.dilate(cv2.erode(cv2.GaussianBlur(im_slice,
+    postprocessed_slice = (cv2.dilate(cv2.erode(cv2.GaussianBlur(im_slice,
                                                                ksize=(3, 3),
                                                                sigmaX=1,
                                                                sigmaY=1),
                                               np.ones(erode_shape)),
                                     np.ones(dilate_shape)) > 255 / 2).astype(np.uint8)
 
-    return postprocess_slice
+    return postprocessed_slice
 
 
 def _post_process_binary_slice(im_slice, n_step=1):
@@ -307,7 +334,7 @@ def _post_process_binary_slice(im_slice, n_step=1):
 
     Fill the inside of a binary image.
 
-    @param im_slice:
+    @param im_slice: 2D slice images
     @return:
     """
     im_out = im_slice
@@ -318,6 +345,14 @@ def _post_process_binary_slice(im_slice, n_step=1):
 
 
 def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
+    """
+    Experimental: clean the segmentation using morphological operations.
+
+    @param segmentation_data:
+    @param file_basename: for the export
+    @param joblib_parallel:
+    @return:
+    """
     improved_seg_data = dilation(erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
     for i in range(segmentation_data.shape[0]):
         improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
