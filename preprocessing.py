@@ -111,23 +111,23 @@ def denoise(opt_data, file_basename, joblib_parallel=None):
             logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
             io.imsave(filename, denoised_opt_data)
     else:
-        filename = file_basename + "_tv_denoised.tif"
-        denoised_opt_data = restoration.denoise_tv_chambolle(opt_data,
-                                                             multichannel=False)
-        # Range and type conversion
-        denoised_opt_data = (denoised_opt_data * 255).astype(np.uint8)
-        logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-        io.imsave(filename, denoised_opt_data)
+        # filename = file_basename + "_tv_denoised.tif"
+        # denoised_opt_data = restoration.denoise_tv_chambolle(opt_data,
+        #                                                      multichannel=False)
+        # # Range and type conversion
+        # denoised_opt_data = (denoised_opt_data * 255).astype(np.uint8)
+        # logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
+        # io.imsave(filename, denoised_opt_data)
 
         filename = file_basename + "_median_denoised.tif"
         denoised_opt_data = filters.median(opt_data)
         logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
         io.imsave(filename, denoised_opt_data)
 
-        filename = file_basename + "_nl_means_denoised.tif"
-        denoised_opt_data = denoise_nl_means(opt_data)
-        logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-        io.imsave(filename, denoised_opt_data)
+        # filename = file_basename + "_nl_means_denoised.tif"
+        # denoised_opt_data = denoise_nl_means(opt_data)
+        # logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
+        # io.imsave(filename, denoised_opt_data)
 
 
 def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
@@ -146,23 +146,23 @@ def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
     logging.info("Original data")
     _log_nd_array_info(opt_data)
 
-    logging.info("Intensity Rescaling")
-    p2, p98 = np.percentile(opt_data, (2, 98))
-    opt_data_rescale = exposure.rescale_intensity(opt_data, in_range=(p2, p98))
-    _log_nd_array_info(opt_data_rescale)
-    filename = file_basename + "_rescaled_int.tif"
-    logging.info(f"Saving at {filename} (shape: {opt_data_rescale.shape})")
-    io.imsave(filename, opt_data_rescale)
-
-    logging.info("Histogram Equalization")
-    opt_data_eq = exposure.equalize_hist(opt_data)
-    _log_nd_array_info(opt_data_eq)
-    # Range and type conversion
-    opt_data_eq = (opt_data_eq * 255).astype(np.uint8)
-    _log_nd_array_info(opt_data_eq)
-    filename = file_basename + "_hist_eq.tif"
-    logging.info(f"Saving at {filename} (shape: {opt_data_eq.shape})")
-    io.imsave(filename, opt_data_eq)
+    # logging.info("Intensity Rescaling")
+    # p2, p98 = np.percentile(opt_data, (2, 98))
+    # opt_data_rescale = exposure.rescale_intensity(opt_data, in_range=(p2, p98))
+    # _log_nd_array_info(opt_data_rescale)
+    # filename = file_basename + "_rescaled_int.tif"
+    # logging.info(f"Saving at {filename} (shape: {opt_data_rescale.shape})")
+    # io.imsave(filename, opt_data_rescale)
+    #
+    # logging.info("Histogram Equalization")
+    # opt_data_eq = exposure.equalize_hist(opt_data)
+    # _log_nd_array_info(opt_data_eq)
+    # # Range and type conversion
+    # opt_data_eq = (opt_data_eq * 255).astype(np.uint8)
+    # _log_nd_array_info(opt_data_eq)
+    # filename = file_basename + "_hist_eq.tif"
+    # logging.info(f"Saving at {filename} (shape: {opt_data_eq.shape})")
+    # io.imsave(filename, opt_data_eq)
 
     logging.info("Contrast Limited Adaptive Histogram Equalization")
     opt_data_adapt_eq = exposure.equalize_adapthist(opt_data, clip_limit=0.03)
