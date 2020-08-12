@@ -1,63 +1,104 @@
+affine==2.3.0
+appdirs==1.4.4
+argon2-cffi==20.1.0
+attrs==19.3.0
 backcall @ file:///home/conda/feedstock_root/build_artifacts/backcall_1592338393461/work
 bleach==3.1.0
 certifi==2020.6.20
 cffi==1.14.0
 chardet==3.0.4
+click==7.1.2
+click-plugins==1.1.1
+cligj==0.5.0
 cloudpickle @ file:///home/conda/feedstock_root/build_artifacts/cloudpickle_1593623337153/work
 cycler==0.10.0
 Cython @ file:///home/conda/feedstock_root/build_artifacts/cython_1591799495396/work
 cytoolz==0.10.1
 dask @ file:///home/conda/feedstock_root/build_artifacts/dask-core_1592593303100/work
 decorator==4.4.2
+defusedxml==0.6.0
 dill @ file:///home/conda/feedstock_root/build_artifacts/dill_1592315758554/work
 docutils==0.14
 efficientnet-pytorch==0.6.3
+entrypoints==0.3
 guppy3==3.0.10.post1
+h5py==2.10.0
 idna==2.8
 igl @ file:///home/conda/feedstock_root/build_artifacts/igl_1591373926455/work
 imagecodecs @ file:///home/conda/feedstock_root/build_artifacts/imagecodecs_1593295485416/work
 imageio==2.8.0
 imcut==1.11.0
+importlib-metadata==1.7.0
+ipykernel==5.3.4
 ipython @ file:///home/conda/feedstock_root/build_artifacts/ipython_1593235451385/work
 ipython-genutils==0.2.0
+ipywidgets==7.5.1
 jedi @ file:///home/conda/feedstock_root/build_artifacts/jedi_1592619883817/work
+Jinja2==2.11.2
 joblib @ file:///home/conda/feedstock_root/build_artifacts/joblib_1593624380152/work
+jsonschema==3.2.0
+jupyter==1.0.0
+jupyter-client==6.1.6
+jupyter-console==6.1.0
+jupyter-core==4.6.3
 kiwisolver==1.2.0
+MarkupSafe==1.1.1
 matplotlib @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-base_1592576124213/work
 MedPy==0.4.0
+meshio==4.0.16
+mistune==0.8.4
 munch==2.5.0
+nbconvert==5.6.1
+nbformat==5.0.7
 networkx==2.4
 nibabel==3.1.1
+notebook==6.1.1
 numpy==1.18.5
 olefile==0.46
+opencv-python==4.3.0.36
 packaging==20.4
 pandas @ file:///tmp/build/80754af9/pandas_1592841660978/work
+pandocfilters==1.4.2
 parso==0.7.0
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow @ file:///home/conda/feedstock_root/build_artifacts/pillow_1593694094240/work
 pkginfo==1.5.0.1
 pretrainedmodels==0.7.4
+prometheus-client==0.8.0
 prompt-toolkit @ file:///home/conda/feedstock_root/build_artifacts/prompt-toolkit_1592500439797/work
 ptyprocess==0.6.0
 pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
 pygco==0.0.16
 Pygments==2.3.1
 pymesh2==0.2.1
+pymeshfix==0.14.1
 pyparsing==2.4.7
+pyrsistent==0.16.0
+python-crfsuite==0.9.7
 python-dateutil==2.8.1
 pytz==2020.1
+pyvista==0.25.3
 PyWavelets==1.1.1
 PyYAML==5.3.1
+pyzmq==19.0.2
+qtconsole==4.7.5
+QtPy==1.9.0
+rasterio @ file:///home/conda/feedstock_root/build_artifacts/rasterio_1591144424823/work
 readme-renderer==24.0
 requests-toolbelt==0.9.1
 scikit-image==0.17.2
 scikit-learn @ file:///home/conda/feedstock_root/build_artifacts/scikit-learn_1589920858235/work
 scipy @ file:///tmp/build/80754af9/scipy_1592930497347/work
-SimpleCRF @ git+https://github.com/jjerphan/SimpleCRF.git@739df0d31c8f70c2e03db9eaa4103e0b6cde5147
+scooby==0.5.6
+Send2Trash==1.5.0
+-e git+git@github.com:HiLab-git/SimpleCRF.git@ff90555cc694db682481a9d64d21b7f08458c7cc#egg=SimpleCRF
 SimpleITK==1.2.4
 six @ file:///home/conda/feedstock_root/build_artifacts/six_1590081179328/work
 sklearn==0.0
+snuggs==1.4.7
+terminado==0.8.3
+testpath==0.4.4
 threadpoolctl @ file:///tmp/tmp79xdzxkt/threadpoolctl-2.1.0-py3-none-any.whl
 tifffile @ file:///home/conda/feedstock_root/build_artifacts/tifffile_1593508478078/work
 toolz==0.10.0
@@ -70,3 +111,5 @@ urllib3==1.24.1
 vtk==9.0.1
 wcwidth @ file:///home/conda/feedstock_root/build_artifacts/wcwidth_1592931742287/work
 webencodings==0.5.1
+widgetsnbextension==3.5.1
+zipp==3.1.0
