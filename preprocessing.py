@@ -23,6 +23,8 @@ from skimage.morphology import erosion, dilation
 from skimage.restoration import estimate_sigma
 from matplotlib import pyplot as plt
 
+from crop_h5 import _empirical_crop
+
 
 def __denoise_nl_means(slice):
     """
@@ -227,9 +229,10 @@ def crop_cube(opt_data, file_basename, joblib_parallel=None):
     """
     Crop volume. Limit determined empirically.
     """
-    x_min, x_max = 0, 512
-    y_min, y_max = 100, 450
-    z_min, z_max = 40, 480
+    cropped_opt, coords = _empirical_crop(opt_data)
+    x_min, x_max = coords[0]
+    y_min, y_max = coords[1]
+    z_min, z_max = coords[2]
     croped_opt = opt_data[x_min:x_max, y_min:y_max, z_min:z_max]
 
     filename = file_basename + f"_{x_min}_{x_max}_{y_min}_{y_max}_{z_min}_{z_max}.tif"
