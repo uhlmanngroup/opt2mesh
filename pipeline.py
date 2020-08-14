@@ -645,7 +645,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
             filename = segmentation_file.replace(".h5", f"_cleaned.tif")
             logging.info(f"Saving post post-processed segmentation in {filename}")
             hf = h5py.File(filename, 'w')
-            hf.create_dataset("exported_data", data=occupancy_map)
+            hf.create_dataset("exported_data", data=occupancy_map, chunks=True)
             hf.close()
 
         logging.info(f"Done extracting the occupancy map with autocontext")
