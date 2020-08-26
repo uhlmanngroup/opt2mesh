@@ -47,6 +47,9 @@ def parse_args():
 
     # Auto-context segmentation parameters
     parser.add_argument("--autocontext", type=str, help="Autocontext: path to the Ilastik project")
+    parser.add_argument("--use_probabilities", help="Autocontext: use probabilities instead of"
+                                                    "segmentation for the occupancy map",
+                        action="store_true")
 
     # Marching cubes parameters
     parser.add_argument("--level", type=float, default=0.999,
@@ -190,6 +193,7 @@ def main():
     elif args.method.lower() == "autocontext":
         tif2mesh_pipeline = AutoContextPipeline(# AutoContextSpecific
                                                 project=args.autocontext,
+                                                use_probabilities=args.use_probabilities,
                                                 ###
                                                 iterations=args.iterations,
                                                 level=args.level,

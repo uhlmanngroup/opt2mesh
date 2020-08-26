@@ -548,19 +548,23 @@ class AutoContextPipeline(TIF2MeshPipeline):
     def __init__(self,
                  # Autocontext specific
                  project,
+                 use_probabilities=True,
                  #
                  gradient_direction="descent", step_size=1, timing=True,
                  detail="high", iterations=150, level=0.999, spacing=1,
                  save_temp=False, on_slices=False, n_jobs=-1):
         super().__init__(iterations=iterations, level=level, spacing=spacing,
                          gradient_direction=gradient_direction, step_size=step_size,
-                         timing=timing, detail=detail, save_temp=save_temp, on_slices=on_slices,
-                         n_jobs=n_jobs)
+                         timing=timing, detail=detail, save_temp=save_temp,
+                         on_slices=on_slices, n_jobs=n_jobs)
 
         self.project: str = project
 
-        self._drange = '"(0,255)"'
-        self._dtype = "uint8"
+        self._use_probabilities = use_probabilities
+
+        if self._use_probabilities:
+            # TODO: tune this
+            self.level = 0.90
 
     def _dump_hdf5_on_disk(self, tif_file, base_out_file):
         """
@@ -603,8 +607,10 @@ class AutoContextPipeline(TIF2MeshPipeline):
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
 
         # We use h5 here because it is more memory efficient
-        # https://forum.image.sc/t/notable-memory-usage-difference-when-running-ilastik-in-headless-mode-on-different-machines/41144/4?u=jjerphan
+        # https://forum.image.sc/t/notable-memory-usage-difference-when-running-ilastik-in-headless-mode-on-different-machines/41144/4
         output_format = 'hdf5'
+        drange = '"(0,255)"'
+        dtype = "uint8"
         output_filename_format = ilastik_output_folder + "{nickname}_pred.h5 "
         in_files = self._dump_hdf5_on_disk(tif_file, base_out_file)
 
@@ -614,9 +620,13 @@ class AutoContextPipeline(TIF2MeshPipeline):
         command += f"--project={self.project} "
         command += f"--output_format={output_format} "
         command += f"--output_filename_format={output_filename_format} "
-        command += f"--export_dtype={self._dtype} "
-        command += f'--export_drange={self._drange} '
-        command += f'--pipeline_result_drange={self._drange} '
+        if self._use_probabilities:
+            # TODO: change the number when using AutoContext with more stages here
+            command += '--export_source="Probabilities Stage 2" '
+        else:
+            command += f"--export_dtype={dtype} "
+            command += f'--export_drange={drange} '
+            command += f'--pipeline_result_drange={dtype} '
         command += in_files
 
         # To have a dedicated file for Ilastik's standard output
@@ -631,15 +641,20 @@ class AutoContextPipeline(TIF2MeshPipeline):
         logging.info("Ilastik CLI Call standard output:")
         logging.info(out_ilastik)
 
-        # Here we are only interested in the last label (interior), hence the use of "[-1]"
         segmentation_file = os.path.join(ilastik_output_folder, os.listdir(ilastik_output_folder)[0])
         assert segmentation_file.endswith(".h5"), f"Not a correct hdf5 file : {segmentation_file}"
 
         hf = h5py.File(segmentation_file, 'r')
-        interior_segmentation = np.array(hf["exported_data"])[..., -1]
+        # We are only interested in the "interior" information.
+        # It is the last label, hence the use of "-1"
+        noisy_occupancy_map = np.array(hf["exported_data"])[..., -1]
         hf.close()
 
-        occupancy_map = self._post_processing(interior_segmentation)
+        if not self._use_probabilities:
+            # we work on segmentations which we need to clean
+            occupancy_map = self._post_processing(noisy_occupancy_map)
+        else:
+            occupancy_map = noisy_occupancy_map
 
         if self.save_temp:
             filename = segmentation_file.replace(".h5", f"_cleaned.tif")
