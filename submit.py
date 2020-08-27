@@ -42,7 +42,10 @@ def bsub_command(python_exec, file, batch_job_name, job_description,
 
     job_description = job_description.replace("'", "")
 
+    user = os.getenv("USER", None)
+
     command = "bsub \ \n"
+    command += f" -u {user}" if user is not None else ""
     command += f" -J {batch_job_name} \ \n"
     command += f" -Jd '{job_description}' \ \n"
     command += f" -M {memory} \ \n"
