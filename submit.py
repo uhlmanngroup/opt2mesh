@@ -12,10 +12,10 @@ __doc__ = """
     Example:
 
     ```yaml
-    batch_job_name: crf
-    goal: This batch of jobs is dedicated to explore different values \n
+    job_batch_name: crf
+    goal: "This batch of jobs is dedicated to explore different values \n
           of parameters for CRF on two different input files.\n\n
-          This would results in 32 total jobs.
+          This would results in 32 total jobs."
     python_exec: /homes/jerphanion/.miniconda3/envs/ec/bin/python
     file: /homes/jerphanion/mesh-processing-pipeline/src/python/crf.py
     memory: 20000
