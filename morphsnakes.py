@@ -50,7 +50,6 @@ References
 """
 __author__ = "P. Márquez Neila <p.mneila@upm.es>"
 
-
 from itertools import cycle
 
 import numpy as np
@@ -64,7 +63,6 @@ __all__ = ['morphological_chan_vese',
            'circle_level_set',
            'checkerboard_level_set'
            ]
-
 
 __version__ = (2, 0, 1)
 __version_str__ = ".".join(map(str, __version__))
@@ -135,7 +133,7 @@ def inf_sup(u):
     return np.array(dilations, dtype=np.int8).min(0)
 
 
-_curvop = _fcycle([lambda u: sup_inf(inf_sup(u)),   # SIoIS
+_curvop = _fcycle([lambda u: sup_inf(inf_sup(u)),  # SIoIS
                    lambda u: inf_sup(sup_inf(u))])  # ISoSI
 
 
@@ -199,7 +197,54 @@ def circle_level_set(image_shape, center=None, radius=None):
 
     grid = np.mgrid[[slice(i) for i in image_shape]]
     grid = (grid.T - center).T
-    phi = radius - np.sqrt(np.sum((grid)**2, 0))
+    phi = radius - np.sqrt(np.sum((grid) ** 2, 0))
+    res = np.int8(phi > 0)
+    return res
+
+
+def ellipsoid_level_set(image_shape, center=None, radius=None):
+    """Create a ellipsoid level set with binary values.
+
+    Parameters
+    ----------
+    image_shape : tuple of positive integers
+        Shape of the image
+    center : tuple of positive integers, optional
+        Coordinates of the center of the ellipsoid given in (row, column).
+        If not given, it defaults to the center of the image.
+    radius : float, optional
+        Radius of the circle. If not given, it is set to the 75% of the
+        image dimension.
+
+    Returns
+    -------
+    out : array with shape `image_shape`
+        Binary level set of the ellipsoid with the given `radius` and `center`.
+
+    See also
+    --------
+    checkerboard_level_set
+    """
+
+    if center is None:
+        center = tuple(i // 2 for i in image_shape)
+
+    if radius is None:
+        radius = 0.75
+
+    if len(image_shape) == 2:
+        rx, ry = center
+        phi = radius - np.fromfunction(
+            lambda x, y: ((x - rx) / rx) ** 2 + ((y - ry) / ry) ** 2,
+            image_shape, dtype=int)
+    elif len(image_shape) == 3:
+        rx, ry, rz = center
+        phi = radius - np.fromfunction(
+            lambda x, y, z: ((x - rx) / rx) ** 2 + ((y - ry) / ry) ** 2 + ((z - rz) / rz) ** 2,
+            image_shape, dtype=int)
+    else:
+        raise RuntimeError("image_shape must be a 2 or 3 tuples ")
+
     res = np.int8(phi > 0)
     return res
 
@@ -364,7 +409,7 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
         # Image attachment
         du = np.gradient(u)
         abs_du = np.abs(du).sum(0)
-        aux = abs_du * (lambda1 * (image - c1)**2 - lambda2 * (image - c0)**2)
+        aux = abs_du * (lambda1 * (image - c1) ** 2 - lambda2 * (image - c0) ** 2)
 
         u[aux < 0] = 1
         u[aux > 0] = 0
