@@ -6,7 +6,7 @@ import sys
 import yaml
 from datetime import datetime
 
-from pipeline import ACWEPipeline, GACPipeline, AutoContextPipeline
+from pipeline import ACWEPipeline, GACPipeline, AutoContextPipeline, AutoContextACWEPipeline
 
 
 def parse_args():
@@ -16,7 +16,8 @@ def parse_args():
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run")
     parser.add_argument("--method", help="Surface extraction method",
-                        choices=["acwe", "gac", "autocontext"], default="acwe")
+                        choices=["acwe", "gac", "autocontext", "autocontext_acwe"],
+                        default="acwe")
 
     # General settings
     parser.add_argument("--save_temp", help="Save temporary results",
@@ -191,20 +192,41 @@ def main():
                                          lambda1=args.lambda1,
                                          lambda2=args.lambda2)
     elif args.method.lower() == "autocontext":
-        tif2mesh_pipeline = AutoContextPipeline(# AutoContextSpecific
-                                                project=args.autocontext,
-                                                use_probabilities=args.use_probabilities,
-                                                ###
-                                                iterations=args.iterations,
-                                                level=args.level,
-                                                spacing=args.spacing,
-                                                gradient_direction=args.gradient_direction,
-                                                step_size=args.step_size,
-                                                timing=args.timing,
-                                                detail=args.detail,
-                                                save_temp=args.save_temp,
-                                                on_slices=args.on_slices,
-                                                n_jobs=args.n_jobs)
+        tif2mesh_pipeline = AutoContextPipeline(
+            # AutoContextSpecific
+            project=args.autocontext,
+            use_probabilities=args.use_probabilities,
+            ###
+            iterations=args.iterations,
+            level=args.level,
+            spacing=args.spacing,
+            gradient_direction=args.gradient_direction,
+            step_size=args.step_size,
+            timing=args.timing,
+            detail=args.detail,
+            save_temp=args.save_temp,
+            on_slices=args.on_slices,
+            n_jobs=args.n_jobs)
+    elif args.method.lower() == "autocontext_acwe":
+        tif2mesh_pipeline = AutoContextACWEPipeline(
+            # AutoContextSpecific
+            project=args.autocontext,
+            # ACWE specifics
+            smoothing=args.smoothing,
+            lambda1=args.lambda1,
+            lambda2=args.lambda2,
+            ###
+            iterations=args.iterations,
+            level=args.level,
+            spacing=args.spacing,
+            gradient_direction=args.gradient_direction,
+            step_size=args.step_size,
+            timing=args.timing,
+            detail=args.detail,
+            save_temp=args.save_temp,
+            on_slices=args.on_slices,
+            n_jobs=args.n_jobs)
+
     else:
         raise RuntimeError(f"Method {args.method} is not recongnised")
 

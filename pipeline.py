@@ -276,7 +276,7 @@ class GACPipeline(TIF2MeshPipeline):
         if self.on_slices:
             occupancy_map = np.zeros(gradient_image.shape)
 
-            init_ls = ms.circle_level_set(gradient_image[0].shape)
+            init_ls = ms.ellipsoid_level_set(gradient_image[0].shape)
 
             start = time.time()
             logging.info(f"Starting Morphological Geodesic Active Contour on slices")
@@ -295,7 +295,7 @@ class GACPipeline(TIF2MeshPipeline):
             logging.info(f"Done Morphological Geodesic Active Contour on slices in {(end - start)}s")
         else:
             # Initialization of the level-set.
-            init_ls = ms.circle_level_set(opt_data.shape)
+            init_ls = ms.ellipsoid_level_set(opt_data.shape)
 
             logging.info(f"Running Morphological Geodesic Active Contour on full")
 
@@ -350,7 +350,7 @@ class ACWEPipeline(TIF2MeshPipeline):
             logging.info(f"Loaded full data")
 
             # Initialization of the level-set.
-            init_ls = ms.circle_level_set(opt_data.shape)
+            init_ls = ms.ellipsoid_level_set(opt_data.shape)
 
             logging.info(f"Running Morphological Chan Vese on full")
 
@@ -395,7 +395,7 @@ class ACWEPipeline(TIF2MeshPipeline):
         logging.info(f"Loaded half {suffix}")
 
         # Initialization of the level-set.
-        init_ls = ms.circle_level_set(opt_data.shape)
+        init_ls = ms.ellipsoid_level_set(opt_data.shape)
 
         # Morphological Chan-Vese (or ACWE)
         logging.info(f"Loaded half {suffix}")
@@ -454,7 +454,7 @@ class ACWEPipeline(TIF2MeshPipeline):
         opt_data = io.imread(tif_stack_file)
         occupancy_map = np.zeros(opt_data.shape)
 
-        init_ls = ms.circle_level_set(opt_data[0].shape)
+        init_ls = ms.ellipsoid_level_set(opt_data[0].shape)
 
         start = time.time()
         logging.info(f"Starting Morphological Chan Vese on slices")
@@ -657,12 +657,79 @@ class AutoContextPipeline(TIF2MeshPipeline):
             occupancy_map = noisy_occupancy_map
 
         if self.save_temp:
-            filename = segmentation_file.replace(".h5", f"_cleaned.tif")
-            logging.info(f"Saving post post-processed segmentation in {filename}")
+            filename = segmentation_file.replace(".h5", f"_occupancy_map.tif")
+            logging.info(f"Saving occupancy map in {filename}")
             hf = h5py.File(filename, 'w')
             hf.create_dataset("exported_data", data=occupancy_map, chunks=True)
             hf.close()
 
-        logging.info(f"Done extracting the occupancy map with autocontext")
+        logging.info(f"Done extracting the occupancy map with Autocontext")
+
+        return occupancy_map
+
+
+class AutoContextACWEPipeline(TIF2MeshPipeline):
+    """
+    Use AutoContext to extract the occupancy map (probabilities)
+    then runs ACWE on the occupancy map to extract the surface.
+    """
+
+    def __init__(self,
+                 # AutoContextSpecific
+                 project,
+                 # ACWE specifics
+                 smoothing,
+                 lambda1,
+                 lambda2,
+                 ###
+                 gradient_direction="descent", step_size=1, timing=True,
+                 detail="high", iterations=150, level=0.999, spacing=1,
+                 save_temp=False, on_slices=False, n_jobs=-1):
+        super().__init__(iterations=iterations, level=level, spacing=spacing,
+                         gradient_direction=gradient_direction, step_size=step_size,
+                         timing=timing, detail=detail, save_temp=save_temp,
+                         on_slices=on_slices, n_jobs=n_jobs)
+
+        self.autocontext_pipeline = AutoContextPipeline(project=project,
+                                                        use_probabilities=True,
+                                                        gradient_direction="descent",
+                                                        step_size=step_size,
+                                                        timing=timing,
+                                                        detail=detail,
+                                                        save_temp=save_temp,
+                                                        on_slices=on_slices,
+                                                        n_jobs=n_jobs)
+        self.smoothing = smoothing
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+
+    def _extract_occupancy_map(self, tif_file, base_out_file):
+        """
+        See AutoContextACWEPipeline docstring.
+
+        @param tif_file:
+        @param base_out_file:
+        @return:
+        """
+        logging.info(f"Running Morphological Chan Vese on full")
+        start = time.time()
+        occupancy_map = self.autocontext_pipeline._extract_occupancy_map(tif_file, base_out_file)
+        end = time.time()
+        logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
+
+        # Initialization of the level-set.
+        init_ls = ms.ellipsoid_level_set(occupancy_map.shape)
+
+        logging.info(f"Running Morphological Chan Vese on full")
+
+        start = time.time()
+        occupancy_map = ms.morphological_chan_vese(occupancy_map,
+                                                   init_level_set=init_ls,
+                                                   iterations=self.iterations,
+                                                   smoothing=self.smoothing,
+                                                   lambda1=self.lambda1,
+                                                   lambda2=self.lambda2)
+        end = time.time()
+        logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
 
         return occupancy_map
