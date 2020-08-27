@@ -213,7 +213,7 @@ def ellipsoid_level_set(image_shape, center=None, radius=None):
         Coordinates of the center of the ellipsoid given in (row, column).
         If not given, it defaults to the center of the image.
     radius : float, optional
-        Radius of the circle. If not given, it is set to the 75% of the
+        Radius of the circle. If not given, it is set to the 90% of the
         image dimension.
 
     Returns
@@ -230,7 +230,7 @@ def ellipsoid_level_set(image_shape, center=None, radius=None):
         center = tuple(i // 2 for i in image_shape)
 
     if radius is None:
-        radius = 0.75
+        radius = 0.9
 
     if len(image_shape) == 2:
         rx, ry = center
@@ -243,7 +243,7 @@ def ellipsoid_level_set(image_shape, center=None, radius=None):
             lambda x, y, z: ((x - rx) / rx) ** 2 + ((y - ry) / ry) ** 2 + ((z - rz) / rz) ** 2,
             image_shape, dtype=int)
     else:
-        raise RuntimeError("image_shape must be a 2 or 3 tuples ")
+        raise RuntimeError("image_shape must be a 2 or 3 tuples")
 
     res = np.int8(phi > 0)
     return res
