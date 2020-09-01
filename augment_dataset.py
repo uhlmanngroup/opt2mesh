@@ -39,6 +39,12 @@ if __name__ == "__main__":
     example = np.array(h5py.File(args.example, "r")["dataset"])
     ground_truth = np.array(h5py.File(args.ground_truth, "r")["exported_data"])[..., 0]
 
+    # We crop examples
+    first, last = 0, 511
+
+    example = example[first:last, first:last, first:last]
+    ground_truth = ground_truth[first:last, first:last, first:last]
+
     x_indices, y_indices, z_indices = get_slice_indices(ground_truth,
                                                         threshold=args.threshold)
 
@@ -55,70 +61,43 @@ if __name__ == "__main__":
     os.makedirs(mask_folder, exist_ok=True)
     base_name = args.example.split(os.sep)[-1].split(".h5")[0]
 
-    # We crop examples
-    first = 0
-    last = 511
-
     # Changing merging background and unlabelled slices together by default
     ground_truth[ground_truth == 2] = 0
 
     # Inverting
-    ground_truth = (1 - ground_truth)[:, np.newaxis]
+    ground_truth = (1 - ground_truth)[..., np.newaxis]
 
     # Data Augmenter
     data_augmenter = iaa.Sequential([
         iaa.PiecewiseAffine(scale=(0.01, 0.03)),
         iaa.PerspectiveTransform(scale=(0.01, 0.15)),
         iaa.Fliplr(0.5),
-        iaa.Crop(percent=(0, 0.4))
     ], random_order=True)
 
+    print(example.shape, ground_truth.shape)
+    examples_slices = (
+        [example[x, :, :] for x in x_indices] +
+        [example[:, y, :] for y in y_indices] +
+        [example[:, :, z] for z in z_indices]
+    )
+
+    gts_slices = (
+        [ground_truth[x, :, :, :] for x in x_indices] +
+        [ground_truth[:, y, :, :] for y in y_indices] +
+        [ground_truth[:, :, z, :] for z in z_indices]
+    )
+
     n_augment = 5
+    examples = []
+    gts = []
+    for _ in range(n_augment):
+        examples_i, gts_i = data_augmenter(images=examples_slices, segmentation_maps=gts_slices)
+        examples.extend(examples_i)
+        gts.extend(gts_i)
 
-    for x in x_indices:
-        example_slice = example[x, :, :][first:last, first:last]
-        ground_truth_slice = ground_truth[x, :, :][first:last, first:last]
-        ex_slice_name = os.path.join(img_folder, base_name + f"_x_{x}.tif")
-        gt_slice_name = os.path.join(mask_folder, base_name + f"_x_{x}.tif")
-        io.imsave(ex_slice_name, example_slice)
-        io.imsave(gt_slice_name, ground_truth_slice)
+    for i, (e, gt) in enumerate(zip(examples, gts)):
+        ex_slice_name = os.path.join(img_folder, base_name + f"_{i}.tif")
+        gt_slice_name = os.path.join(mask_folder, base_name + f"_{i}.tif")
+        io.imsave(ex_slice_name, e)
+        io.imsave(gt_slice_name, gt)
 
-        for i in range(n_augment):
-            example_slice_mod, ground_truth_slice_mod =\
-                data_augmenter(images=[example_slice], segmentation_maps=[ground_truth_slice])
-            ex_slice_name = os.path.join(img_folder, base_name + f"_x_{x}_{i}.tif")
-            gt_slice_name = os.path.join(mask_folder, base_name + f"_x_{x}_{i}.tif")
-            io.imsave(ex_slice_name, example_slice_mod)
-            io.imsave(gt_slice_name, ground_truth_slice_mod)
-
-    for y in y_indices:
-        example_slice = example[:, y, :][first:last, first:last]
-        ground_truth_slice = ground_truth[:, y, :][first:last, first:last]
-        ex_slice_name = os.path.join(img_folder, base_name + f"_y_{y}.tif")
-        gt_slice_name = os.path.join(mask_folder, base_name + f"_y_{y}.tif")
-        io.imsave(ex_slice_name, example_slice)
-        io.imsave(gt_slice_name, ground_truth_slice)
-
-        for i in range(n_augment):
-            example_slice_mod, ground_truth_slice_mod =\
-                data_augmenter(images=[example_slice], segmentation_maps=[ground_truth_slice])
-            ex_slice_name = os.path.join(img_folder, base_name + f"_y_{y}_{i}.tif")
-            gt_slice_name = os.path.join(mask_folder, base_name + f"_y_{y}_{i}.tif")
-            io.imsave(ex_slice_name, example_slice_mod)
-            io.imsave(gt_slice_name, ground_truth_slice_mod)
-
-    for z in z_indices:
-        example_slice = example[:, :, z][first:last, first:last]
-        ground_truth_slice = ground_truth[:, :, z][first:last, first:last]
-        ex_slice_name = os.path.join(img_folder, base_name + f"_z_{z}.tif")
-        gt_slice_name = os.path.join(mask_folder, base_name + f"_z_{z}.tif")
-        io.imsave(ex_slice_name, example_slice)
-        io.imsave(gt_slice_name, ground_truth_slice)
-
-        for i in range(n_augment):
-            example_slice_mod, ground_truth_slice_mod =\
-                data_augmenter(images=[example_slice], segmentation_maps=[ground_truth_slice])
-            ex_slice_name = os.path.join(img_folder, base_name + f"_y_{z}_{i}.tif")
-            gt_slice_name = os.path.join(mask_folder, base_name + f"_y_{z}_{i}.tif")
-            io.imsave(ex_slice_name, example_slice_mod)
-            io.imsave(gt_slice_name, ground_truth_slice_mod)
