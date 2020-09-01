@@ -216,12 +216,49 @@ def extract_png(opt_data, file_basename, joblib_parallel=None):
 def extract_tif(opt_data, file_basename, joblib_parallel=None):
     """
     Extract all the slices and save them as tif images.
-
-    Typically used when using Ilastik.
     """
     for slice_index, slice in enumerate(opt_data):
         logging.info(f"Extracting slice {slice_index} as a tif image")
         filename = file_basename + "_" + str(slice_index).zfill(4) + ".tif"
+        io.imsave(filename, slice)
+
+
+def extract_tif_x(opt_data, file_basename, joblib_parallel=None):
+    """
+    Extract all the slices on the x axis and save them as tif images.
+    """
+    h, w, d = opt_data.shape
+
+    for slice_index in range(h):
+        logging.info(f"Extracting slice {slice_index} as a tif image")
+        filename = file_basename + "_x_" + str(slice_index).zfill(4) + ".tif"
+        slice = opt_data[slice_index, :, :]
+        io.imsave(filename, slice)
+
+
+def extract_tif_y(opt_data, file_basename, joblib_parallel=None):
+    """
+    Extract all the slices on the y axis and save them as tif images.
+    """
+    h, w, d = opt_data.shape
+
+    for slice_index in range(w):
+        logging.info(f"Extracting slice {slice_index} as a tif image")
+        filename = file_basename + "_y_" + str(slice_index).zfill(4) + ".tif"
+        slice = opt_data[:, slice_index, :]
+        io.imsave(filename, slice)
+
+
+def extract_tif_z(opt_data, file_basename, joblib_parallel=None):
+    """
+    Extract all the slices on the z axis and save them as tif images.
+    """
+    h, w, d = opt_data.shape
+
+    for slice_index in range(d):
+        logging.info(f"Extracting slice {slice_index} as a tif image")
+        filename = file_basename + "_z_" + str(slice_index).zfill(4) + ".tif"
+        slice = opt_data[:, :, slice_index]
         io.imsave(filename, slice)
 
 
@@ -370,6 +407,9 @@ commands = {func.__name__: func for func in [
     downsample,
     extract_png,
     extract_tif,
+    extract_tif_x,
+    extract_tif_y,
+    extract_tif_z,
     crop_cube,
     to_hdf5,
     clean_seg,
