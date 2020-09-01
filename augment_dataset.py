@@ -26,7 +26,10 @@ def parse_args():
     parser.add_argument("out_folder",
                         help="Name of the output folder for slices")
     parser.add_argument("--threshold", type=float, default=0.8,
-                        help="Proportions of labels to consider a slice to be manually labelled")
+                        help="proportions of labels to consider a slice to be manually labelled")
+    parser.add_argument("--n_augment", type=int, default=15,
+                        help="Number of new examples to generate from the data"
+                        "that we have.")
 
     return parser.parse_args()
 
@@ -87,7 +90,7 @@ if __name__ == "__main__":
         [ground_truth[:, :, z, :] for z in z_indices]
     )
 
-    n_augment = 5
+    n_augment = args.n_augment
     examples = []
     gts = []
     for _ in range(n_augment):

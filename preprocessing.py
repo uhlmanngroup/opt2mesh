@@ -396,7 +396,14 @@ def main():
     args = parse_args()
 
     tif_stack_file = args.in_tif
-    opt_data = io.imread(tif_stack_file)
+
+    if tif_stack_file.endswith("tif"):
+        opt_data = io.imread(tif_stack_file)
+    else:
+        f = h5py.File(tif_stack_file, "r")
+        key = list(f.keys())[0]
+        opt_data = np.array(f[key])
+        f.close()
 
     os.makedirs(args.out_folder, exist_ok=True)
 
