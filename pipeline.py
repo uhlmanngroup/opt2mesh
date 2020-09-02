@@ -108,7 +108,8 @@ class TIF2MeshPipeline(ABC):
             logging.info(f"Saving extracted occupancy map in: {surface_file}")
             io.imsave(surface_file, occupancy_map_hdf5)
 
-        assert (0 <= occupancy_map <= 1).all(), "The occupancy map values should be between 0 and 1"
+        assert 0 <= occupancy_map.min(), "The occupancy map values should be between 0 and 1"
+        assert occupancy_map.max() <= 1, "The occupancy map values should be between 0 and 1"
 
         logging.info(f"Extracting mesh from surface")
         logging.info(f"   Level      : {self.level}")
