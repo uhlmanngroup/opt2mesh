@@ -99,14 +99,21 @@ class TIF2MeshPipeline(ABC):
 
         logging.info(f"Input file: {tif_stack_file}")
 
-        logging.info(f"Extracting binary occupancy map")
+        logging.info(f"Extracting occupancy map")
         occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
 
-        surface_file = base_out_file + "_surface.tif"
-        logging.info(f"Saving extracted surface in: {surface_file}")
+        if self.save_temp:
+            surface_file = base_out_file + "_occupancy_map.tif"
+            occupancy_map_hdf5 = np.array(occupancy_map * 255, dtype=np.uint8)
+            logging.info(f"Saving extracted occupancy map in: {surface_file}")
+            io.imsave(surface_file, occupancy_map_hdf5)
 
-        io.imsave(surface_file, occupancy_map)
+        assert (0 <= occupancy_map <= 1).all(), "The occupancy map values should be between 0 and 1"
 
+        logging.info(f"Extracting mesh from surface")
+        logging.info(f"   Level      : {self.level}")
+        logging.info(f"   Spacing    : {self.spacing}")
+        logging.info(f"   Step-size  : {self.step_size}")
         logging.info(f"Extracting mesh from surface")
         v, f, normals, values = measure.marching_cubes(occupancy_map,
                                                        level=self.level,
@@ -848,19 +855,7 @@ class UNetPipeline(TIF2MeshPipeline):
                                             full_img=Image.fromarray(img[:, :, z]),
                                             device=device)
 
-        end = time.time()
-
-        logging.info(f"Prediction obtained and averaged in {end - start}")
-        
         occupancy_map = (pred_x + pred_y + pred_z) / 3
-
-        if self.save_temp:
-            filename = base_out_file + "_occupancy_map.tif"
-            logging.info(f"Saving occupancy map in {filename}")
-            hf = h5py.File(filename, 'w')
-            occupancy_map_hdf5 = np.array(occupancy_map * 255, dtype=np.uint8)
-            hf.create_dataset("exported_data",
-                              data=occupancy_map_hdf5, chunks=True)
-            hf.close()
-
+        end = time.time()
+        logging.info(f"Prediction obtained and averaged in {end - start}")
         return occupancy_map
