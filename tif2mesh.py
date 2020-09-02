@@ -237,7 +237,7 @@ def main():
     elif args.method.lower() == "2d_unet":
         tif2mesh_pipeline = UNetPipeline(
             # UNet specifics
-            model_file=args.autocontext,
+            model_file=args.pytorch_model,
             scale_factor=args.scale,
             ###
             level=args.level,
