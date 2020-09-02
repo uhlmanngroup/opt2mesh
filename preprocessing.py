@@ -16,12 +16,11 @@ import os
 import cv2
 import h5py
 import numpy as np
-from joblib import Parallel, delayed
+from matplotlib import pyplot as plt
 from scipy.ndimage import gaussian_filter
 from skimage import io, restoration, filters, exposure
 from skimage.morphology import erosion, dilation
 from skimage.restoration import estimate_sigma
-from matplotlib import pyplot as plt
 
 from crop_h5 import _empirical_crop
 
@@ -56,36 +55,12 @@ def _log_nd_array_info(data: np.ndarray):
     logging.info(f"Mean  :{data.mean()}")
 
 
-def __parallel_denoising(joblib_parallel, opt_data, denoise_function, method):
-    """
-    Denoise a TIF stack a slice at a time, in a parallel fashion.
-
-    This is not optimal: the denoising should be done on the entire stack
-    but we need to have kind a lot of memory for this.
-
-    @param joblib_parallel:
-    @param opt_data:
-    @param denoise_function:
-    @param method:
-    @return:
-    """
-    logging.info(f"Starting {method}")
-    denoised_opt_data = joblib_parallel(delayed(denoise_function)(img)
-                                        for img in opt_data)
-    logging.info(f"Done with {method}")
-    denoised_opt_data = np.array(denoised_opt_data)
-    assert denoised_opt_data.shape == opt_data.shape
-
-    return denoised_opt_data
-
-
-def downsample(opt_data, file_basename, joblib_parallel=None):
+def downsample(opt_data, file_basename):
     """
     Downsample the data by a factor of 2.
 
     @param opt_data:
     @param file_basename:
-    @param joblib_parallel:
     @return:
     """
     opt_data_downsampled = opt_data[::2, ::2, ::2]
@@ -94,7 +69,7 @@ def downsample(opt_data, file_basename, joblib_parallel=None):
     io.imsave(filename, opt_data_downsampled)
 
 
-def denoise(opt_data, file_basename, joblib_parallel=None):
+def denoise(opt_data, file_basename):
     """
     Perform denoising and save results.
 
@@ -106,54 +81,15 @@ def denoise(opt_data, file_basename, joblib_parallel=None):
     Taken and adapted from skimage's documentation.
     @param opt_data:
     @param file_basename:
-    @param joblib_parallel:
     @return:
     """
-    if joblib_parallel is not None:
-        with joblib_parallel:
-            filename = file_basename + "_tv_denoised.tif"
-            denoised_opt_data = __parallel_denoising(joblib_parallel, opt_data,
-                                                     method="TV-L1 denoising (Chambolle pock)",
-                                                     denoise_function=restoration.denoise_tv_chambolle)
-            # Range and type conversion
-            denoised_opt_data = (denoised_opt_data * 255).astype(np.uint8)
-            logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-            io.imsave(filename, denoised_opt_data)
-
-            filename = file_basename + "_median_denoised.tif"
-            denoised_opt_data = __parallel_denoising(joblib_parallel, opt_data,
-                                                     method="median filtering",
-                                                     denoise_function=filters.median)
-            logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-            io.imsave(filename, denoised_opt_data)
-
-            filename = file_basename + "_nl_means_denoised.tif"
-            denoised_opt_data = __parallel_denoising(joblib_parallel, opt_data,
-                                                     method="non linear means denoising",
-                                                     denoise_function=__denoise_nl_means)
-            logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-            io.imsave(filename, denoised_opt_data)
-    else:
-        # filename = file_basename + "_tv_denoised.tif"
-        # denoised_opt_data = restoration.denoise_tv_chambolle(opt_data,
-        #                                                      multichannel=False)
-        # # Range and type conversion
-        # denoised_opt_data = (denoised_opt_data * 255).astype(np.uint8)
-        # logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-        # io.imsave(filename, denoised_opt_data)
-
-        filename = file_basename + "_median_denoised.tif"
-        denoised_opt_data = filters.median(opt_data)
-        logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-        io.imsave(filename, denoised_opt_data)
-
-        # filename = file_basename + "_nl_means_denoised.tif"
-        # denoised_opt_data = denoise_nl_means(opt_data)
-        # logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
-        # io.imsave(filename, denoised_opt_data)
+    filename = file_basename + "_median_denoised.tif"
+    denoised_opt_data = filters.median(opt_data)
+    logging.info(f"Saving at {filename} (shape: {denoised_opt_data.shape})")
+    io.imsave(filename, denoised_opt_data)
 
 
-def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
+def contrast(opt_data: np.ndarray, file_basename: str):
     """
     Perform contrast rectification and save results.
 
@@ -169,24 +105,6 @@ def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
     logging.info("Original data")
     _log_nd_array_info(opt_data)
 
-    # logging.info("Intensity Rescaling")
-    # p2, p98 = np.percentile(opt_data, (2, 98))
-    # opt_data_rescale = exposure.rescale_intensity(opt_data, in_range=(p2, p98))
-    # _log_nd_array_info(opt_data_rescale)
-    # filename = file_basename + "_rescaled_int.tif"
-    # logging.info(f"Saving at {filename} (shape: {opt_data_rescale.shape})")
-    # io.imsave(filename, opt_data_rescale)
-    #
-    # logging.info("Histogram Equalization")
-    # opt_data_eq = exposure.equalize_hist(opt_data)
-    # _log_nd_array_info(opt_data_eq)
-    # # Range and type conversion
-    # opt_data_eq = (opt_data_eq * 255).astype(np.uint8)
-    # _log_nd_array_info(opt_data_eq)
-    # filename = file_basename + "_hist_eq.tif"
-    # logging.info(f"Saving at {filename} (shape: {opt_data_eq.shape})")
-    # io.imsave(filename, opt_data_eq)
-
     logging.info("Contrast Limited Adaptive Histogram Equalization")
     opt_data_adapt_eq = exposure.equalize_adapthist(opt_data, clip_limit=0.03)
     # Range and type conversion
@@ -197,7 +115,7 @@ def contrast(opt_data: np.ndarray, file_basename: str, joblib_parallel=None):
     io.imsave(filename, opt_data_adapt_eq)
 
 
-def extract_png(opt_data, file_basename, joblib_parallel=None):
+def extract_png(opt_data, file_basename):
     """
     Extract all the slices and save them as png images.
 
@@ -213,7 +131,7 @@ def extract_png(opt_data, file_basename, joblib_parallel=None):
         plt.close('all')
 
 
-def extract_tif(opt_data, file_basename, joblib_parallel=None):
+def extract_tif(opt_data, file_basename):
     """
     Extract all the slices and save them as tif images.
     """
@@ -223,7 +141,7 @@ def extract_tif(opt_data, file_basename, joblib_parallel=None):
         io.imsave(filename, slice)
 
 
-def extract_tif_x(opt_data, file_basename, joblib_parallel=None):
+def extract_tif_x(opt_data, file_basename):
     """
     Extract all the slices on the x axis and save them as tif images.
     """
@@ -236,7 +154,7 @@ def extract_tif_x(opt_data, file_basename, joblib_parallel=None):
         io.imsave(filename, slice)
 
 
-def extract_tif_y(opt_data, file_basename, joblib_parallel=None):
+def extract_tif_y(opt_data, file_basename):
     """
     Extract all the slices on the y axis and save them as tif images.
     """
@@ -249,7 +167,7 @@ def extract_tif_y(opt_data, file_basename, joblib_parallel=None):
         io.imsave(filename, slice)
 
 
-def extract_tif_z(opt_data, file_basename, joblib_parallel=None):
+def extract_tif_z(opt_data, file_basename):
     """
     Extract all the slices on the z axis and save them as tif images.
     """
@@ -262,7 +180,7 @@ def extract_tif_z(opt_data, file_basename, joblib_parallel=None):
         io.imsave(filename, slice)
 
 
-def crop_cube(opt_data, file_basename, joblib_parallel=None):
+def crop_cube(opt_data, file_basename):
     """
     Crop volume. Limit determined empirically.
     """
@@ -277,7 +195,7 @@ def crop_cube(opt_data, file_basename, joblib_parallel=None):
     io.imsave(filename, croped_opt)
 
 
-def to_hdf5(opt_data, file_basename, joblib_parallel=None):
+def to_hdf5(opt_data, file_basename):
     """
     Convert the example to hdf5
     """
@@ -289,13 +207,12 @@ def to_hdf5(opt_data, file_basename, joblib_parallel=None):
     return file_name
 
 
-def full(opt_data, file_basename, joblib_parallel=None):
+def full(opt_data, file_basename):
     """
     Perform the full preprocessing of the data.
 
     @param opt_data:
     @param file_basename: for the export
-    @param joblib_parallel:
     @return:
     """
 
@@ -384,13 +301,12 @@ def _post_process_binary_slice(im_slice, n_step=1):
     return im_out
 
 
-def clean_seg(segmentation_data, file_basename, joblib_parallel=None):
+def clean_seg(segmentation_data, file_basename):
     """
     Experimental: clean the segmentation using morphological operations.
 
     @param segmentation_data:
     @param file_basename: for the export
-    @param joblib_parallel:
     @return:
     """
     improved_seg_data = dilation(erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
@@ -426,8 +342,6 @@ def parse_args():
                         choices=list(commands.keys()), default="contrast")
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run")
-    parser.add_argument("--n_jobs", help="Number of parallel jobs",
-                        type=int, default=0)
 
     return parser.parse_args()
 
@@ -458,12 +372,10 @@ def main():
         ]
     )
 
-    joblib_parallel = Parallel(n_jobs=args.n_jobs, backend="loky") if args.n_jobs > 0 else None
-
     file_basename = os.path.join(args.out_folder, basename)
     processing = commands[args.step]
 
-    processing(opt_data, file_basename, joblib_parallel)
+    processing(opt_data, file_basename)
 
 
 if __name__ == "__main__":

@@ -66,6 +66,7 @@ class TIF2MeshPipeline(ABC):
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         raise NotImplementedError()
 
+
     def get_mesh_statistics(self, v, f):
         """
         Return the statistics of a mesh as a python dictionary
