@@ -1,4 +1,4 @@
-import glob
+import logging
 import logging
 import os
 import time
@@ -7,17 +7,23 @@ from abc import abstractmethod, ABC
 
 import h5py
 import igl
-import pymesh
 import numpy as np
+import pymesh
+import torch
+import torch.nn.functional as F
+from PIL import Image
 from guppy import hpy
 from joblib import Parallel, delayed
 from scipy.linalg import norm
 from scipy.ndimage import gaussian_filter
 from skimage import io, measure
 from skimage.morphology import dilation, erosion
+from torchvision import transforms
 
 import morphsnakes as ms
-from preprocessing import extract_tif, to_hdf5, _fill_binary_image
+from dataset import BasicDataset
+from preprocessing import to_hdf5, _fill_binary_image
+from unet import UNet
 
 
 class TIF2MeshPipeline(ABC):
@@ -731,5 +737,130 @@ class AutoContextACWEPipeline(TIF2MeshPipeline):
                                                    lambda2=self.lambda2)
         end = time.time()
         logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
+
+        return occupancy_map
+
+
+class UNetPipeline(TIF2MeshPipeline):
+    """
+    Use a 2D UNet to get occupancy map slices on the 3 different axes.
+    Predictions are stacked together to get occupancy maps and are then
+    averaged to get a better estimated occupancy map.
+
+    Code adapted from:
+     - https://github.com/milesial/Pytorch-UNet
+
+    """
+
+    def __init__(self,
+                 # UNet specifics
+                 model_file,
+                 scale_factor=0.5,
+                 ###
+                 level=0.5,
+                 ###
+                 gradient_direction="descent", step_size=1, timing=True,
+                 detail="high", iterations=150, spacing=1,
+                 save_temp=False, on_slices=False, n_jobs=-1):
+        super().__init__(iterations=iterations, level=level, spacing=spacing,
+                         gradient_direction=gradient_direction, step_size=step_size,
+                         timing=timing, detail=detail, save_temp=save_temp,
+                         on_slices=on_slices, n_jobs=n_jobs)
+
+        self.model_file = model_file
+        self.scale_factor = scale_factor
+
+        # TODO: this is enforced
+        self.level = 0.5
+
+    def _predict(self, net, full_img, device):
+        net.eval()
+
+        img = torch.from_numpy(BasicDataset.preprocess(full_img, self.scale_factor))
+
+        img = img.unsqueeze(0)
+        img = img.to(device=device, dtype=torch.float32)
+
+        with torch.no_grad():
+            output = net(img)
+
+            if net.n_classes > 1:
+                probs = F.softmax(output, dim=1)
+            else:
+                probs = torch.sigmoid(output)
+
+            probs = probs.squeeze(0)
+
+            tf = transforms.Compose(
+                [
+                    transforms.ToPILImage(),
+                    transforms.Resize(full_img.size[1]),
+                    transforms.ToTensor()
+                ]
+            )
+
+            probs = tf(probs.cpu())
+            full_mask = probs.squeeze().cpu().numpy()
+
+        return full_mask
+
+    def _extract_occupancy_map(self, tif_file, base_out_file):
+        logging.info(f"Running 2D UNet on the 3 axis")
+        start = time.time()
+        img = io.imread(tif_file)
+
+        # TODO: adapt cropping on the long run
+        first, last = 0, 511
+        img = img[first:last, first:last, first:last]
+
+        pred_x = np.zeros_like(img)
+        pred_y = np.zeros_like(img)
+        pred_z = np.zeros_like(img)
+
+        h, w, d = img.shape
+
+        net = UNet(n_channels=1, n_classes=1)
+
+        logging.info("Loading model {}".format(self.model_file))
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        logging.info(f'Using device {device}')
+        net.to(device=device)
+        net.load_state_dict(torch.load(self.model_file, map_location=device))
+
+        logging.info(f'Prediction w.r.t axis x')
+        for x in range(h):
+            logging.info(f'Slice x: {x}/{h}')
+            pred_x[x, :, :] = self._predict(net=net,
+                                            full_img=Image.fromarray(img[x, :, :]),
+                                            device=device)
+
+        logging.info(f'Prediction w.r.t axis y')
+        for y in range(w):
+            logging.info(f'Slice y: {y}/{w}')
+            pred_y[:, y, :] = self._predict(net=net,
+                                            full_img=Image.fromarray(img[:, y, :]),
+                                            device=device)
+
+        logging.info(f'Prediction w.r.t axis z')
+        for z in range(d):
+            logging.info(f'Slice z: {z}/{d}')
+            pred_z[:, :, z] = self._predict(net=net,
+                                            full_img=Image.fromarray(img[:, :, z]),
+                                            device=device)
+
+        end = time.time()
+
+        logging.info(f"Prediction obtained and averaged in {end - start}")
+        
+        occupancy_map = (pred_x + pred_y + pred_z) / 3
+
+        if self.save_temp:
+            filename = base_out_file + "_occupancy_map.tif"
+            logging.info(f"Saving occupancy map in {filename}")
+            hf = h5py.File(filename, 'w')
+            occupancy_map_hdf5 = np.array(occupancy_map * 255, dtype=np.uint8)
+            hf.create_dataset("exported_data",
+                              data=occupancy_map_hdf5, chunks=True)
+            hf.close()
 
         return occupancy_map
