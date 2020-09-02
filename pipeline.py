@@ -104,18 +104,21 @@ class TIF2MeshPipeline(ABC):
 
         if self.save_temp:
             surface_file = base_out_file + "_occupancy_map.tif"
-            occupancy_map_hdf5 = np.array(occupancy_map * 255, dtype=np.uint8)
+            occupancy_map_int = np.array(occupancy_map * 255, dtype=np.uint8)
             logging.info(f"Saving extracted occupancy map in: {surface_file}")
-            io.imsave(surface_file, occupancy_map_hdf5)
+            io.imsave(surface_file, occupancy_map_int)
 
         assert 0 <= occupancy_map.min(), "The occupancy map values should be between 0 and 1"
         assert occupancy_map.max() <= 1, "The occupancy map values should be between 0 and 1"
 
-        logging.info(f"Extracting mesh from surface")
+        logging.info(f"Extracting mesh from occupancy map")
         logging.info(f"   Level      : {self.level}")
         logging.info(f"   Spacing    : {self.spacing}")
         logging.info(f"   Step-size  : {self.step_size}")
-        logging.info(f"Extracting mesh from surface")
+        logging.info(f"Extracting mesh from occupancy map")
+        logging.info(f"Occupancy map values")
+        logging.info(f"    min        : {occupancy_map.min()}")
+        logging.info(f"    max        : {occupancy_map.max()}")
         v, f, normals, values = measure.marching_cubes(occupancy_map,
                                                        level=self.level,
                                                        spacing=(self.spacing, self.spacing, self.spacing),
