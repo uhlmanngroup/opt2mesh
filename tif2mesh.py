@@ -238,7 +238,7 @@ def main():
         tif2mesh_pipeline = UNetPipeline(
             # UNet specifics
             model_file=args.autocontext,
-            scale_factor=args.scale_factor,
+            scale_factor=args.scale,
             ###
             level=args.level,
             ###
