@@ -824,9 +824,9 @@ class UNetPipeline(TIF2MeshPipeline):
         first, last = 0, 511
         img = img[first:last, first:last, first:last]
 
-        pred_x = np.zeros_like(img)
-        pred_y = np.zeros_like(img)
-        pred_z = np.zeros_like(img)
+        pred_x = np.zeros(img.shape)
+        pred_y = np.zeros(img.shape)
+        pred_z = np.zeros(img.shape)
 
         h, w, d = img.shape
 
