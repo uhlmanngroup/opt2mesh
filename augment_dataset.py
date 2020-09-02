@@ -27,7 +27,7 @@ def parse_args():
                         help="Name of the output folder for slices")
     parser.add_argument("--threshold", type=float, default=0.8,
                         help="proportions of labels to consider a slice to be manually labelled")
-    parser.add_argument("--n_augment", type=int, default=15,
+    parser.add_argument("--n_augment", type=int, default=50,
                         help="Number of new examples to generate from the data"
                         "that we have.")
 
