@@ -22,7 +22,7 @@ from skimage import io, restoration, filters, exposure
 from skimage.morphology import erosion, dilation
 from skimage.restoration import estimate_sigma
 
-from crop_h5 import _empirical_crop
+from scripts.crop_h5 import _empirical_crop
 
 
 def __denoise_nl_means(slice):
@@ -245,7 +245,6 @@ def full(opt_data, file_basename):
 
 
 def _fill_binary_image(im_slice):
-
     # Copy the thresholded image.
     im_floodfill = im_slice.copy()
 
@@ -276,11 +275,11 @@ def _morphological_post_processing(im_slice):
     erode_shape = (3, 3)
     dilate_shape = (3, 3)
     postprocessed_slice = (cv2.dilate(cv2.erode(cv2.GaussianBlur(im_slice,
-                                                               ksize=(3, 3),
-                                                               sigmaX=1,
-                                                               sigmaY=1),
-                                              np.ones(erode_shape)),
-                                    np.ones(dilate_shape)) > 255 / 2).astype(np.uint8)
+                                                                 ksize=(3, 3),
+                                                                 sigmaX=1,
+                                                                 sigmaY=1),
+                                                np.ones(erode_shape)),
+                                      np.ones(dilate_shape)) > 255 / 2).astype(np.uint8)
 
     return postprocessed_slice
 
