@@ -1,5 +1,4 @@
 import logging
-import logging
 import os
 import time
 import uuid
@@ -22,7 +21,7 @@ from torchvision import transforms
 
 import morphsnakes as ms
 from dataset import BasicDataset
-from preprocessing import to_hdf5, _fill_binary_image
+from scripts.preprocessing import to_hdf5, _fill_binary_image
 from unet import UNet
 
 
