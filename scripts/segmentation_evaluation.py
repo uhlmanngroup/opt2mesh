@@ -26,13 +26,19 @@ def get_slice_indices(volume: np.ndarray, threshold: float):
     def _is_manually_labelled(slice: np.ndarray):
         h, w = slice.shape
         # Non labelled pixel have values 0
-        proportions_labelled = (np.count_nonzero(slice) / (h * w))
+        proportions_labelled = np.count_nonzero(slice) / (h * w)
 
         return proportions_labelled >= threshold
 
-    x_indices = [x for x in range(volume.shape[0]) if _is_manually_labelled(volume[x, :, :])]
-    y_indices = [y for y in range(volume.shape[1]) if _is_manually_labelled(volume[:, y, :])]
-    z_indices = [z for z in range(volume.shape[2]) if _is_manually_labelled(volume[:, :, z])]
+    x_indices = [
+        x for x in range(volume.shape[0]) if _is_manually_labelled(volume[x, :, :])
+    ]
+    y_indices = [
+        y for y in range(volume.shape[1]) if _is_manually_labelled(volume[:, y, :])
+    ]
+    z_indices = [
+        z for z in range(volume.shape[2]) if _is_manually_labelled(volume[:, :, z])
+    ]
 
     return x_indices, y_indices, z_indices
 
@@ -72,7 +78,7 @@ def dice(im1, im2, empty_score=1.0):
     # Compute Dice coefficient
     intersection = np.logical_and(im1, im2)
 
-    return 2. * intersection.sum() / im_sum
+    return 2.0 * intersection.sum() / im_sum
 
 
 def iou(im1, im2):
@@ -112,12 +118,20 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
 
     # Argument
-    parser.add_argument("probabilities",
-                        help="HDF5 file of predictions on one example (512 × 512 × 512 × n_classes) typically")
-    parser.add_argument("ground_truth",
-                        help="HDF5 file of labels of one (512 × 512 × 512 × 1), last channel in {0, …, n_classes}")
-    parser.add_argument("--threshold", type=float, default=0.8,
-                        help="Proportions of labels to consider a slice to be manually labelled")
+    parser.add_argument(
+        "probabilities",
+        help="HDF5 file of predictions on one example (512 × 512 × 512 × n_classes) typically",
+    )
+    parser.add_argument(
+        "ground_truth",
+        help="HDF5 file of labels of one (512 × 512 × 512 × 1), last channel in {0, …, n_classes}",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.8,
+        help="Proportions of labels to consider a slice to be manually labelled",
+    )
 
     return parser.parse_args()
 
@@ -128,8 +142,9 @@ if __name__ == "__main__":
     probabilities = np.array(h5py.File(args.probabilities, "r")["exported_data"])
     ground_truth = np.array(h5py.File(args.ground_truth, "r")["exported_data"])[..., 0]
 
-    x_indices, y_indices, z_indices = get_slice_indices(ground_truth,
-                                                        threshold=args.threshold)
+    x_indices, y_indices, z_indices = get_slice_indices(
+        ground_truth, threshold=args.threshold
+    )
 
     print(f"{len(x_indices)} slices labelled on X axis: {x_indices}")
     print(f"{len(y_indices)} slices labelled on Y axis: {y_indices}")

@@ -23,7 +23,7 @@ def _empirical_crop(volume):
 if __name__ == "__main__":
 
     filename = sys.argv[1]
-    hdf5_file = h5py.File(filename, 'r')
+    hdf5_file = h5py.File(filename, "r")
     key = list(hdf5_file.keys())[0]  # == "exported_data"
     data = np.array(hdf5_file[key])
     hdf5_file.close()
@@ -35,6 +35,6 @@ if __name__ == "__main__":
     cropped_data, _ = _empirical_crop(new_data)
 
     outfile_name = filename.replace(".h5", "_2_classes_cropped.h5")
-    hf = h5py.File(outfile_name, 'w')
+    hf = h5py.File(outfile_name, "w")
     hf.create_dataset(key, data=cropped_data, chunks=True)
     hf.close()

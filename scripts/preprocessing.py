@@ -33,15 +33,12 @@ def __denoise_nl_means(slice):
     """
     sigma_est = np.mean(estimate_sigma(slice))
 
-    patch_kw = dict(patch_size=5,  # 5x5 patches
-                    patch_distance=6)  # 13x13 search area
+    patch_kw = dict(patch_size=5, patch_distance=6)  # 5x5 patches  # 13x13 search area
 
     # slow algorithm
-    slice_denoised = restoration.denoise_nl_means(slice,
-                                                  h=1.15 * sigma_est,
-                                                  fast_mode=False,
-                                                  preserve_range=True,
-                                                  **patch_kw)
+    slice_denoised = restoration.denoise_nl_means(
+        slice, h=1.15 * sigma_est, fast_mode=False, preserve_range=True, **patch_kw
+    )
 
     return slice_denoised
 
@@ -124,11 +121,11 @@ def extract_png(opt_data, file_basename):
     for slice_index, slice in enumerate(opt_data):
         logging.info(f"Extracting slice {slice_index} as a png image")
         filename = file_basename + "_" + str(slice_index).zfill(4) + ".png"
-        plt.axis('off')
+        plt.axis("off")
         plt.tight_layout()
         plt.imshow(slice)
-        plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-        plt.close('all')
+        plt.savefig(filename, bbox_inches="tight", pad_inches=0)
+        plt.close("all")
 
 
 def extract_tif(opt_data, file_basename):
@@ -200,7 +197,7 @@ def to_hdf5(opt_data, file_basename):
     Convert the example to hdf5
     """
     file_name = f"{file_basename}.h5"
-    hf = h5py.File(file_name, 'w')
+    hf = h5py.File(file_name, "w")
     hf.create_dataset("dataset", data=opt_data, chunks=True)
     hf.close()
 
@@ -274,12 +271,16 @@ def _morphological_post_processing(im_slice):
     """
     erode_shape = (3, 3)
     dilate_shape = (3, 3)
-    postprocessed_slice = (cv2.dilate(cv2.erode(cv2.GaussianBlur(im_slice,
-                                                                 ksize=(3, 3),
-                                                                 sigmaX=1,
-                                                                 sigmaY=1),
-                                                np.ones(erode_shape)),
-                                      np.ones(dilate_shape)) > 255 / 2).astype(np.uint8)
+    postprocessed_slice = (
+        cv2.dilate(
+            cv2.erode(
+                cv2.GaussianBlur(im_slice, ksize=(3, 3), sigmaX=1, sigmaY=1),
+                np.ones(erode_shape),
+            ),
+            np.ones(dilate_shape),
+        )
+        > 255 / 2
+    ).astype(np.uint8)
 
     return postprocessed_slice
 
@@ -308,7 +309,9 @@ def clean_seg(segmentation_data, file_basename):
     @param file_basename: for the export
     @return:
     """
-    improved_seg_data = dilation(erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))).astype(np.uint8)
+    improved_seg_data = dilation(
+        erosion(dilation(gaussian_filter(segmentation_data, sigma=0.1)))
+    ).astype(np.uint8)
     for i in range(segmentation_data.shape[0]):
         improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
     filename = file_basename + f"_cleaned.tif"
@@ -316,29 +319,35 @@ def clean_seg(segmentation_data, file_basename):
     io.imsave(filename, improved_seg_data)
 
 
-commands = {func.__name__: func for func in [
-    denoise,
-    contrast,
-    downsample,
-    extract_png,
-    extract_tif,
-    extract_tif_x,
-    extract_tif_y,
-    extract_tif_z,
-    crop_cube,
-    to_hdf5,
-    clean_seg,
-    full
-]}
+commands = {
+    func.__name__: func
+    for func in [
+        denoise,
+        contrast,
+        downsample,
+        extract_png,
+        extract_tif,
+        extract_tif_x,
+        extract_tif_y,
+        extract_tif_z,
+        crop_cube,
+        to_hdf5,
+        clean_seg,
+        full,
+    ]
+}
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
 
     # Argument
-    parser.add_argument("step", help="Pre-processing step to perform",
-                        choices=list(commands.keys()), default="contrast")
+    parser.add_argument(
+        "step",
+        help="Pre-processing step to perform",
+        choices=list(commands.keys()),
+        default="contrast",
+    )
     parser.add_argument("in_tif", help="Input tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run")
 
@@ -366,9 +375,7 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.StreamHandler()
-        ]
+        handlers=[logging.StreamHandler()],
     )
 
     file_basename = os.path.join(args.out_folder, basename)

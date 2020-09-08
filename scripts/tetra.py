@@ -15,8 +15,9 @@ def main():
     # Argument
     parser.add_argument("in_mesh", help="Input triangle mesh (.stl file)")
     parser.add_argument("out_folder", help="General output folder for this run")
-    parser.add_argument("--repair", help="Repair the input mesh if needed",
-                        action="store_true")
+    parser.add_argument(
+        "--repair", help="Repair the input mesh if needed", action="store_true"
+    )
 
     args = parser.parse_args()
 
@@ -25,12 +26,10 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.StreamHandler()
-        ]
+        handlers=[logging.StreamHandler()],
     )
 
-    pv.set_plot_theme('document')
+    pv.set_plot_theme("document")
 
     filename = args.in_mesh
 
@@ -54,7 +53,7 @@ def main():
     # Default parameters from documentation
     tet.tetrahedralize(order=1, minratio=1.5)
 
-    outfile = os.path.join(args.out_folder, basename + '.vtu')
+    outfile = os.path.join(args.out_folder, basename + ".vtu")
     logging.info(f"Saving the file: {outfile}")
     tet.write(outfile)
 

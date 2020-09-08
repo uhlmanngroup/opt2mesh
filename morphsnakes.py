@@ -57,19 +57,19 @@ import logging
 from scipy import ndimage as ndi
 from guppy import hpy
 
-__all__ = ['morphological_chan_vese',
-           'morphological_geodesic_active_contour',
-           'inverse_gaussian_gradient',
-           'circle_level_set',
-           'checkerboard_level_set'
-           ]
+__all__ = [
+    "morphological_chan_vese",
+    "morphological_geodesic_active_contour",
+    "inverse_gaussian_gradient",
+    "circle_level_set",
+    "checkerboard_level_set",
+]
 
 __version__ = (2, 0, 1)
 __version_str__ = ".".join(map(str, __version__))
 
 
 class _fcycle(object):
-
     def __init__(self, iterable):
         """Call functions from the iterable each time it is called."""
         self.funcs = cycle(iterable)
@@ -80,10 +80,12 @@ class _fcycle(object):
 
 
 # SI and IS operators for 2D and 3D.
-_P2 = [np.eye(3),
-       np.array([[0, 1, 0]] * 3),
-       np.flipud(np.eye(3)),
-       np.rot90([[0, 1, 0]] * 3)]
+_P2 = [
+    np.eye(3),
+    np.array([[0, 1, 0]] * 3),
+    np.flipud(np.eye(3)),
+    np.rot90([[0, 1, 0]] * 3),
+]
 _P3 = [np.zeros((3, 3, 3)) for i in range(9)]
 
 _P3[0][:, :, 1] = 1
@@ -105,8 +107,7 @@ def sup_inf(u):
     elif np.ndim(u) == 3:
         P = _P3
     else:
-        raise ValueError("u has an invalid number of dimensions "
-                         "(should be 2 or 3)")
+        raise ValueError("u has an invalid number of dimensions " "(should be 2 or 3)")
 
     erosions = []
     for P_i in P:
@@ -123,8 +124,7 @@ def inf_sup(u):
     elif np.ndim(u) == 3:
         P = _P3
     else:
-        raise ValueError("u has an invalid number of dimensions "
-                         "(should be 2 or 3)")
+        raise ValueError("u has an invalid number of dimensions " "(should be 2 or 3)")
 
     dilations = []
     for P_i in P:
@@ -133,8 +133,9 @@ def inf_sup(u):
     return np.array(dilations, dtype=np.int8).min(0)
 
 
-_curvop = _fcycle([lambda u: sup_inf(inf_sup(u)),  # SIoIS
-                   lambda u: inf_sup(sup_inf(u))])  # ISoSI
+_curvop = _fcycle(
+    [lambda u: sup_inf(inf_sup(u)), lambda u: inf_sup(sup_inf(u))]  # SIoIS
+)  # ISoSI
 
 
 def _check_input(image, init_level_set):
@@ -143,8 +144,10 @@ def _check_input(image, init_level_set):
         raise ValueError("`image` must be a 2 or 3-dimensional array.")
 
     if len(image.shape) != len(init_level_set.shape):
-        raise ValueError("The dimensions of the initial level set do not "
-                         "match the dimensions of the image.")
+        raise ValueError(
+            "The dimensions of the initial level set do not "
+            "match the dimensions of the image."
+        )
 
 
 def _init_level_set(init_level_set, image_shape):
@@ -153,13 +156,12 @@ def _init_level_set(init_level_set, image_shape):
     If `init_level_set` is not a string, it is returned as is.
     """
     if isinstance(init_level_set, str):
-        if init_level_set == 'checkerboard':
+        if init_level_set == "checkerboard":
             res = checkerboard_level_set(image_shape)
-        elif init_level_set == 'circle':
+        elif init_level_set == "circle":
             res = circle_level_set(image_shape)
         else:
-            raise ValueError("`init_level_set` not in "
-                             "['checkerboard', 'circle']")
+            raise ValueError("`init_level_set` not in " "['checkerboard', 'circle']")
     else:
         res = init_level_set
     return res
@@ -236,12 +238,18 @@ def ellipsoid_level_set(image_shape, center=None, radius=None):
         rx, ry = center
         phi = radius - np.fromfunction(
             lambda x, y: ((x - rx) / rx) ** 2 + ((y - ry) / ry) ** 2,
-            image_shape, dtype=int)
+            image_shape,
+            dtype=int,
+        )
     elif len(image_shape) == 3:
         rx, ry, rz = center
         phi = radius - np.fromfunction(
-            lambda x, y, z: ((x - rx) / rx) ** 2 + ((y - ry) / ry) ** 2 + ((z - rz) / rz) ** 2,
-            image_shape, dtype=int)
+            lambda x, y, z: ((x - rx) / rx) ** 2
+            + ((y - ry) / ry) ** 2
+            + ((z - rz) / rz) ** 2,
+            image_shape,
+            dtype=int,
+        )
     else:
         raise RuntimeError("image_shape must be a 2 or 3 tuples")
 
@@ -305,13 +313,19 @@ def inverse_gaussian_gradient(image, alpha=100.0, sigma=5.0):
         Preprocessed image (or volume) suitable for
         `morphological_geodesic_active_contour`.
     """
-    gradnorm = ndi.gaussian_gradient_magnitude(image, sigma, mode='nearest')
+    gradnorm = ndi.gaussian_gradient_magnitude(image, sigma, mode="nearest")
     return 1.0 / np.sqrt(1.0 + alpha * gradnorm)
 
 
-def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
-                            smoothing=1, lambda1=1, lambda2=1,
-                            iter_callback=lambda x: None):
+def morphological_chan_vese(
+    image,
+    iterations,
+    init_level_set="checkerboard",
+    smoothing=1,
+    lambda1=1,
+    lambda2=1,
+    iter_callback=lambda x: None,
+):
     """Morphological Active Contours without Edges (MorphACWE)
 
     Active contours without edges implemented with morphological operators. It
@@ -423,10 +437,15 @@ def morphological_chan_vese(image, iterations, init_level_set='checkerboard',
     return u
 
 
-def morphological_geodesic_active_contour(gimage, iterations,
-                                          init_level_set='circle', smoothing=1,
-                                          threshold='auto', balloon=0,
-                                          iter_callback=lambda x: None):
+def morphological_geodesic_active_contour(
+    gimage,
+    iterations,
+    init_level_set="circle",
+    smoothing=1,
+    threshold="auto",
+    balloon=0,
+    iter_callback=lambda x: None,
+):
     """Morphological Geodesic Active Contours (MorphGAC).
 
     Geodesic active contours implemented with morphological operators. It can
@@ -517,7 +536,7 @@ def morphological_geodesic_active_contour(gimage, iterations,
 
     _check_input(image, init_level_set)
 
-    if threshold == 'auto':
+    if threshold == "auto":
         threshold = np.percentile(image, 40)
 
     structure = np.ones((3,) * len(image.shape), dtype=np.int8)

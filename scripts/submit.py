@@ -34,8 +34,17 @@ __doc__ = """
 """
 
 
-def bsub_command(python_exec, file, batch_job_name, job_description,
-                 memory, cpus, input_file, output_folder, options):
+def bsub_command(
+    python_exec,
+    file,
+    batch_job_name,
+    job_description,
+    memory,
+    cpus,
+    input_file,
+    output_folder,
+    options,
+):
     options_str = ""
     for k, v in options.items():
         options_str += f" --{k} {v} \ \n"
@@ -50,25 +59,25 @@ def bsub_command(python_exec, file, batch_job_name, job_description,
     command += f" -Jd '{job_description}' \ \n"
     command += f" -M {memory} \ \n"
     command += f' -R "rusage[mem={memory}]" \ \n'
-    command += f' -n {cpus} \ \n'
-    command += f'{python_exec} \ \n'
-    command += f'{file} \ \n'
-    command += f'{options_str}'
-    command += f'{input_file} \ \n'
-    command += f'{output_folder} \ \n'
+    command += f" -n {cpus} \ \n"
+    command += f"{python_exec} \ \n"
+    command += f"{file} \ \n"
+    command += f"{options_str}"
+    command += f"{input_file} \ \n"
+    command += f"{output_folder} \ \n"
     return command
 
 
 if __name__ == "__main__":
     yaml_file = sys.argv[1]
 
-    with open(yaml_file, 'r') as stream:
+    with open(yaml_file, "r") as stream:
         try:
             raw = stream.read()
         except yaml.YAMLError as exc:
             print(exc)
 
-    with open(yaml_file, 'r') as stream:
+    with open(yaml_file, "r") as stream:
         try:
             command = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -104,37 +113,41 @@ if __name__ == "__main__":
         # Submitting all the jobs possible on the cartesian product of options
         options_values = list(itertools.product(*options_vals))
         if len(options_values) == 0:
-            std_out_command = bsub_command(python_exec,
-                                           file,
-                                           job_batch_name,
-                                           job_description,
-                                           memory,
-                                           cpus,
-                                           input_file,
-                                           output_folder,
-                                           dict())
+            std_out_command = bsub_command(
+                python_exec,
+                file,
+                job_batch_name,
+                job_description,
+                memory,
+                cpus,
+                input_file,
+                output_folder,
+                dict(),
+            )
             print(std_out_command)
             bsub_commands.append(std_out_command)
         else:
             for values in options_values:
                 options = dict(zip(options_keys, values))
 
-                std_out_command = bsub_command(python_exec,
-                                               file,
-                                               job_batch_name,
-                                               job_description,
-                                               memory,
-                                               cpus,
-                                               input_file,
-                                               output_folder,
-                                               options)
+                std_out_command = bsub_command(
+                    python_exec,
+                    file,
+                    job_batch_name,
+                    job_description,
+                    memory,
+                    cpus,
+                    input_file,
+                    output_folder,
+                    options,
+                )
                 print(std_out_command)
                 bsub_commands.append(std_out_command)
 
     n_jobs = len(bsub_commands)
     print(f"You are going to submit {n_jobs} jobs")
 
-    if input("Confirm by entering 'y': ").lower() == 'y':
+    if input("Confirm by entering 'y': ").lower() == "y":
         for i, command in enumerate(bsub_commands):
             print(f"Submitting job {i + 1} / {n_jobs}")
-            std_out_command = os.popen(command.replace('\ \n', '')).read()
+            std_out_command = os.popen(command.replace("\ \n", "")).read()
