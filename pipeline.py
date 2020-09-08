@@ -782,7 +782,7 @@ class UNetPipeline(TIF2MeshPipeline):
         self.scale_factor = scale_factor
 
         # TODO: this is enforced
-        self.level = 0.5
+        self.level = 0.85
 
     def _predict(self, net, full_img, device):
         net.eval()
