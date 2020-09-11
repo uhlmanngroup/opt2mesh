@@ -910,6 +910,7 @@ class UNetPipeline(TIF2MeshPipeline):
         # UNet specifics
         model_file,
         scale_factor=0.5,
+        bilinear=False,
         ###
         level=0.5,
         ###
@@ -938,6 +939,7 @@ class UNetPipeline(TIF2MeshPipeline):
 
         self.model_file = model_file
         self.scale_factor = scale_factor
+        self.bilinear = bilinear
 
         # TODO: this is enforced
         self.level = 0.85
@@ -988,7 +990,7 @@ class UNetPipeline(TIF2MeshPipeline):
 
         h, w, d = img.shape
 
-        net = UNet(n_channels=1, n_classes=1)
+        net = UNet(n_channels=1, n_classes=1, bilinear=self.bilinear)
 
         logging.info("Loading model {}".format(self.model_file))
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -113,6 +113,11 @@ def parse_args():
         help="UNet: Scale factor for the input images",
         default=0.5,
     )
+    parser.add_argument(
+        "--bilinear",
+        help="UNet: Use bilinear upsampling instead of Up Convolution",
+        action="store_true",
+    )
 
     # Marching cubes parameters
     parser.add_argument(
@@ -330,6 +335,7 @@ def main():
             # UNet specifics
             model_file=args.pytorch_model,
             scale_factor=args.scale,
+            bilinear=args.bilinear,
             ###
             level=args.level,
             ###
