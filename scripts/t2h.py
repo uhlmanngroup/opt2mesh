@@ -12,6 +12,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data = io.imread(args.tif_file)
+
+    print(f"{args.tif_file} dtype: {data.dtype}")
+
     hf = h5py.File(args.tif_file.replace(".tif", ".h5"), "w")
     hf.create_dataset(name="dataset", data=data, chunks=True)
     hf.close()
