@@ -1195,3 +1195,21 @@ class UNet3DPipeline(TIF2MeshPipeline):
         shutil.rmtree(h5_dir)
 
         return occupancy_map
+
+
+class DirectMeshingPipeline(TIF2MeshPipeline):
+    """
+    Directly mesh a raw file and perform the simplification
+    of it then.
+    """
+
+    def _extract_occupancy_map(self, file, base_out_file):
+
+        if ".h5" in file:
+            hf = h5py.File(file, "r")
+            key = list(hf.keys())[0]
+            occupancy_map = np.array(hf[key])
+        elif ".tif" in file:
+            occupancy_map = io.imread(file)
+
+        return occupancy_map
