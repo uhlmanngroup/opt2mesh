@@ -10,7 +10,7 @@ import numpy as np
 import h5py
 from skimage import io
 
-from segmentation_evaluation import get_slice_indices
+from scripts.segmentation_evaluation import get_slice_indices
 
 __doc__ = "2D dataset creation from 3D images"
 

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+binarize MNS_M059_105_clahe_median_denoised_occupancy_map.tif 0.75
+binarize MNS_M090_115a_clahe_median_denoised_occupancy_map.tif 0.85
+binarize MNS_M173a_115_clahe_median_denoised_occupancy_map.tif 0.85
+binarize MNS_M395a_115_clahe_median_denoised_occupancy_map.tif 0.85
+binarize MNS_M745c_115_clahe_median_denoised_occupancy_map.tif 0.60
+binarize MNS_M813_115_clahe_median_denoised_occupancy_map.tif 0.85
+binarize MNS_M822_115_clahe_median_denoised_occupancy_map.tif 0.65
+binarize MNS_M822a_115_clahe_median_denoised_occupancy_map.tif 0.9
+binarize MNS_M583b_115_clahe_median_denoised_occupancy_map.tif 0.5
+binarize MNS_M745a_115_clahe_median_denoised_occupancy_map.tif 0.7

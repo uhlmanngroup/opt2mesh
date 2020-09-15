@@ -4,8 +4,9 @@ from skimage import io
 import argparse
 import numpy as np
 
-__doc__ = "Binarise a tif stack based on a decision threshold" \
-          "used to construct the ground truth."
+__doc__ = "Generate a tif stack based on a decision threshold" \
+          "used to construct the ground truth." \
+          "0: background, 1: embryo, 2: unlabelled/don't take into account"
 
 from skimage.morphology import flood_fill
 
@@ -51,6 +52,13 @@ if __name__ == "__main__":
     # binarize MNS_M822a_115_clahe_median_denoised_occupancy_map.tif 0.9
     # data_out_new[370:480, 512-275:512-185, 150:275] = 2
     # data_out_new[80:175, 512-300:512-200, 200:350] = 2
+
+    # binarize MNS_M583b_115_clahe_median_denoised_occupancy_map.tif 0.5
+    # Nothing
+
+    # binarize MNS_M745a_115_clahe_median_denoised_occupancy_map.tif 0.7
+    data_out_new[150:220, 512-280:512-180, 270:380] = 2
+    data_out_new[360:435, 512-300:512-200, 175:275] = 2
 
     io.imsave(args.tif_file.replace(".tif", "_bin.tif"), data_out_new)
 
