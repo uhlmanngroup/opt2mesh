@@ -37,5 +37,20 @@ if __name__ == "__main__":
     # binarize MNS_M395a_115_clahe_median_denoised_occupancy_map.tif 0.85
     # data_out_new[120:210, 512-375:512-220, 300:375] = 2
 
+    # binarize MNS_M745c_115_clahe_median_denoised_occupancy_map.tif 0.60
+    # data_out_new[145:255, 512-220:512-145, 205:285] = 2
+
+    # binarize MNS_M813_115_clahe_median_denoised_occupancy_map.tif 0.85
+    # data_out_new[125:300, 512-330:512-180, 180:340] = 2
+
+    # binarize MNS_M822_115_clahe_median_denoised_occupancy_map.tif 0.65
+    # data_out_new[400:475, 512-300:512-200, 175:275] = 2
+    # data_out_new[200:225, 512-240:512-160, 175:220] = 2
+    # data_out_new[125:220, 512-250:512-200, 275:325] = 2
+
+    # binarize MNS_M822a_115_clahe_median_denoised_occupancy_map.tif 0.9
+    # data_out_new[370:480, 512-275:512-185, 150:275] = 2
+    # data_out_new[80:175, 512-300:512-200, 200:350] = 2
+
     io.imsave(args.tif_file.replace(".tif", "_bin.tif"), data_out_new)
 
