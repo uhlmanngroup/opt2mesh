@@ -122,9 +122,8 @@ def parse_args():
         "--config_file",
         type=str,
         help="UNet: Path to the YAML config file",
-        default="unet3d/config.yml",
+        default=None,
     )
-
 
     # Marching cubes parameters
     parser.add_argument(

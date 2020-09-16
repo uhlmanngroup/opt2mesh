@@ -1070,6 +1070,10 @@ class UNet3DPipeline(TIF2MeshPipeline):
 
         self.model_file = model_file
 
+        if config_file is None:
+            global_dir = os.path.dirname(os.path.realpath(__file__))
+            config_file = os.path.join(global_dir, "unet3d", "config.yml")
+
         config = yaml.safe_load(open(config_file, "r"))
         # Get a device to train on
         device_str = config.get("device", None)
