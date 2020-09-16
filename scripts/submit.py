@@ -59,7 +59,7 @@ def bsub_command(
     command += f" -M {memory} \ \n"
     command += f' -R "rusage[mem={memory}]" \ \n'
     command += f" -n {cpus} \ \n"
-    command += f' -gpus "num={gpus}:mode=exclusive_process:mps=yes" \ \n' if gpus is not None else ""
+    command += f' -gpu "num={gpus}:mode=exclusive_process:mps=yes" \ \n' if gpus is not None else ""
     command += f"{python_exec} \ \n"
     command += f"{file} \ \n"
     command += f"{options_str}"
