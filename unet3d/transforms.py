@@ -823,8 +823,21 @@ class Transformer:
 
     @staticmethod
     def _transformer_class(class_name):
-        m = importlib.import_module("pytorch3dunet.augment.transforms")
-        clazz = getattr(m, class_name)
+
+        # TODO: fix this
+        name_to_class = {
+            "Relabel": Relabel,
+            "ToTensor": ToTensor,
+            "Normalize": Normalize,
+            "Standardize": Standardize,
+            "CropToFixed": CropToFixed,
+            "ElasticDeformation": ElasticDeformation,
+            "RandomContrast": RandomContrast,
+            "RandomRotate": RandomRotate,
+            "RandomRotate90": RandomRotate90,
+            "RandomFlip": RandomFlip
+        }
+        clazz = name_to_class[class_name]
         return clazz
 
     def _create_transform(self, name):
