@@ -15,7 +15,7 @@ generate_ground_truth MNS_M745a_115_clahe_median_denoised_occupancy_map.tif 0.7
 generate_ground_truth MNS_M164_125_clahe_median_denoised_occupancy_map.tif 0.85
 generate_ground_truth MNS_M164_125a_clahe_median_denoised_occupancy_map.tif 0.85
 
-# TODO
+# Noisy examples TODO
 generate_ground_truth MNS_M322_1_clahe_median_denoised_occupancy_map.tif 0.85
 generate_ground_truth MNS_M590_125_clahe_median_denoised_occupancy_map.tif 0.85
 generate_ground_truth MNS_M802_115rescan_clahe_median_denoised_occupancy_map.tif 0.85
