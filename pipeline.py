@@ -1156,6 +1156,14 @@ class UNet3DPipeline(TIF2MeshPipeline):
         logging.info(f"Loading model from {self.model_file}...")
         self.__load_checkpoint(self.model_file, model)
 
+        device = self.config['device']
+        if torch.cuda.device_count() > 1 and not device.type == 'cpu':
+            model = torch.nn.DataParallel(model)
+            logging.info(f'Using {torch.cuda.device_count()} GPUs for prediction')
+
+        logging.info(f"Sending the model to '{device}'")
+        model = model.to(device)
+
         predictions_output_dir = f"{base_out_file}/predictions"
 
         os.makedirs(predictions_output_dir, exist_ok=True)
