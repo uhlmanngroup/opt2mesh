@@ -117,19 +117,22 @@ class TIF2MeshPipeline(ABC):
 
         assert (
             0 <= occupancy_map.min()
-        ), "The occupancy map values should be between 0 and 1"
+        ), f"The occupancy map values should be between 0 and 1, currently: {occupancy_map.min()}"
         assert (
             occupancy_map.max() <= 1
-        ), "The occupancy map values should be between 0 and 1"
+        ), f"The occupancy map values should be between 0 and 1, currently: {occupancy_map.max()}"
+        assert (
+            len(occupancy_map.shape) == 3
+        ), f"The occupancy map values should be a 3D array, currently: {len(occupancy_map.shape)}"
 
         logging.info(f"Extracting mesh from occupancy map")
         logging.info(f"   Level      : {self.level}")
         logging.info(f"   Spacing    : {self.spacing}")
         logging.info(f"   Step-size  : {self.step_size}")
-        logging.info(f"Extracting mesh from occupancy map")
-        logging.info(f"Occupancy map values")
+        logging.info(f"Occupancy map info")
         logging.info(f"    min        : {occupancy_map.min()}")
         logging.info(f"    max        : {occupancy_map.max()}")
+        logging.info(f"    shape      : {occupancy_map.shape}")
         v, f, normals, values = measure.marching_cubes(
             occupancy_map,
             level=self.level,
@@ -1181,7 +1184,10 @@ class UNet3DPipeline(TIF2MeshPipeline):
                 model, test_loader, output_file, self.config, **predictor_config
             )
 
-            # Run the model prediction on the entire dataset and save to the 'output_file' H5
+            # Run the model prediction on the entire dataset
             occupancy_map = predictor.predict()
+
+        if len(occupancy_map.shape) == 4:
+            occupancy_map = occupancy_map[0, :, :, :]
 
         return occupancy_map
