@@ -57,8 +57,23 @@ if __name__ == "__main__":
     # Nothing
 
     # generate_ground_truth MNS_M745a_115_clahe_median_denoised_occupancy_map.tif 0.7
-    data_out_new[150:220, 512-280:512-180, 270:380] = 2
-    data_out_new[360:435, 512-300:512-200, 175:275] = 2
+    # data_out_new[150:220, 512-280:512-180, 270:380] = 2
+    # data_out_new[360:435, 512-300:512-200, 175:275] = 2
+
+    # generate_ground_truth MNS_M164_125_clahe_median_denoised_occupancy_map.tif 0.85
+    # data_out_new[295:340, 512-330:512-295, 350:375] = 2
+    # data_out_new[245:275, 512-300:512-280, 355:365] = 2
+    # data_out_new[375:410, 512-300:512-200, 175:255] = 2
+
+    # generate_ground_truth MNS_M164_125a_clahe_median_denoised_occupancy_map.tif 0.85
+    # data_out_new[295:340, 512-330:512-295, 350:375] = 2
+    # data_out_new[245:275, 512-300:512-280, 355:365] = 2
+    # data_out_new[375:410, 512-300:512-200, 175:255] = 2
+
+    # generate_ground_truth MNS_M322_1_clahe_median_denoised_occupancy_map_bin.tif 0.85
+    # WIP
+    # data_out_new[360:440, 512-300:512-200, 130:255] = 2
+    # data_out_new[225:275, 512-350:512-300, 220:300] = 2
 
     io.imsave(args.tif_file.replace(".tif", "_bin.tif"), data_out_new)
 
