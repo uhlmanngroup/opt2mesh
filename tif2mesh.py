@@ -11,7 +11,7 @@ from pipeline import (
     GACPipeline,
     AutoContextPipeline,
     AutoContextACWEPipeline,
-    UNetPipeline,
+    UNetPipeline, UNet3DPipeline,
 )
 
 
@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument(
         "--method",
         help="Surface extraction method",
-        choices=["acwe", "gac", "autocontext", "autocontext_acwe", "2D_unet"],
+        choices=["acwe", "gac", "autocontext", "autocontext_acwe", "2D_unet", "3d_unet"],
         default="acwe",
     )
 
@@ -118,6 +118,13 @@ def parse_args():
         help="UNet: Use bilinear upsampling instead of Up Convolution",
         action="store_true",
     )
+    parser.add_argument(
+        "--config_file",
+        type=str,
+        help="UNet: Path to the YAML config file",
+        default="unet3d/config.yml",
+    )
+
 
     # Marching cubes parameters
     parser.add_argument(
@@ -349,6 +356,25 @@ def main():
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
         )
+    elif args.method.lower() == "3d_unet":
+        tif2mesh_pipeline = UNet3DPipeline(
+            # UNet specifics
+            model_file=args.pytorch_model,
+            config_file=args.config_file,
+            ###
+            level=args.level,
+            ###
+            iterations=args.iterations,
+            spacing=args.spacing,
+            gradient_direction=args.gradient_direction,
+            step_size=args.step_size,
+            timing=args.timing,
+            detail=args.detail,
+            save_temp=args.save_temp,
+            on_slices=args.on_slices,
+            n_jobs=args.n_jobs,
+        )
+
     else:
         raise RuntimeError(f"Method {args.method} is not recongnised")
 

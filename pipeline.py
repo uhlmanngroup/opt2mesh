@@ -10,6 +10,7 @@ import numpy as np
 import pymesh
 import torch
 import torch.nn.functional as F
+import yaml
 from PIL import Image
 from guppy import hpy
 from joblib import Parallel, delayed
@@ -23,6 +24,9 @@ import morphsnakes as ms
 from dataset import BasicDataset
 from scripts.preprocessing import to_hdf5, _fill_binary_image
 from unet import UNet
+from unet3d.datasets.utils import get_test_loaders
+from unet3d.model import UNet3D
+from unet3d.predictor import StandardPredictor
 
 
 class TIF2MeshPipeline(ABC):
@@ -1022,4 +1026,150 @@ class UNetPipeline(TIF2MeshPipeline):
         occupancy_map = (pred_x + pred_y + pred_z) / 3
         end = time.time()
         logging.info(f"Prediction obtained and averaged in {end - start}")
+        return occupancy_map
+
+
+class UNet3DPipeline(TIF2MeshPipeline):
+    """
+    Use a 3D UNet to get occupancy map.
+    """
+
+    def __init__(
+        self,
+        # UNet specifics
+        model_file,
+        config_file,
+        ###
+        level=0.5,
+        ###
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=150,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+    ):
+        super().__init__(
+            iterations=iterations,
+            level=level,
+            spacing=spacing,
+            gradient_direction=gradient_direction,
+            step_size=step_size,
+            timing=timing,
+            detail=detail,
+            save_temp=save_temp,
+            on_slices=on_slices,
+            n_jobs=n_jobs,
+        )
+
+        # TODO: this is enforced
+        self.level = 0.85
+
+        self.model_file = model_file
+
+        config = yaml.safe_load(open(config_file, "r"))
+        # Get a device to train on
+        device_str = config.get("device", None)
+        if device_str is not None:
+            logging.info(f"Device specified in config: '{device_str}'")
+            if device_str.startswith("cuda") and not torch.cuda.is_available():
+                logging.info("CUDA not available, using CPU")
+                device_str = "cpu"
+        else:
+            device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
+            logging.info(f"Using '{device_str}' device")
+
+        device = torch.device(device_str)
+        config["device"] = device
+
+        self.config = config
+
+    def __load_checkpoint(self, checkpoint_path, model, optimizer=None):
+        """Loads model and training parameters from a given checkpoint_path
+        If optimizer is provided, loads optimizer's state_dict of as well.
+
+        Args:
+            checkpoint_path (string): path to the checkpoint to be loaded
+            model (torch.nn.Module): model into which the parameters are to be copied
+            optimizer (torch.optim.Optimizer) optional: optimizer instance into
+                which the parameters are to be copied
+
+        Returns:
+            state
+        """
+        if not os.path.exists(checkpoint_path):
+            raise IOError(f"Checkpoint '{checkpoint_path}' does not exist")
+
+        state = torch.load(checkpoint_path, map_location="cpu")
+        model.load_state_dict(state["model_state_dict"])
+
+        if optimizer is not None:
+            optimizer.load_state_dict(state["optimizer_state_dict"])
+
+        return state
+
+    def __get_output_file(self, dataset, suffix="_predictions", output_dir=None):
+        input_dir, file_name = os.path.split(dataset.file_path)
+        if output_dir is None:
+            output_dir = input_dir
+        output_file = os.path.join(
+            output_dir, os.path.splitext(file_name)[0] + suffix + ".h5"
+        )
+        return output_file
+
+    def _extract_occupancy_map(self, tif_file, base_out_file):
+        logging.info(f"Running 3D UNet on the 3 axis")
+
+        # Dumping file to disk
+        opt_data = io.imread(tif_file)
+
+        # TODO: adapt cropping on the long run
+        first, last = 0, 511
+        opt_data = opt_data[first:last, first:last, first:last]
+
+        basename = tif_file.split(os.sep)[-1].split(".")[0]
+
+        h5_dir = f"{base_out_file}/h5"
+        os.makedirs(h5_dir, exist_ok=True)
+        h5_file = f"{h5_dir}/{basename}.h5"
+
+        hf = h5py.File(h5_file, "w")
+        logging.info(f"Converting {tif_file} to {h5_file}")
+        data_set_name = self.config["loaders"]["raw_internal_path"]
+        hf.create_dataset(data_set_name, data=opt_data, chunks=True)
+        hf.close()
+
+        logging.info(f"Adding {h5_dir} as the file path for predictions")
+        self.config["loaders"]["test"]["file_paths"] = [h5_dir]
+
+        # Create the model
+        model = UNet3D(**self.config["model"])
+
+        # Load model state
+        logging.info(f"Loading model from {self.model_file}...")
+        self.__load_checkpoint(self.model_file, model)
+
+        predictions_output_dir = f"{base_out_file}/predictions"
+
+        os.makedirs(predictions_output_dir, exist_ok=True)
+        logging.info(f"Saving predictions to: {predictions_output_dir}")
+
+        for test_loader in get_test_loaders(self.config):
+            logging.info(f"Processing '{test_loader.dataset.file_path}'...")
+
+            output_file = self.__get_output_file(
+                dataset=test_loader.dataset, output_dir=predictions_output_dir
+            )
+
+            predictor_config = self.config.get("predictor", {})
+            predictor = StandardPredictor(
+                model, test_loader, output_file, self.config, **predictor_config
+            )
+
+            # Run the model prediction on the entire dataset and save to the 'output_file' H5
+            occupancy_map = predictor.predict()
+
         return occupancy_map
