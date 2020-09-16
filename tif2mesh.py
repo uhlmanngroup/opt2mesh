@@ -3,6 +3,8 @@ import argparse
 import logging
 import os
 import sys
+import uuid
+
 import yaml
 from datetime import datetime
 
@@ -178,7 +180,7 @@ def main():
 
     # Env variables set by LSF:
     # https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.2/lsf_config_ref/lsf_envars_job_exec.html
-    job_id = os.getenv("LSB_JOBID", 0)
+    job_id = os.getenv("LSB_JOBID", str(uuid.uuid1())[:8])
     job_batch_name = os.getenv("LSB_JOBNAME", "unknown_job_batch_name")
     job_out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string())
     code_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
