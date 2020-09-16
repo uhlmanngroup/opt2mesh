@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, ConcatDataset, Dataset
 
+from unet3d.datasets.hdf5 import StandardHDF5Dataset
 from unet3d.utils import get_logger
 
 logger = get_logger("Dataset")
@@ -311,25 +312,10 @@ class RandomFilterSliceBuilder(EmbeddingsSliceBuilder):
         self._label_slices = list(label_slices)
 
 
-def _get_cls(class_name):
-    modules = [
-        "pytorch3dunet.datasets.hdf5",
-        "pytorch3dunet.datasets.dsb",
-        "pytorch3dunet.datasets.utils",
-    ]
-    for module in modules:
-        m = importlib.import_module(module)
-        clazz = getattr(m, class_name, None)
-        if clazz is not None:
-            return clazz
-    raise RuntimeError(f"Unsupported dataset class: {class_name}")
-
-
 def get_slice_builder(raws, labels, weight_maps, config):
     assert "name" in config
     logger.info(f"Slice builder config: {config}")
-    slice_builder_cls = _get_cls(config["name"])
-    return slice_builder_cls(raws, labels, weight_maps, **config)
+    return SliceBuilder(raws, labels, weight_maps, **config)
 
 
 def get_train_loaders(config):
@@ -349,12 +335,12 @@ def get_train_loaders(config):
 
     # get dataset class
     dataset_cls_str = loaders_config.get("dataset", None)
-    if dataset_cls_str is None:
+    if dataset_cls_str != "StandardHDF5Dataset":
         dataset_cls_str = "StandardHDF5Dataset"
         logger.warn(
-            f"Cannot find dataset class in the config. Using default '{dataset_cls_str}'."
+            f"Force using default '{dataset_cls_str}'."
         )
-    dataset_class = _get_cls(dataset_cls_str)
+    dataset_class = StandardHDF5Dataset
 
     assert set(loaders_config["train"]["file_paths"]).isdisjoint(
         loaders_config["val"]["file_paths"]
@@ -405,12 +391,12 @@ def get_test_loaders(config):
 
     # get dataset class
     dataset_cls_str = loaders_config.get("dataset", None)
-    if dataset_cls_str is None:
+    if dataset_cls_str != "StandardHDF5Dataset":
         dataset_cls_str = "StandardHDF5Dataset"
         logger.warn(
-            f"Cannot find dataset class in the config. Using default '{dataset_cls_str}'."
+            f"Force using default '{dataset_cls_str}'."
         )
-    dataset_class = _get_cls(dataset_cls_str)
+    dataset_class = StandardHDF5Dataset
 
     test_datasets = dataset_class.create_datasets(loaders_config, phase="test")
 
