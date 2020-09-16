@@ -7,9 +7,7 @@ from collections import ChainMap
 
 __doc__ = """
 
-    Job submitter on a yaml request specified like this.
-
-    Example:
+    LSF Job submitter on a yaml request specified like this.
 
     ```yaml
     job_batch_name: crf
@@ -41,6 +39,7 @@ def bsub_command(
     job_description,
     memory,
     cpus,
+    gpus,
     input_file,
     output_folder,
     options,
@@ -60,6 +59,7 @@ def bsub_command(
     command += f" -M {memory} \ \n"
     command += f' -R "rusage[mem={memory}]" \ \n'
     command += f" -n {cpus} \ \n"
+    command += f' -gpus "num={gpus}:mode=exclusive_process:mps=yes" \ \n' if gpus is not None else ""
     command += f"{python_exec} \ \n"
     command += f"{file} \ \n"
     command += f"{options_str}"
@@ -94,6 +94,7 @@ if __name__ == "__main__":
     job_description = command["goal"]
     memory = command["memory"]
     cpus = command["cpus"]
+    gpus = command.get("gpus", None)
     inputs_list = command["input_files"]
     output_folder = command["output_folder"]
 
@@ -120,6 +121,7 @@ if __name__ == "__main__":
                 job_description,
                 memory,
                 cpus,
+                gpus,
                 input_file,
                 output_folder,
                 dict(),
@@ -137,6 +139,7 @@ if __name__ == "__main__":
                     job_description,
                     memory,
                     cpus,
+                    gpus,
                     input_file,
                     output_folder,
                     options,
