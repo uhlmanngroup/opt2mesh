@@ -24,7 +24,7 @@ import morphsnakes as ms
 from dataset import BasicDataset
 from scripts.preprocessing import to_hdf5, _fill_binary_image
 from unet import UNet
-from unet3d.datasets.utils import get_test_loaders
+from unet3d.datasets.hdf5 import get_test_loaders
 from unet3d.model import UNet3D
 from unet3d.predictor import StandardPredictor
 
