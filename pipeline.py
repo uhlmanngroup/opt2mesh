@@ -1190,4 +1190,7 @@ class UNet3DPipeline(TIF2MeshPipeline):
         if len(occupancy_map.shape) == 4:
             occupancy_map = occupancy_map[0, :, :, :]
 
+        logging.info(f"Removing temporary directory '{h5_dir}'")
+        os.rmdir(h5_dir)
+
         return occupancy_map
