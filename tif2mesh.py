@@ -378,6 +378,7 @@ def main():
         )
     elif args.method.lower() == "direct":
         tif2mesh_pipeline = DirectMeshingPipeline(
+            level=args.level,
             iterations=args.iterations,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
