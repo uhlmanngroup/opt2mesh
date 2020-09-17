@@ -35,6 +35,9 @@ def parse_args():
     parser.add_argument(
         "--save_temp", help="Save temporary results", action="store_true"
     )
+    parser.add_argument(
+        "--segment_occupancy_map", help="Segment occupancy map", action="store_true"
+    )
     parser.add_argument("--timing", help="Print timing info", action="store_true")
     parser.add_argument(
         "--n_jobs",
@@ -267,7 +270,7 @@ def main():
     ###
 
     if args.method.lower() == "gac":
-        tif2mesh_pipeline = GACPipeline(
+        opt2mesh_pipeline = GACPipeline(
             iterations=args.iterations,
             level=args.level,
             spacing=args.spacing,
@@ -284,9 +287,10 @@ def main():
             balloon=args.balloon,
             alpha=args.alpha,
             sigma=args.sigma,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     elif args.method.lower() == "acwe":
-        tif2mesh_pipeline = ACWEPipeline(
+        opt2mesh_pipeline = ACWEPipeline(
             iterations=args.iterations,
             level=args.level,
             spacing=args.spacing,
@@ -302,9 +306,10 @@ def main():
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     elif args.method.lower() == "autocontext":
-        tif2mesh_pipeline = AutoContextPipeline(
+        opt2mesh_pipeline = AutoContextPipeline(
             # AutoContextSpecific
             project=args.autocontext,
             use_probabilities=args.use_probabilities,
@@ -319,9 +324,10 @@ def main():
             save_temp=args.save_temp,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     elif args.method.lower() == "autocontext_acwe":
-        tif2mesh_pipeline = AutoContextACWEPipeline(
+        opt2mesh_pipeline = AutoContextACWEPipeline(
             # AutoContextSpecific
             project=args.autocontext,
             # ACWE specifics
@@ -339,9 +345,10 @@ def main():
             save_temp=args.save_temp,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     elif args.method.lower() == "2d_unet":
-        tif2mesh_pipeline = UNetPipeline(
+        opt2mesh_pipeline = UNetPipeline(
             # UNet specifics
             model_file=args.pytorch_model,
             scale_factor=args.scale,
@@ -358,9 +365,10 @@ def main():
             save_temp=args.save_temp,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     elif args.method.lower() == "3d_unet":
-        tif2mesh_pipeline = UNet3DPipeline(
+        opt2mesh_pipeline = UNet3DPipeline(
             # UNet specifics
             model_file=args.pytorch_model,
             config_file=args.config_file,
@@ -375,9 +383,10 @@ def main():
             save_temp=args.save_temp,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     elif args.method.lower() == "direct":
-        tif2mesh_pipeline = DirectMeshingPipeline(
+        opt2mesh_pipeline = DirectMeshingPipeline(
             level=args.level,
             iterations=args.iterations,
             spacing=args.spacing,
@@ -388,16 +397,17 @@ def main():
             save_temp=args.save_temp,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
     else:
-        raise RuntimeError(f"Method {args.method} is not recongnised")
+        raise RuntimeError(f"Method {args.method} is not recognised")
 
-    logging.info(f"Starting TIF2Mesh pipeline")
+    logging.info(f"Starting pipeline")
     logging.info(f"  Input TIF stack: {args.in_tif}")
     logging.info(f"  Out folder: {job_out_folder}")
-    tif2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=job_out_folder)
+    opt2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=job_out_folder)
 
-    logging.info("End of TIF2Mesh pipeline")
+    logging.info("End of pipeline")
 
 
 if __name__ == "__main__":

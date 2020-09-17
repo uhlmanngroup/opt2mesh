@@ -18,7 +18,7 @@ from joblib import Parallel, delayed
 from scipy.linalg import norm
 from scipy.ndimage import gaussian_filter
 from skimage import io, measure
-from skimage.morphology import dilation, erosion
+from skimage.morphology import dilation, erosion, flood_fill
 from torchvision import transforms
 
 import morphsnakes as ms
@@ -30,17 +30,18 @@ from unet3d.model import UNet3D
 from unet3d.predictor import StandardPredictor
 
 
-class TIF2MeshPipeline(ABC):
+class OPT2MeshPipeline(ABC):
     """
-    General pipeline to convert TIF stacks of images to a STL mesh file.
+    General pipeline to convert a OPT to a mesh.
 
-    It:
+    Input: TIF Stack
+    Output: STL file
+
+    This pipeline:
       Loads OPT data
       Extracts surface
       Create Mesh
       Clean, smooth and simplify mesh
-
-    The surface extraction is up to each implementation.
 
     """
 
@@ -56,6 +57,7 @@ class TIF2MeshPipeline(ABC):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
+        segment_occupancy_map=False
     ):
         self.iterations: int = iterations
         self.level: float = level
@@ -67,6 +69,7 @@ class TIF2MeshPipeline(ABC):
         self.save_temp: bool = save_temp
         self.on_slices: bool = on_slices
         self.n_jobs: int = n_jobs
+        self.segment_occupancy_map: bool = segment_occupancy_map
 
     @abstractmethod
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
@@ -126,14 +129,28 @@ class TIF2MeshPipeline(ABC):
             len(occupancy_map.shape) == 3
         ), f"The occupancy map values should be a 3D array, currently: {len(occupancy_map.shape)}"
 
-        logging.info(f"Extracting mesh from occupancy map")
-        logging.info(f"   Level      : {self.level}")
-        logging.info(f"   Spacing    : {self.spacing}")
-        logging.info(f"   Step-size  : {self.step_size}")
         logging.info(f"Occupancy map info")
         logging.info(f"    min        : {occupancy_map.min()}")
         logging.info(f"    max        : {occupancy_map.max()}")
         logging.info(f"    shape      : {occupancy_map.shape}")
+
+        if self.segment_occupancy_map:
+            logging.info(f"Segmenting occupancy map info on level: {self.level}")
+            occupancy_map = np.array(occupancy_map > self.level, dtype=np.uint8)
+            # Remove inner part which are lower that the current level
+            occupancy_map = flood_fill(occupancy_map, (1, 1, 1), 2)
+            # Create a segmented occupancy map with 2 homogeneous values
+            occupancy_map = (self.level + 10e-2) * (occupancy_map != 2)
+            logging.info(f"Segmented occupancy map info")
+            logging.info(f"    min        : {occupancy_map.min()}")
+            logging.info(f"    max        : {occupancy_map.max()}")
+            logging.info(f"    shape      : {occupancy_map.shape}")
+
+        logging.info(f"Extracting mesh from occupancy map")
+        logging.info(f"   Level      : {self.level}")
+        logging.info(f"   Spacing    : {self.spacing}")
+        logging.info(f"   Step-size  : {self.step_size}")
+
         v, f, normals, values = measure.marching_cubes(
             occupancy_map,
             level=self.level,
@@ -284,7 +301,7 @@ class TIF2MeshPipeline(ABC):
         return final_mesh
 
 
-class GACPipeline(TIF2MeshPipeline):
+class GACPipeline(OPT2MeshPipeline):
     def __init__(
         self,
         gradient_direction="descent",
@@ -303,6 +320,7 @@ class GACPipeline(TIF2MeshPipeline):
         balloon=1,
         alpha=1000,
         sigma=5,
+        segment_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -315,6 +333,7 @@ class GACPipeline(TIF2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
+            segment_occupancy_map=args.segment_occupancy_map,
         )
 
         self.smoothing = smoothing
@@ -386,7 +405,7 @@ class GACPipeline(TIF2MeshPipeline):
         return occupancy_map
 
 
-class ACWEPipeline(TIF2MeshPipeline):
+class ACWEPipeline(OPT2MeshPipeline):
     def __init__(
         self,
         gradient_direction="descent",
@@ -404,6 +423,7 @@ class ACWEPipeline(TIF2MeshPipeline):
         smoothing=1,
         lambda1=3,
         lambda2=1,
+        segment_occupancy_map=False
     ):
 
         super().__init__(
@@ -417,6 +437,7 @@ class ACWEPipeline(TIF2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
+            segment_occupancy_map=segment_occupancy_map,
         )
 
         self.on_halves: bool = on_halves
@@ -659,7 +680,7 @@ class ACWEPipeline(TIF2MeshPipeline):
         return occupancy_map
 
 
-class AutoContextPipeline(TIF2MeshPipeline):
+class AutoContextPipeline(OPT2MeshPipeline):
     """
     Use ilastik for the segmentation using the headless mode.
 
@@ -684,6 +705,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
+        segment_occupancy_map=False
     ):
         super().__init__(
             iterations=iterations,
@@ -696,6 +718,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
+            segment_occupancy_map=segment_occupancy_map,
         )
 
         self.project: str = project
@@ -812,7 +835,7 @@ class AutoContextPipeline(TIF2MeshPipeline):
         return occupancy_map
 
 
-class AutoContextACWEPipeline(TIF2MeshPipeline):
+class AutoContextACWEPipeline(OPT2MeshPipeline):
     """
     Use AutoContext to extract the occupancy map (probabilities)
     then runs ACWE on the occupancy map to extract the surface.
@@ -837,6 +860,7 @@ class AutoContextACWEPipeline(TIF2MeshPipeline):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
+        segment_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -849,6 +873,7 @@ class AutoContextACWEPipeline(TIF2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
+            segment_occupancy_map=segment_occupancy_map,
         )
 
         self.autocontext_pipeline = AutoContextPipeline(
@@ -902,7 +927,7 @@ class AutoContextACWEPipeline(TIF2MeshPipeline):
         return occupancy_map
 
 
-class UNetPipeline(TIF2MeshPipeline):
+class UNetPipeline(OPT2MeshPipeline):
     """
     Use a 2D UNet to get occupancy map slices on the 3 different axes.
     Predictions are stacked together to get occupancy maps and are then
@@ -931,6 +956,7 @@ class UNetPipeline(TIF2MeshPipeline):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
+        segment_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -943,6 +969,7 @@ class UNetPipeline(TIF2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
+            segment_occupancy_map=segment_occupancy_map,
         )
 
         self.model_file = model_file
@@ -1033,7 +1060,7 @@ class UNetPipeline(TIF2MeshPipeline):
         return occupancy_map
 
 
-class UNet3DPipeline(TIF2MeshPipeline):
+class UNet3DPipeline(OPT2MeshPipeline):
     """
     Use a 3D UNet to get occupancy map.
     """
@@ -1055,6 +1082,7 @@ class UNet3DPipeline(TIF2MeshPipeline):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
+        segment_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -1067,6 +1095,7 @@ class UNet3DPipeline(TIF2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
+            segment_occupancy_map=segment_occupancy_map,
         )
 
         # TODO: this is enforced
@@ -1197,7 +1226,7 @@ class UNet3DPipeline(TIF2MeshPipeline):
         return occupancy_map
 
 
-class DirectMeshingPipeline(TIF2MeshPipeline):
+class DirectMeshingPipeline(OPT2MeshPipeline):
     """
     Directly mesh a raw file and perform the simplification
     of it then.
