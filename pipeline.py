@@ -2,8 +2,7 @@ import logging
 import os
 import time
 import uuid
-from abc import abstractmethod, ABC
-
+import shutil
 import h5py
 import igl
 import numpy as np
@@ -11,7 +10,9 @@ import pymesh
 import torch
 import torch.nn.functional as F
 import yaml
+
 from PIL import Image
+from abc import abstractmethod, ABC
 from guppy import hpy
 from joblib import Parallel, delayed
 from scipy.linalg import norm
@@ -1191,6 +1192,6 @@ class UNet3DPipeline(TIF2MeshPipeline):
             occupancy_map = occupancy_map[0, :, :, :]
 
         logging.info(f"Removing temporary directory '{h5_dir}'")
-        os.rmdir(h5_dir)
+        shutil.rmtree(h5_dir)
 
         return occupancy_map
