@@ -124,7 +124,7 @@ def parse_args():
     )
     parser.add_argument(
         "ground_truth",
-        help="HDF5 file of labels of one (512 × 512 × 512 × 1), last channel in {0, …, n_classes}",
+        help="HDF5 file of labels of one (512 × 512 × 512 × 1), last channel in {0, …, n_classes - 1}",
     )
     parser.add_argument(
         "--threshold",
