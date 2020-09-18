@@ -57,7 +57,8 @@ class OPT2MeshPipeline(ABC):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
-        segment_occupancy_map=False
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         self.iterations: int = iterations
         self.level: float = level
@@ -70,6 +71,7 @@ class OPT2MeshPipeline(ABC):
         self.on_slices: bool = on_slices
         self.n_jobs: int = n_jobs
         self.segment_occupancy_map: bool = segment_occupancy_map
+        self.save_occupancy_map: bool = save_occupancy_map
 
     @abstractmethod
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
@@ -140,7 +142,7 @@ class OPT2MeshPipeline(ABC):
             logging.info(f"    max        : {occupancy_map.max()}")
             logging.info(f"    shape      : {occupancy_map.shape}")
 
-        if self.save_temp:
+        if self.save_occupancy_map:
             surface_file = base_out_file + "_occupancy_map.tif"
             occupancy_map_int = np.array(occupancy_map * 255, dtype=np.uint8)
             logging.info(f"Saving extracted occupancy map in: {surface_file}")
@@ -321,6 +323,7 @@ class GACPipeline(OPT2MeshPipeline):
         alpha=1000,
         sigma=5,
         segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -333,7 +336,8 @@ class GACPipeline(OPT2MeshPipeline):
             save_temp=save_temp,
             on_slices=on_slices,
             n_jobs=n_jobs,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
+            save_occupancy_map=save_occupancy_map,
         )
 
         self.smoothing = smoothing
@@ -423,7 +427,8 @@ class ACWEPipeline(OPT2MeshPipeline):
         smoothing=1,
         lambda1=3,
         lambda2=1,
-        segment_occupancy_map=False
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
 
         super().__init__(
@@ -438,6 +443,7 @@ class ACWEPipeline(OPT2MeshPipeline):
             on_slices=on_slices,
             n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
+            save_occupancy_map=save_occupancy_map,
         )
 
         self.on_halves: bool = on_halves
@@ -705,7 +711,8 @@ class AutoContextPipeline(OPT2MeshPipeline):
         save_temp=False,
         on_slices=False,
         n_jobs=-1,
-        segment_occupancy_map=False
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -719,6 +726,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             on_slices=on_slices,
             n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
+            save_occupancy_map=save_occupancy_map,
         )
 
         self.project: str = project
@@ -861,6 +869,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         on_slices=False,
         n_jobs=-1,
         segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -874,6 +883,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             on_slices=on_slices,
             n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
+            save_occupancy_map=save_occupancy_map,
         )
 
         self.autocontext_pipeline = AutoContextPipeline(
@@ -957,6 +967,7 @@ class UNetPipeline(OPT2MeshPipeline):
         on_slices=False,
         n_jobs=-1,
         segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -970,6 +981,7 @@ class UNetPipeline(OPT2MeshPipeline):
             on_slices=on_slices,
             n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
+            save_occupancy_map=save_occupancy_map,
         )
 
         self.model_file = model_file
@@ -1085,6 +1097,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
         on_slices=False,
         n_jobs=-1,
         segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -1098,6 +1111,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
             on_slices=on_slices,
             n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
+            save_occupancy_map=save_occupancy_map,
         )
 
         # TODO: this is enforced

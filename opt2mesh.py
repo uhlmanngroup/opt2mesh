@@ -36,8 +36,12 @@ def parse_args():
         "--save_temp", help="Save temporary results", action="store_true"
     )
     parser.add_argument(
-        "--segment_occupancy_map", help="Segment occupancy map", action="store_true"
+        "--segment_occupancy_map", help="Segment the occupancy map", action="store_true"
     )
+    parser.add_argument(
+        "--save_occupancy_map", help="Save the occupancy map", action="store_true"
+    )
+
     parser.add_argument("--timing", help="Print timing info", action="store_true")
     parser.add_argument(
         "--n_jobs",
@@ -300,6 +304,7 @@ def main():
             alpha=args.alpha,
             sigma=args.sigma,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "acwe":
         opt2mesh_pipeline = ACWEPipeline(
@@ -319,6 +324,7 @@ def main():
             lambda1=args.lambda1,
             lambda2=args.lambda2,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "autocontext":
         opt2mesh_pipeline = AutoContextPipeline(
@@ -337,6 +343,7 @@ def main():
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "autocontext_acwe":
         opt2mesh_pipeline = AutoContextACWEPipeline(
@@ -358,6 +365,7 @@ def main():
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "2d_unet":
         opt2mesh_pipeline = UNetPipeline(
@@ -378,6 +386,7 @@ def main():
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "3d_unet":
         opt2mesh_pipeline = UNet3DPipeline(
@@ -398,6 +407,7 @@ def main():
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "direct":
         opt2mesh_pipeline = DirectMeshingPipeline(
@@ -412,6 +422,7 @@ def main():
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
         )
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")
