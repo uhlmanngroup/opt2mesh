@@ -1134,7 +1134,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
         if stride_shape is not None:
             t_stride = (stride_shape, stride_shape, stride_shape)
             logging.info(f"Override Configuration: use stride_shape={t_stride} ")
-            config["loader"]["test"]["slice_builder"]["stride_shape"] = t_stride
+            config["loaders"]["test"]["slice_builder"]["stride_shape"] = t_stride
 
         # Get a device to train on
         device_str = config.get("device", None)
