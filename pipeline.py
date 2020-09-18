@@ -940,7 +940,7 @@ class UNetPipeline(OPT2MeshPipeline):
 
     def __init__(
         self,
-        # UNet specifics
+        # UNet (2D) specifics
         model_file,
         scale_factor=0.5,
         bilinear=False,

@@ -19,10 +19,10 @@ from pipeline import (
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run the pipeline")
+    parser = argparse.ArgumentParser(description="Extract a mesh from a OPT scan")
 
     # Argument
-    parser.add_argument("in_tif", help="Input tif stack (3D image)")
+    parser.add_argument("in_tif", help="Input OPT scan as tif stack (3D image)")
     parser.add_argument("out_folder", help="General output folder for this run")
     parser.add_argument(
         "--method",
