@@ -23,6 +23,10 @@ def parse_args():
         help="Folder of HDF5 examples containing both raw and labels as 'raw' and 'labels' datasets",
     )
     parser.add_argument(
+        "out_folder",
+        help="Output folder for slices",
+    )
+    parser.add_argument(
         "--n_augment",
         type=int,
         default=5,
