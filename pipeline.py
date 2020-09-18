@@ -134,7 +134,7 @@ class OPT2MeshPipeline(ABC):
             # Remove inner part which are lower that the current level
             occupancy_map = flood_fill(occupancy_map, (1, 1, 1), 2)
             # Create a segmented occupancy map with 2 homogeneous values
-            occupancy_map = (self.level + 10e-2) * (occupancy_map != 2)
+            occupancy_map = (self.level + 10e-3) * (occupancy_map != 2)
             logging.info(f"Segmented occupancy map info")
             logging.info(f"    min        : {occupancy_map.min()}")
             logging.info(f"    max        : {occupancy_map.max()}")
