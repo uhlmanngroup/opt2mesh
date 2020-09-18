@@ -113,12 +113,6 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Extracting occupancy map")
         occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
 
-        if self.save_temp:
-            surface_file = base_out_file + "_occupancy_map.tif"
-            occupancy_map_int = np.array(occupancy_map * 255, dtype=np.uint8)
-            logging.info(f"Saving extracted occupancy map in: {surface_file}")
-            io.imsave(surface_file, occupancy_map_int)
-
         assert (
             0 <= occupancy_map.min()
         ), f"The occupancy map values should be between 0 and 1, currently: {occupancy_map.min()}"
@@ -145,6 +139,12 @@ class OPT2MeshPipeline(ABC):
             logging.info(f"    min        : {occupancy_map.min()}")
             logging.info(f"    max        : {occupancy_map.max()}")
             logging.info(f"    shape      : {occupancy_map.shape}")
+
+        if self.save_temp:
+            surface_file = base_out_file + "_occupancy_map.tif"
+            occupancy_map_int = np.array(occupancy_map * 255, dtype=np.uint8)
+            logging.info(f"Saving extracted occupancy map in: {surface_file}")
+            io.imsave(surface_file, occupancy_map_int)
 
         logging.info(f"Extracting mesh from occupancy map")
         logging.info(f"   Level      : {self.level}")
