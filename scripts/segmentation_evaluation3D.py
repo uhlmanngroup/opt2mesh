@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 import argparse
+import os
+from glob import glob
 
 import h5py
 import numpy as np
@@ -8,8 +10,6 @@ __doc__ = """
 Perform the evaluation of predictions on volumes which have been labelled by
 computing Dice Coefficient and Intersection over Union. Doesn't use the unlabelled class (2).
 """
-
-from skimage import io
 
 from sklearn.metrics import adjusted_rand_score
 
@@ -91,48 +91,55 @@ def parse_args():
     # Argument
     parser.add_argument(
         "probabilities",
-        help="HDF5 file of predictions on one (511 × 511 × 511) example",
+        help="Folder of HDF5 files predictions of (511 × 511 × 511) examples",
     )
     parser.add_argument(
-        "ground_truth",
-        help="HDF5 file of labels of one (511 × 511 × 511) example, in [0, 1, 2]",
+        "ground_truths",
+        help="Folder of HDF5 files of labels of (511 × 511 × 511) examples, values in [0, 1, 2]",
     )
 
     return parser.parse_args()
 
 
-def _read_file(file):
-    if '.tif' in file:
-        return io.imread(file)
-    elif '.h5' in file:
-        hf = h5py.File(file, 'r')
-        data = np.array(hf["labels"])
-        hf.close()
-        return data
-
-
 if __name__ == "__main__":
     args = parse_args()
 
-    probabilities = _read_file(args.probabilities)
-    ground_truth = _read_file(args.ground_truth)
+    probs_files = sorted(glob(os.path.join(args.probabilities, "*.h5")))
+    gt_files = sorted(glob(os.path.join(args.ground_truths, "*.h5")))
 
-    if len(probabilities.shape) == 4:
-        probabilities = probabilities[probabilities.shape.index(1)]
+    assert len(probs_files) == len(gt_files), "Different number of files in each folder"
 
-    if len(ground_truth.shape) == 4:
-        ground_truth = ground_truth[ground_truth.shape.index(1)]
+    for pf, gt in zip(probs_files, gt_files):
 
-    # 0 indexing to labels
-    assert probabilities.shape == (511, 511, 511)
-    assert ground_truth.shape == (511, 511, 511)
+        hf = h5py.File(pf, 'r')
+        ks = list(hf.keys())
+        print("Keys in", pf, ": ", ks)
+        probabilities = np.array(hf[ks[0]])
+        hf.close()
 
-    predictions = np.array(probabilities > 0.5, dtype=np.uint8)
+        hf = h5py.File(gt, 'r')
+        ks = list(hf.keys())
+        print("Keys in", gt, ": ", ks)
+        ground_truth = np.array(hf["labels"])
+        hf.close()
 
-    # Do not consider the "unlabelled" class voxels
-    unlabelled_class = 2
-    mask = (ground_truth != unlabelled_class)
+        if len(probabilities.shape) == 4:
+            probabilities = probabilities[probabilities.shape.index(1)]
 
-    print("Dice:", dice(ground_truth[mask], predictions[mask]))
-    print("IoU:", iou(ground_truth[mask], predictions[mask]))
-    print("Adjusted RAND:", adjusted_rand_score(ground_truth[mask], predictions[mask]))
+        if len(ground_truth.shape) == 4:
+            ground_truth = ground_truth[ground_truth.shape.index(1)]
+
+        assert probabilities.shape == (511, 511, 511)
+        assert ground_truth.shape == (511, 511, 511)
+
+        predictions = np.array(probabilities > 0.5, dtype=np.uint8)
+
+        # Do not consider the "unlabelled" class voxels
+        unlabelled_class = 2
+        mask = (ground_truth != unlabelled_class)
+
+        print(pf, "vs", gt)
+        print("Dice          :", dice(ground_truth[mask], predictions[mask]))
+        print("IoU           :", iou(ground_truth[mask], predictions[mask]))
+        print("Adjusted RAND :", adjusted_rand_score(ground_truth[mask], predictions[mask]))
+        print()
