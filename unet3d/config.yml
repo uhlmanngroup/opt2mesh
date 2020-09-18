@@ -21,7 +21,7 @@ model:
 predictor:
   # standard in memory predictor
   name: 'StandardPredictor'
-  patch_halo: [4, 4, 4]
+  patch_halo: [2, 2, 2]
 # specify the test datasets
 loaders:
   # batch dimension; if number of GPUs is N > 1, then a batch_size of N * batch_size will automatically be taken for DataParallel
