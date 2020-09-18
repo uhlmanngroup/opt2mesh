@@ -121,13 +121,25 @@ def parse_args():
     )
     parser.add_argument(
         "--bilinear",
-        help="UNet: Use bilinear upsampling instead of Up Convolution",
+        help="UNet (2D): Use bilinear upsampling instead of Up Convolution",
         action="store_true",
     )
     parser.add_argument(
         "--config_file",
         type=str,
-        help="UNet: Path to the YAML config file",
+        help="UNet (3D): Path to the YAML config file",
+        default=None,
+    )
+    parser.add_argument(
+        "--patch_halo",
+        type=tuple,
+        help="UNet (3D): Halo to remove from patch",
+        default=None,
+    )
+    parser.add_argument(
+        "--stride_shape",
+        type=tuple,
+        help="UNet (3D): Stride for the prediction",
         default=None,
     )
 
@@ -372,6 +384,8 @@ def main():
             # UNet specifics
             model_file=args.pytorch_model,
             config_file=args.config_file,
+            patch_halo=args.patch_halo,
+            stride_shape=args.stride_shape,
             ###
             level=args.level,
             iterations=args.iterations,

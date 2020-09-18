@@ -1067,9 +1067,11 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
     def __init__(
         self,
-        # UNet specifics
+        # UNet (3D) specifics
         model_file,
         config_file,
+        patch_halo=None,
+        stride_shape=None,
         ###
         level=0.5,
         ###
@@ -1108,6 +1110,16 @@ class UNet3DPipeline(OPT2MeshPipeline):
             config_file = os.path.join(global_dir, "unet3d", "config.yml")
 
         config = yaml.safe_load(open(config_file, "r"))
+
+        # Configuration overriding
+        if patch_halo is not None:
+            logging.info(f"Override Configuration: use patch_halo={patch_halo} ")
+            config["predictor"]["patch_halo"] = patch_halo
+
+        if stride_shape is not None:
+            logging.info(f"Override Configuration: use stride_shape={stride_shape} ")
+            config["loader"]["test"]["slice_builder"]["stride_shape"] = stride_shape
+
         # Get a device to train on
         device_str = config.get("device", None)
         if device_str is not None:
