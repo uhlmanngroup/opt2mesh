@@ -136,14 +136,14 @@ def parse_args():
     )
     parser.add_argument(
         "--patch_halo",
-        type=tuple,
-        help="UNet (3D): Halo to remove from patch",
+        type=int,
+        help="UNet (3D): Halo to remove from patch (one dimension)",
         default=None,
     )
     parser.add_argument(
         "--stride_shape",
-        type=tuple,
-        help="UNet (3D): Stride for the prediction",
+        type=int,
+        help="UNet (3D): Stride for the prediction (one dimension)",
         default=None,
     )
 

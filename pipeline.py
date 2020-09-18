@@ -1127,12 +1127,14 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
         # Configuration overriding
         if patch_halo is not None:
-            logging.info(f"Override Configuration: use patch_halo={patch_halo} ")
-            config["predictor"]["patch_halo"] = patch_halo
+            t_patch = (patch_halo, patch_halo, patch_halo)
+            logging.info(f"Override Configuration: use patch_halo={t_patch} ")
+            config["predictor"]["patch_halo"] = t_patch
 
         if stride_shape is not None:
-            logging.info(f"Override Configuration: use stride_shape={stride_shape} ")
-            config["loader"]["test"]["slice_builder"]["stride_shape"] = stride_shape
+            t_stride = (stride_shape, stride_shape, stride_shape)
+            logging.info(f"Override Configuration: use stride_shape={t_stride} ")
+            config["loader"]["test"]["slice_builder"]["stride_shape"] = t_stride
 
         # Get a device to train on
         device_str = config.get("device", None)
