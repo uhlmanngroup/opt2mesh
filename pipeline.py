@@ -7,6 +7,7 @@ import h5py
 import igl
 import numpy as np
 import pymesh
+import pymeshfix
 import torch
 import torch.nn.functional as F
 import yaml
@@ -201,15 +202,18 @@ class OPT2MeshPipeline(ABC):
         id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
         mesh_to_simplify = meshes[id_main_component]
 
-        logging.info(f"Final mesh simplification")
-        final_output_mesh = self._mesh_simplification(mesh_to_simplify)
+        logging.info(f"Mesh simplification")
+        simplified_mesh = self._mesh_simplification(mesh_to_simplify)
+
+        logging.info(f"Mesh fixing")
+        final_mesh = self._mesh_fixing(simplified_mesh)
 
         final_mesh_file = base_out_file + "_final_mesh.stl"
         logging.info(f"Saving final simplified mesh in: {final_mesh_file}")
-        pymesh.meshio.save_mesh(final_mesh_file, final_output_mesh)
+        pymesh.meshio.save_mesh(final_mesh_file, final_mesh)
         logging.info(f"Saved final simplified mesh !")
         stats = self.get_mesh_statistics(
-            mesh_to_simplify.vertices, mesh_to_simplify.faces
+            final_mesh.vertices, final_mesh.faces
         )
         logging.info("Statistics of final simplified mesh:")
         for k, v in stats:
@@ -301,6 +305,28 @@ class OPT2MeshPipeline(ABC):
         final_mesh = meshes[id_main_component]
 
         return final_mesh
+
+
+    @staticmethod
+    def _mesh_fixing(mesh):
+        """
+        Fix the mesh to get to a 2-manifold:
+         - no self-intersection
+         - closed mesh
+        """
+        #
+        v = np.copy(mesh.vertices)
+        f = np.copy(mesh.faces)
+
+        logging.info(f"Fixing mesh")
+        meshfix = pymeshfix.MeshFix(v, f)
+        meshfix.repair()
+        logging.info(f"Fixed mesh")
+
+        # Access the repaired mesh with vtk
+        fixed_mesh = meshfix.mesh
+
+        return fixed_mesh
 
 
 class GACPipeline(OPT2MeshPipeline):
