@@ -1084,6 +1084,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
         config_file,
         patch_halo=None,
         stride_shape=None,
+        f_maps=None,
         ###
         level=0.5,
         ###
@@ -1126,6 +1127,10 @@ class UNet3DPipeline(OPT2MeshPipeline):
         config = yaml.safe_load(open(config_file, "r"))
 
         # Configuration overriding
+        if f_maps is not None:
+            logging.info(f"Override Configuration: use f_maps={f_maps} ")
+            config["model"]["f_maps"] = f_maps
+
         if patch_halo is not None:
             t_patch = (patch_halo, patch_halo, patch_halo)
             logging.info(f"Override Configuration: use patch_halo={t_patch} ")

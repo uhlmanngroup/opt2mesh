@@ -146,6 +146,12 @@ def parse_args():
         help="UNet (3D): Stride for the prediction (one dimension)",
         default=None,
     )
+    parser.add_argument(
+        "--f_maps",
+        type=int,
+        help="UNet (3D): Feature maps scale factor (one dimension)",
+        default=None,
+    )
 
     # Marching cubes parameters
     parser.add_argument(
@@ -395,6 +401,7 @@ def main():
             config_file=args.config_file,
             patch_halo=args.patch_halo,
             stride_shape=args.stride_shape,
+            f_maps=args.f_maps,
             ###
             level=args.level,
             iterations=args.iterations,
