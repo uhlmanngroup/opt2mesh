@@ -1,10 +1,8 @@
+#! /usr/bin/env python
 import argparse
 import logging
 import os
-
 import pymesh
-import pyvista as pv
-import tetgen
 
 __doc__ = """STL to OFF converter"""
 
@@ -33,7 +31,8 @@ def main():
     logging.info(f"Vertices: {len(mesh.vertices)}")
     logging.info(f"Faces: {len(mesh.faces)}")
 
-    outfilename = filename.replace(".stl", ".off")
+    basename = filename.split(os.sep)[-1]
+    outfilename = os.path.join(args.out_folder, basename.replace(".stl", ".off"))
 
     logging.info(f"Saving mesh: {outfilename}")
     pymesh.meshio.save_mesh(outfilename, mesh)
