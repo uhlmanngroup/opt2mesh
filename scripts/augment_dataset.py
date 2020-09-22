@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     args = parse_args()
 
-    examples_files = sorted(glob.glob(os.path.join(args.example_folder, ".tif")))
-    gt_files = sorted(glob.glob(os.path.join(args.ground_truth_folder, ".tif")))
+    examples_files = sorted(os.listdir(args.example_folder))
+    gt_files = sorted(os.listdir(args.ground_truth_folder))
 
     print(f"Examples  files: {len(examples_files)}")
     print(f"Ground T. files: {len(gt_files)}")
