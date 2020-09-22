@@ -52,8 +52,13 @@ if __name__ == "__main__":
 
     args = parse_args()
 
-    examples_files = sorted(os.path.join(glob.glob(args.example_folder), ".tif"))
-    gt_files = sorted(os.path.join(glob.glob(args.ground_truth_folder), ".tif"))
+    examples_files = sorted(glob.glob(os.path.join(args.example_folder, ".tif")))
+    gt_files = sorted(glob.glob(os.path.join(args.ground_truth_folder, ".tif")))
+
+    print(f"Examples  files: {len(examples_files)}")
+    print(f"Ground T. files: {len(gt_files)}")
+
+    assert len(examples_files) == len(gt_files), 'Different numbers of files'
 
     for e_file, gt_file in zip(examples_files, gt_files):
 
