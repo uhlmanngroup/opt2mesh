@@ -10,8 +10,6 @@ import numpy as np
 import h5py
 from skimage import io
 
-from scripts.segmentation_evaluation import get_slice_indices
-
 __doc__ = "2D dataset creation from 3D images"
 
 
@@ -70,14 +68,20 @@ if __name__ == "__main__":
     example = example[first:last, first:last, first:last]
     ground_truth = ground_truth[first:last, first:last, first:last]
 
-    x_indices, y_indices, z_indices = get_slice_indices(
-            ground_truth, threshold=args.threshold
-    )
+    if args.threshold != 0:
+        from scripts.segmentation_evaluation import get_slice_indices
 
-    print(args.example)
-    print(f"{len(x_indices)} slices labelled on X axis: {x_indices}")
-    print(f"{len(y_indices)} slices labelled on Y axis: {y_indices}")
-    print(f"{len(z_indices)} slices labelled on Z axis: {z_indices}")
+        x_indices, y_indices, z_indices = get_slice_indices(
+                ground_truth, threshold=args.threshold
+        )
+
+        print(args.example)
+        print(f"{len(x_indices)} slices labelled on X axis: {x_indices}")
+        print(f"{len(y_indices)} slices labelled on Y axis: {y_indices}")
+        print(f"{len(z_indices)} slices labelled on Z axis: {z_indices}")
+    else:
+        print("Taking all the slices for augmentation")
+        x_indices = y_indices = z_indices = list(range(511))
 
     # Pytorch-UNet format
     img_folder = os.path.join(args.out_folder, "imgs")
