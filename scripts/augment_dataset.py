@@ -59,7 +59,10 @@ if __name__ == "__main__":
     elif args.example.endswith(".tif"):
         example = io.imread(args.example)
 
-    ground_truth = np.array(h5py.File(args.ground_truth, "r")["exported_data"])[..., 0]
+    if args.ground_truth.endswith(".h5"):
+        ground_truth = np.array(h5py.File(args.ground_truth, "r")["exported_data"])[..., 0]
+    elif args.ground_truth.endswith(".tif"):
+        ground_truth = io.imread(args.example)
 
     # We crop examples
     first, last = 0, 511
@@ -68,7 +71,7 @@ if __name__ == "__main__":
     ground_truth = ground_truth[first:last, first:last, first:last]
 
     x_indices, y_indices, z_indices = get_slice_indices(
-        ground_truth, threshold=args.threshold
+            ground_truth, threshold=args.threshold
     )
 
     print(args.example)
@@ -110,6 +113,7 @@ if __name__ == "__main__":
         [
             iaa.PiecewiseAffine(scale=(0.01, 0.03)),
             iaa.PerspectiveTransform(scale=(0.01, 0.15)),
+            iaa.ElasticTransformation(sigma=4.0),
             iaa.Fliplr(0.5),
         ],
         random_order=True,
