@@ -62,8 +62,8 @@ if __name__ == "__main__":
 
     for e_file, gt_file in zip(examples_files, gt_files):
 
-        example = io.imread(e_file)
-        ground_truth = io.imread(gt_file)
+        example = io.imread(os.path.join(args.example_folder, e_file))
+        ground_truth = io.imread(os.path.join(args.ground_truth_folder, gt_file))
 
         # We crop examples
         first, last = 0, 511
