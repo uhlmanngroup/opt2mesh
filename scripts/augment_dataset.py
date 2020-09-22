@@ -137,6 +137,8 @@ if __name__ == "__main__":
         n_augment = args.n_augment
         examples = []
         gts = []
+        examples.extend(examples_slices)
+        gts.extend(gts_slices)
         for i in range(n_augment):
             print(f"Augmenting step: {i} / {n_augment}")
             examples_i, gts_i = data_augmenter(
