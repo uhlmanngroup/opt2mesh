@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
         os.makedirs(img_folder, exist_ok=True)
         os.makedirs(mask_folder, exist_ok=True)
-        base_name = example.split(os.sep)[-1].split(".")[0]
+        base_name = e_file.split(os.sep)[-1].split(".")[0]
 
         if args.old_labelling:
             # Mapping the labelling:
