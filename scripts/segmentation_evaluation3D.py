@@ -107,8 +107,8 @@ if __name__ == "__main__":
     probs_files = sorted(glob(os.path.join(args.probabilities, "*.h5")))
     gt_files = sorted(glob(os.path.join(args.ground_truths, "*.h5")))
 
-    print(probs_files)
-    print(gt_files)
+    print(f"Number of files for predictions : {len(probs_files)}")
+    print(f"Number of files for ground truth: {len(gt_files)}")
 
     assert len(probs_files) == len(gt_files), "Different number of files in each folder"
 
