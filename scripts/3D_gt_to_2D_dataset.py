@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ia.seed(1337)
 
     args = parse_args()
-    files = sorted(glob(os.path.join(args.examples_folder), "*.h5"))
+    files = sorted(glob(os.path.join(args.examples_folder, "*.h5")))
 
     # Pytorch-UNet format
     img_folder = os.path.join(args.out_folder, "imgs")
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         y_indices = [i for i in range(ground_truth.shape[1]) if not(unlabelled_class in ground_truth[:, i, :])]
         z_indices = [i for i in range(ground_truth.shape[2]) if not(unlabelled_class in ground_truth[:, :, i])]
 
-        print(args.example)
+        print(f)
         print(f"{len(x_indices) / last * 100} % slices taken on X axis")
         print(f"{len(y_indices) / last * 100} % slices taken on Y axis")
         print(f"{len(z_indices) / last * 100} % slices taken on Z axis")
@@ -87,6 +87,8 @@ if __name__ == "__main__":
             random_order=True,
         )
 
+        ground_truth = ground_truth[..., np.newaxis]
+
         print(raw.shape, ground_truth.shape)
         examples_slices = (
             [raw[x, :, :] for x in x_indices]
@@ -95,9 +97,9 @@ if __name__ == "__main__":
         )
 
         gts_slices = (
-            [ground_truth[x, :, :, :] for x in x_indices]
-            + [ground_truth[:, y, :, :] for y in y_indices]
-            + [ground_truth[:, :, z, :] for z in z_indices]
+                [ground_truth[x, :, :, :] for x in x_indices]
+                + [ground_truth[:, y, :, :] for y in y_indices]
+                + [ground_truth[:, :, z, :] for z in z_indices]
         )
 
         n_augment = args.n_augment
