@@ -204,21 +204,26 @@ class OPT2MeshPipeline(ABC):
 
         logging.info(f"Mesh simplification")
         simplified_mesh = self._mesh_simplification(mesh_to_simplify)
-        pymesh.save_mesh_raw(base_out_file + "_simplified_mesh.stl",
-                             simplified_mesh.vertices,
-                             simplified_mesh.faces)
+        igl.write_triangle_mesh(base_out_file + "_simplified_mesh.stl",
+                                simplified_mesh.vertices,
+                                simplified_mesh.faces)
 
         logging.info(f"Mesh fixing")
         final_mesh = self._mesh_fixing(simplified_mesh)
 
-        final_mesh_file = base_out_file + "_final_mesh.stl"
-        logging.info(f"Saving final mesh in: {final_mesh_file}")
-        pymesh.save_mesh_raw(final_mesh_file, final_mesh.verts, final_mesh.faces)
-        logging.info(f"Saved final mesh !")
+        try:
+            final_mesh_file = base_out_file + "_final_mesh.stl"
+            logging.info(f"Saving final mesh in: {final_mesh_file}")
+            pymesh.save_mesh_raw(final_mesh_file, final_mesh.verts, final_mesh.faces)
+            logging.info(f"Saved final mesh !")
+        except Exception as e:
+            logging.info("Was not able to save final mesh")
+            logging.info(e)
+
+        logging.info("Statistics of final simplified mesh:")
         stats = self.get_mesh_statistics(
             final_mesh.vertices, final_mesh.faces
         )
-        logging.info("Statistics of final simplified mesh:")
         for k, v in stats:
             logging.info(f"{k}: {v}")
 
