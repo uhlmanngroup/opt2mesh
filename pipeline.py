@@ -210,7 +210,7 @@ class OPT2MeshPipeline(ABC):
 
         final_mesh_file = base_out_file + "_final_mesh.stl"
         logging.info(f"Saving final simplified mesh in: {final_mesh_file}")
-        pymesh.meshio.save_mesh(final_mesh_file, final_mesh)
+        igl.write_triangle_mesh(final_mesh_file, final_mesh.verts, final_mesh.faces)
         logging.info(f"Saved final simplified mesh !")
         stats = self.get_mesh_statistics(
             final_mesh.vertices, final_mesh.faces
