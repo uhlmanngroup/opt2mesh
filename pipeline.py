@@ -331,10 +331,9 @@ class OPT2MeshPipeline(ABC):
         meshfix.repair()
         logging.info(f"Fixed mesh")
 
-        # Access the repaired mesh with vtk
-        fixed_mesh = meshfix.mesh
+        mesh = pymesh.meshio.form_mesh(meshfix.v, meshfix.f)
 
-        return fixed_mesh
+        return mesh
 
 
 class GACPipeline(OPT2MeshPipeline):
