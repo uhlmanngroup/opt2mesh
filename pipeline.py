@@ -204,18 +204,19 @@ class OPT2MeshPipeline(ABC):
 
         logging.info(f"Mesh simplification")
         simplified_mesh = self._mesh_simplification(mesh_to_simplify)
-        igl.write_triangle_mesh(base_out_file + "_simplified_mesh.stl",
+        simplified_mesh_file = base_out_file + "_simplified_mesh.stl"
+        igl.write_triangle_mesh(simplified_mesh_file,
                                 simplified_mesh.vertices,
                                 simplified_mesh.faces)
+        logging.info(f"Saved simplified mesh in: {simplified_mesh_file}")
 
         logging.info(f"Mesh fixing")
         final_mesh = self._mesh_fixing(simplified_mesh)
 
         try:
             final_mesh_file = base_out_file + "_final_mesh.stl"
-            logging.info(f"Saving final mesh in: {final_mesh_file}")
-            pymesh.save_mesh_raw(final_mesh_file, final_mesh.verts, final_mesh.faces)
-            logging.info(f"Saved final mesh !")
+            pymesh.save_mesh_raw(final_mesh_file, final_mesh.vertices, final_mesh.faces)
+            logging.info(f"Saved final mesh in: {final_mesh_file}")
         except Exception as e:
             logging.info("Was not able to save final mesh")
             logging.info(e)
@@ -227,7 +228,7 @@ class OPT2MeshPipeline(ABC):
         for k, v in stats:
             logging.info(f"{k}: {v}")
 
-        logging.info("Pipeline done!")
+        logging.info(f"Pipeline {self.__class__.__name__} done")
 
     @staticmethod
     def clean_mesh(v, f):
