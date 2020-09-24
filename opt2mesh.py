@@ -434,11 +434,11 @@ def main():
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")
 
-    logging.info(f"Starting pipeline {opt2mesh_pipeline.__class__.__name}")
+    logging.info(f"Starting pipeline {opt2mesh_pipeline.__class__.__name__}")
     logging.info(f"  Input TIF stack: {args.in_tif}")
     logging.info(f"  Out folder: {job_out_folder}")
     opt2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=job_out_folder)
-    logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name}")
+    logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name__}")
 
 
 if __name__ == "__main__":
