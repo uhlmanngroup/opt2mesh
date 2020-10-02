@@ -3,6 +3,7 @@
 import h5py
 import argparse
 from skimage import io
+import numpy as np
 
 __doc__ = "TIF to HDF5 converter"
 
@@ -16,5 +17,5 @@ if __name__ == "__main__":
     print(f"{args.tif_file} dtype: {data.dtype}")
 
     hf = h5py.File(args.tif_file.replace(".tif", ".h5"), "w")
-    hf.create_dataset(name="dataset", data=data, chunks=True)
+    hf.create_dataset(name="exported_data", data=data[..., np.newaxis], chunks=True)
     hf.close()

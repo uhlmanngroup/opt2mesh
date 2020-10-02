@@ -22,8 +22,21 @@ from skimage import io, restoration, filters, exposure
 from skimage.morphology import erosion, dilation
 from skimage.restoration import estimate_sigma
 
-from scripts.crop_h5 import _empirical_crop
 
+def _empirical_crop(volume):
+    """
+    Limit were determined empirically.
+
+    @param volume:
+    @return:
+    """
+    x_min, x_max = 0, 512
+    y_min, y_max = 100, 450
+    z_min, z_max = 40, 480
+
+    coords = [(x_min, x_max), (y_min, y_max), (z_min, z_max)]
+
+    return volume[x_min:x_max, y_min:y_max, z_min:z_max], coords
 
 def __denoise_nl_means(slice):
     """

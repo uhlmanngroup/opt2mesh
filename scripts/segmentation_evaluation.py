@@ -9,8 +9,6 @@ Perform the evaluation of predictions on slices which have been labelled by
 computing Dice Coefficient and Intersection over Union
 """
 
-# TODO: add warping error, see article:
-#     Boundary Learning by Optimization with Topological Constraints
 from sklearn.metrics import adjusted_rand_score
 
 

@@ -3,13 +3,14 @@ import argparse
 import os
 from glob import glob
 
-import h5py
 import numpy as np
 
 __doc__ = """
 Perform the evaluation of predictions on volumes which have been labelled by
 computing Dice Coefficient and Intersection over Union. Doesn't use the unlabelled class (2).
 """
+
+from skimage import io
 
 from sklearn.metrics import adjusted_rand_score
 
@@ -91,11 +92,11 @@ def parse_args():
     # Argument
     parser.add_argument(
         "probabilities",
-        help="Folder of HDF5 files predictions of (511 × 511 × 511) examples",
+        help="Folder of TIF files predictions of (511 × 511 × 511) examples",
     )
     parser.add_argument(
         "ground_truths",
-        help="Folder of HDF5 files of labels of (511 × 511 × 511) examples, values in [0, 1, 2]",
+        help="Folder of TIF files of labels of (511 × 511 × 511) examples, values in [0, 1, 2]",
     )
 
     return parser.parse_args()
@@ -104,8 +105,8 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    probs_files = sorted(glob(os.path.join(args.probabilities, "*.h5")))
-    gt_files = sorted(glob(os.path.join(args.ground_truths, "*.h5")))
+    probs_files = sorted(glob(os.path.join(args.probabilities, "*.tif")))
+    gt_files = sorted(glob(os.path.join(args.ground_truths, "*.tif")))
 
     print(f"Number of files for predictions : {len(probs_files)}")
     print(f"Number of files for ground truth: {len(gt_files)}")
@@ -114,17 +115,8 @@ if __name__ == "__main__":
 
     for pf, gt in zip(probs_files, gt_files):
 
-        hf = h5py.File(pf, 'r')
-        ks = list(hf.keys())
-        print("Keys in", pf, ": ", ks)
-        probabilities = np.array(hf[ks[0]])
-        hf.close()
-
-        hf = h5py.File(gt, 'r')
-        ks = list(hf.keys())
-        print("Keys in", gt, ": ", ks)
-        ground_truth = np.array(hf["labels"])
-        hf.close()
+        probabilities = io.imread(pf)
+        ground_truth = io.imread(gt)
 
         if len(probabilities.shape) == 4:
             probabilities = probabilities[probabilities.shape.index(1)]
@@ -144,5 +136,4 @@ if __name__ == "__main__":
         print(pf, "vs", gt)
         print("Dice          :", dice(ground_truth[mask], predictions[mask]))
         print("IoU           :", iou(ground_truth[mask], predictions[mask]))
-        print("Adjusted RAND :", adjusted_rand_score(ground_truth[mask], predictions[mask]))
         print()
