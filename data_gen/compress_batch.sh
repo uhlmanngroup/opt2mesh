@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 # Create an archive in the light folder to download
-# all but heavy files (like hdf5 or tif)
+# all but heavy files (like hdf5 or tif) when using the LSF cluster
 
 set -e
 
