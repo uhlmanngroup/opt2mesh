@@ -157,7 +157,7 @@ def parse_args():
     parser.add_argument(
         "--level",
         type=float,
-        default=0.999,
+        default=0.5,
         help="Marching Cubes: isolevel of the surface for marching cube",
     )
     parser.add_argument(
