@@ -204,11 +204,6 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  Vertices: {len(decimated_mesh.vertices)}")
         logging.info(f"  Faces: {len(decimated_mesh.faces)}")
 
-        simplified_mesh_file = base_out_file + "_simplified_mesh.stl"
-        pymesh.save_mesh_raw(simplified_mesh_file,
-                             decimated_mesh.vertices,
-                             decimated_mesh.faces)
-        logging.info(f"Saved simplified mesh in: {simplified_mesh_file}")
 
         logging.info(f"Mesh repairing")
         final_mesh = self._mesh_repairing(decimated_mesh)
