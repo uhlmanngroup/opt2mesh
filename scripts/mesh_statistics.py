@@ -5,7 +5,6 @@ import os
 import pandas as pd
 from pathlib import Path
 from pprint import pprint
-from joblib import Parallel, delayed
 
 __doc__ = "Compute statistics of a set of meshes and stores them in a CSV file "
 
