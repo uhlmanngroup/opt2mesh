@@ -48,7 +48,7 @@ class OPT2MeshPipeline(ABC):
     def __init__(
             self,
             iterations=50,
-            level=0.999,
+            level=0.5,
             spacing=1,
             gradient_direction="descent",
             step_size=1,
@@ -310,7 +310,7 @@ class GACPipeline(OPT2MeshPipeline):
             timing=True,
             detail="high",
             iterations=50,
-            level=0.999,
+            level=0.5,
             spacing=1,
             save_temp=False,
             on_slices=False,
@@ -416,7 +416,7 @@ class ACWEPipeline(OPT2MeshPipeline):
             timing=True,
             detail="high",
             iterations=150,
-            level=0.999,
+            level=0.5,
             spacing=1,
             save_temp=False,
             on_slices=False,
@@ -705,7 +705,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             timing=True,
             detail="high",
             iterations=150,
-            level=0.999,
+            level=0.5,
             spacing=1,
             save_temp=False,
             on_slices=False,
@@ -862,7 +862,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             timing=True,
             detail="high",
             iterations=150,
-            level=0.999,
+            level=0.5,
             spacing=1,
             save_temp=False,
             on_slices=False,
@@ -987,8 +987,6 @@ class UNetPipeline(OPT2MeshPipeline):
         self.scale_factor = scale_factor
         self.bilinear = bilinear
 
-        # TODO: this is enforced
-        self.level = 0.85
 
     def _predict(self, net, full_img, device):
         net.eval()
@@ -1113,9 +1111,6 @@ class UNet3DPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
         )
-
-        # TODO: this is enforced
-        self.level = 0.85
 
         self.model_file = model_file
 
