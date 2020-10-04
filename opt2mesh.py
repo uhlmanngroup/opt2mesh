@@ -28,7 +28,7 @@ def parse_args():
         "--method",
         help="Surface extraction method",
         choices=["acwe", "gac", "autocontext", "autocontext_acwe", "2D_unet", "3d_unet", "direct"],
-        default="acwe",
+        default="direct",
     )
 
     # General settings
