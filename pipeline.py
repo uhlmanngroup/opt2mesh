@@ -616,7 +616,6 @@ class ACWEPipeline(OPT2MeshPipeline):
         logging.info(f"x_front.shape         : {x_front.shape}")
         logging.info(f"x_back.shape          : {x_back.shape}")
 
-        # TODO: make this general                      v
         # the cube has a size of (511,512,512)
         x_front_reshaped = np.concatenate(
             (x_front, np.zeros((255, 512, 512), dtype="int8")), axis=0

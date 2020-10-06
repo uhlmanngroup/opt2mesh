@@ -8,7 +8,7 @@ import pymesh
 import pymeshfix
 import numpy as np
 
-__doc__ = "Experiments with mesh fixing"
+__doc__ = "Manual post-processing of meshes with defect"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
