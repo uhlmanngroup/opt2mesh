@@ -33,7 +33,7 @@ def parse_args():
             "gac",
             "autocontext",
             "autocontext_acwe",
-            "2D_unet",
+            "2d_unet",
             "3d_unet",
             "direct",
         ],
