@@ -4,9 +4,11 @@ from skimage import io
 import argparse
 import numpy as np
 
-__doc__ = "Generate a tif stack based on a decision threshold" \
-          "used to construct the ground truth." \
-          "0: background, 1: embryo, 2: unlabelled/don't take into account"
+__doc__ = (
+    "Generate a tif stack based on a decision threshold"
+    "used to construct the ground truth."
+    "0: background, 1: embryo, 2: unlabelled/don't take into account"
+)
 
 from skimage.morphology import flood_fill
 
@@ -14,8 +16,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tif_file", help="TIF stack")
-    parser.add_argument("threshold", type=float,
-                        help="Value in [0, 1] to binarise image")
+    parser.add_argument(
+        "threshold", type=float, help="Value in [0, 1] to binarise image"
+    )
 
     args = parser.parse_args()
 
@@ -76,4 +79,3 @@ if __name__ == "__main__":
     # data_out_new[225:275, 512-350:512-300, 220:300] = 2
 
     io.imsave(args.tif_file.replace(".tif", "_bin.tif"), data_out_new)
-

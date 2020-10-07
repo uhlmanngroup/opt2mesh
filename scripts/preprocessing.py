@@ -38,6 +38,7 @@ def _empirical_crop(volume):
 
     return volume[x_min:x_max, y_min:y_max, z_min:z_max], coords
 
+
 def __denoise_nl_means(slice):
     """
     Simple adaptation for parallelization.

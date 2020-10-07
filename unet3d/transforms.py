@@ -835,7 +835,7 @@ class Transformer:
             "RandomContrast": RandomContrast,
             "RandomRotate": RandomRotate,
             "RandomRotate90": RandomRotate90,
-            "RandomFlip": RandomFlip
+            "RandomFlip": RandomFlip,
         }
         clazz = name_to_class[class_name]
         return clazz

@@ -24,7 +24,12 @@ if __name__ == "__main__":
             m = igl.massmatrix(v, f, igl.MASSMATRIX_TYPE_VORONOI)
             print(f" ✅ Mass matrix passed")
             ind = np.arange(0, v.shape[0], dtype=np.int32)
-            g = np.stack([igl.exact_geodesic(v, f, np.array([i], dtype=np.int32), ind) for i in ind])
+            g = np.stack(
+                [
+                    igl.exact_geodesic(v, f, np.array([i], dtype=np.int32), ind)
+                    for i in ind
+                ]
+            )
             print(f" ✅ Geodesic matrix passed")
         except Exception as e:
             print(f" ❌ {base_name} failed")

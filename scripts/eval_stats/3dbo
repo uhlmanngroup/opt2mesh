@@ -1,0 +1,194 @@
+ → eval.sh ~/3dbo
+Computing metric for /home/jerphanion/3dbo
+Metrics for /home/jerphanion/3dbo/MNS_M1054_WS6ga_125_occupancy_map.tif
+Similarity:
+DICE    = 0.956851      Dice Coefficient (F1-Measure)
+JACRD   = 0.917272      Jaccard Coefficient
+AUC     = 0.990503      Area under ROC Curve
+KAPPA   = 0.953603      Cohen Kappa
+RNDIND  = 0.987978      Rand Index
+ADJRIND = 0.946972      Adjusted Rand Index
+ICCORR  = 0.956828      Interclass Correlation
+VOLSMTY = 0.969935      Volumetric Similarity Coefficient
+MUTINF  = 0.321129      Mutual Information
+
+Distance:
+HDRFDST = 31.796226     Hausdorff Distance (in voxel)
+MAHLNBS = 0.029361      Mahanabolis Distance
+VARINFO = 0.090076      Variation of Information
+GCOERR  = 0.011730      Global Consistency Error
+PROBDST = 0.000177      Probabilistic Distance
+
+Classic Measures:
+SNSVTY  = 0.986511      Sensitivity (Recall, true positive rate)
+SPCFTY  = 0.994495      Specificity (true negative rate)
+PRCISON = 0.928923      Precision (Confidence)
+FMEASR  = 0.956851      F-Measure
+ACURCY  = 0.993952      Accuracy
+FALLOUT = 0.005505      Fallout (false positive rate)
+
+Total execution time= 16367 milliseconds
+
+
+  ---** VISCERAL 2013, www.visceral.eu **---
+
+Metrics for /home/jerphanion/3dbo/MNS_M173_115_occupancy_map.tif
+Similarity:
+DICE    = 0.972253      Dice Coefficient (F1-Measure)
+JACRD   = 0.946004      Jaccard Coefficient
+AUC     = 0.992548      Area under ROC Curve
+KAPPA   = 0.970228      Cohen Kappa
+RNDIND  = 0.992476      Rand Index
+ADJRIND = 0.966032      Adjusted Rand Index
+ICCORR  = 0.972238      Interclass Correlation
+VOLSMTY = 0.983760      Volumetric Similarity Coefficient
+MUTINF  = 0.327494      Mutual Information
+
+Distance:
+HDRFDST = 23.345235     Hausdorff Distance (in voxel)
+MAHLNBS = 0.024161      Mahanabolis Distance
+VARINFO = 0.062165      Variation of Information
+GCOERR  = 0.007422      Global Consistency Error
+PROBDST = 0.000112      Probabilistic Distance
+
+Classic Measures:
+SNSVTY  = 0.988303      Sensitivity (Recall, true positive rate)
+SPCFTY  = 0.996792      Specificity (true negative rate)
+PRCISON = 0.956716      Precision (Confidence)
+FMEASR  = 0.972253      F-Measure
+ACURCY  = 0.996224      Accuracy
+FALLOUT = 0.003208      Fallout (false positive rate)
+
+Total execution time= 16324 milliseconds
+
+
+  ---** VISCERAL 2013, www.visceral.eu **---
+
+Metrics for /home/jerphanion/3dbo/MNS_M188_115_occupancy_map.tif
+Similarity:
+DICE    = 0.938320      Dice Coefficient (F1-Measure)
+JACRD   = 0.883807      Jaccard Coefficient
+AUC     = 0.992971      Area under ROC Curve
+KAPPA   = 0.933684      Cohen Kappa
+RNDIND  = 0.982844      Rand Index
+ADJRIND = 0.924392      Adjusted Rand Index
+ICCORR  = 0.938286      Interclass Correlation
+VOLSMTY = 0.943184      Volumetric Similarity Coefficient
+MUTINF  = 0.309509      Mutual Information
+
+Distance:
+HDRFDST = 32.710854     Hausdorff Distance (in voxel)
+MAHLNBS = 0.021240      Mahanabolis Distance
+VARINFO = 0.113556      Variation of Information
+GCOERR  = 0.016374      Global Consistency Error
+PROBDST = 0.000258      Probabilistic Distance
+
+Classic Measures:
+SNSVTY  = 0.994843      Sensitivity (Recall, true positive rate)
+SPCFTY  = 0.991099      Specificity (true negative rate)
+PRCISON = 0.887875      Precision (Confidence)
+FMEASR  = 0.938320      F-Measure
+ACURCY  = 0.991347      Accuracy
+FALLOUT = 0.008901      Fallout (false positive rate)
+
+Total execution time= 16286 milliseconds
+
+
+  ---** VISCERAL 2013, www.visceral.eu **---
+
+Metrics for /home/jerphanion/3dbo/MNS_M525_105_occupancy_map.tif
+Similarity:
+DICE    = 0.932355      Dice Coefficient (F1-Measure)
+JACRD   = 0.873283      Jaccard Coefficient
+AUC     = 0.996158      Area under ROC Curve
+KAPPA   = 0.929087      Cohen Kappa
+RNDIND  = 0.987553      Rand Index
+ADJRIND = 0.922705      Adjusted Rand Index
+ICCORR  = 0.932331      Interclass Correlation
+VOLSMTY = 0.933469      Volumetric Similarity Coefficient
+MUTINF  = 0.229074      Mutual Information
+
+Distance:
+HDRFDST = 58.497863     Hausdorff Distance (in voxel)
+MAHLNBS = 0.011195      Mahanabolis Distance
+VARINFO = 0.082396      Variation of Information
+GCOERR  = 0.011744      Global Consistency Error
+PROBDST = 0.000285      Probabilistic Distance
+
+Classic Measures:
+SNSVTY  = 0.998807      Sensitivity (Recall, true positive rate)
+SPCFTY  = 0.993508      Specificity (true negative rate)
+PRCISON = 0.874194      Precision (Confidence)
+FMEASR  = 0.932355      F-Measure
+ACURCY  = 0.993737      Accuracy
+FALLOUT = 0.006492      Fallout (false positive rate)
+
+Total execution time= 14101 milliseconds
+
+
+  ---** VISCERAL 2013, www.visceral.eu **---
+
+Metrics for /home/jerphanion/3dbo/MNS_M539_105_occupancy_map.tif
+Similarity:
+DICE    = 0.904009      Dice Coefficient (F1-Measure)
+JACRD   = 0.824832      Jaccard Coefficient
+AUC     = 0.991966      Area under ROC Curve
+KAPPA   = 0.897282      Cohen Kappa
+RNDIND  = 0.974954      Rand Index
+ADJRIND = 0.884298      Adjusted Rand Index
+ICCORR  = 0.903959      Interclass Correlation
+VOLSMTY = 0.906502      Volumetric Similarity Coefficient
+MUTINF  = 0.276664      Mutual Information
+
+Distance:
+HDRFDST = 70.469852     Hausdorff Distance (in voxel)
+MAHLNBS = 0.075319      Mahanabolis Distance
+VARINFO = 0.147925      Variation of Information
+GCOERR  = 0.023198      Global Consistency Error
+PROBDST = 0.000416      Probabilistic Distance
+
+Classic Measures:
+SNSVTY  = 0.997250      Sensitivity (Recall, true positive rate)
+SPCFTY  = 0.986683      Specificity (true negative rate)
+PRCISON = 0.826713      Precision (Confidence)
+FMEASR  = 0.904009      F-Measure
+ACURCY  = 0.987316      Accuracy
+FALLOUT = 0.013317      Fallout (false positive rate)
+
+Total execution time= 45196 milliseconds
+
+
+  ---** VISCERAL 2013, www.visceral.eu **---
+
+Metrics for /home/jerphanion/3dbo/MNS_M566_125_occupancy_map.tif
+Similarity:
+DICE    = 0.968192      Dice Coefficient (F1-Measure)
+JACRD   = 0.938346      Jaccard Coefficient
+AUC     = 0.992146      Area under ROC Curve
+KAPPA   = 0.965575      Cohen Kappa
+RNDIND  = 0.990367      Rand Index
+ADJRIND = 0.960137      Adjusted Rand Index
+ICCORR  = 0.968174      Interclass Correlation
+VOLSMTY = 0.979352      Volumetric Similarity Coefficient
+MUTINF  = 0.350042      Mutual Information
+
+Distance:
+HDRFDST = 29.563491     Hausdorff Distance (in voxel)
+MAHLNBS = 0.027581      Mahanabolis Distance
+VARINFO = 0.076284      Variation of Information
+GCOERR  = 0.009474      Global Consistency Error
+PROBDST = 0.000129      Probabilistic Distance
+
+Classic Measures:
+SNSVTY  = 0.988605      Sensitivity (Recall, true positive rate)
+SPCFTY  = 0.995688      Specificity (true negative rate)
+PRCISON = 0.948606      Precision (Confidence)
+FMEASR  = 0.968192      F-Measure
+ACURCY  = 0.995160      Accuracy
+FALLOUT = 0.004312      Fallout (false positive rate)
+
+Total execution time= 18596 milliseconds
+
+
+  ---** VISCERAL 2013, www.visceral.eu **---
+

@@ -58,7 +58,7 @@ if __name__ == "__main__":
     print(f"Examples  files: {len(examples_files)}")
     print(f"Ground T. files: {len(gt_files)}")
 
-    assert len(examples_files) == len(gt_files), 'Different numbers of files'
+    assert len(examples_files) == len(gt_files), "Different numbers of files"
 
     for e_file, gt_file in zip(examples_files, gt_files):
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             from scripts.segmentation_evaluation import get_slice_indices
 
             x_indices, y_indices, z_indices = get_slice_indices(
-                    ground_truth, threshold=args.threshold
+                ground_truth, threshold=args.threshold
             )
 
             print(args.example)

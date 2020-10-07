@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
         # Do not consider the "unlabelled" class voxels
         unlabelled_class = 2
-        mask = (ground_truth != unlabelled_class)
+        mask = ground_truth != unlabelled_class
 
         print(pf, "vs", gt)
         print("Dice          :", dice(ground_truth[mask], predictions[mask]))

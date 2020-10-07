@@ -63,9 +63,21 @@ if __name__ == "__main__":
 
         unlabelled_class = 2
 
-        x_indices = [i for i in range(ground_truth.shape[0]) if not(unlabelled_class in ground_truth[i, :, :])]
-        y_indices = [i for i in range(ground_truth.shape[1]) if not(unlabelled_class in ground_truth[:, i, :])]
-        z_indices = [i for i in range(ground_truth.shape[2]) if not(unlabelled_class in ground_truth[:, :, i])]
+        x_indices = [
+            i
+            for i in range(ground_truth.shape[0])
+            if not (unlabelled_class in ground_truth[i, :, :])
+        ]
+        y_indices = [
+            i
+            for i in range(ground_truth.shape[1])
+            if not (unlabelled_class in ground_truth[:, i, :])
+        ]
+        z_indices = [
+            i
+            for i in range(ground_truth.shape[2])
+            if not (unlabelled_class in ground_truth[:, :, i])
+        ]
 
         print(f)
         print(f"{len(x_indices) / last * 100} % slices taken on X axis")
@@ -97,9 +109,9 @@ if __name__ == "__main__":
         )
 
         gts_slices = (
-                [ground_truth[x, :, :, :] for x in x_indices]
-                + [ground_truth[:, y, :, :] for y in y_indices]
-                + [ground_truth[:, :, z, :] for z in z_indices]
+            [ground_truth[x, :, :, :] for x in x_indices]
+            + [ground_truth[:, y, :, :] for y in y_indices]
+            + [ground_truth[:, :, z, :] for z in z_indices]
         )
 
         n_augment = args.n_augment

@@ -15,8 +15,12 @@ if __name__ == "__main__":
     parser.add_argument("examples_folder")
     parser.add_argument("predictions_folder")
     parser.add_argument("out_folder")
-    parser.add_argument("--prediction_level", help="Decision threshold for"
-                                                   "binarization", type=float, default=0.85)
+    parser.add_argument(
+        "--prediction_level",
+        help="Decision threshold for" "binarization",
+        type=float,
+        default=0.85,
+    )
 
     args = parser.parse_args()
 
@@ -27,8 +31,7 @@ if __name__ == "__main__":
 
     for ex_f, prediction_f in zip(examples_files, predictions_files):
         ex = io.imread(os.path.join(args.examples_folder, ex_f))
-        prediction = io.imread(os.path.join(args.predictions_folder,
-                                            prediction_f))
+        prediction = io.imread(os.path.join(args.predictions_folder, prediction_f))
 
         print("Processing", ex_f, "and", prediction_f)
 
@@ -43,13 +46,13 @@ if __name__ == "__main__":
         first, last = 0, 511
         ex = ex[first:last, first:last, first:last]
 
-        labels = (prediction[first:last, first:last, first:last] / 255) > \
-                 args.prediction_level
+        labels = (
+            prediction[first:last, first:last, first:last] / 255
+        ) > args.prediction_level
 
         labels = np.array(labels, dtype=np.uint8)
 
-        out_file = os.path.join(args.out_folder, ex_f.replace(".tif",
-                                                              "_full.h5"))
+        out_file = os.path.join(args.out_folder, ex_f.replace(".tif", "_full.h5"))
 
         hf = h5py.File(out_file, "w")
         hf.create_dataset(name="raw", data=ex, chunks=True)

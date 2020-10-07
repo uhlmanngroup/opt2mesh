@@ -13,8 +13,9 @@ from pipeline import (
     GACPipeline,
     AutoContextPipeline,
     AutoContextACWEPipeline,
-    UNetPipeline, UNet3DPipeline,
-    DirectMeshingPipeline
+    UNetPipeline,
+    UNet3DPipeline,
+    DirectMeshingPipeline,
 )
 
 
@@ -27,7 +28,15 @@ def parse_args():
     parser.add_argument(
         "--method",
         help="Surface extraction method",
-        choices=["acwe", "gac", "autocontext", "autocontext_acwe", "2D_unet", "3d_unet", "direct"],
+        choices=[
+            "acwe",
+            "gac",
+            "autocontext",
+            "autocontext_acwe",
+            "2D_unet",
+            "3d_unet",
+            "direct",
+        ],
         default="direct",
     )
 
@@ -212,9 +221,7 @@ def main():
     code_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
     git_log_command = f"git --git-dir={code_dir}/.git --work-tree={code_dir} log"
     last_commit_message = os.popen(f"{git_log_command} -1").read().strip()
-    last_commit = (
-        os.popen(f'{git_log_command} -1 --pretty="%h"').read().strip()
-    )
+    last_commit = os.popen(f'{git_log_command} -1 --pretty="%h"').read().strip()
     cli_call = " ".join(sys.argv)
 
     os.makedirs(job_out_folder)

@@ -9,7 +9,12 @@ import torch
 from torch.utils.data import DataLoader, ConcatDataset
 
 import unet3d.transforms as transforms
-from unet3d.datasets.utils import ConfigDataset, calculate_stats, logger, prediction_collate
+from unet3d.datasets.utils import (
+    ConfigDataset,
+    calculate_stats,
+    logger,
+    prediction_collate,
+)
 from unet3d.utils import get_logger
 
 logger = get_logger("HDF5Dataset")
@@ -130,7 +135,9 @@ class AbstractHDF5Dataset(ConfigDataset):
         # build slice indices for raw and label data sets
         assert "name" in slice_builder_config
         logger.info(f"Slice builder config: {slice_builder_config}")
-        slice_builder = SliceBuilder(self.raws, self.labels, self.weight_maps, **slice_builder_config)
+        slice_builder = SliceBuilder(
+            self.raws, self.labels, self.weight_maps, **slice_builder_config
+        )
 
         self.raw_slices = slice_builder.raw_slices
         self.label_slices = slice_builder.label_slices
@@ -537,9 +544,7 @@ def get_train_loaders(config):
     dataset_cls_str = loaders_config.get("dataset", None)
     if dataset_cls_str != "StandardHDF5Dataset":
         dataset_cls_str = "StandardHDF5Dataset"
-        logger.warn(
-            f"Force using default '{dataset_cls_str}'."
-        )
+        logger.warn(f"Force using default '{dataset_cls_str}'.")
     dataset_class = StandardHDF5Dataset
 
     assert set(loaders_config["train"]["file_paths"]).isdisjoint(
@@ -593,9 +598,7 @@ def get_test_loaders(config):
     dataset_cls_str = loaders_config.get("dataset", None)
     if dataset_cls_str != "StandardHDF5Dataset":
         dataset_cls_str = "StandardHDF5Dataset"
-        logger.warn(
-            f"Force using default '{dataset_cls_str}'."
-        )
+        logger.warn(f"Force using default '{dataset_cls_str}'.")
     dataset_class = StandardHDF5Dataset
 
     test_datasets = dataset_class.create_datasets(loaders_config, phase="test")

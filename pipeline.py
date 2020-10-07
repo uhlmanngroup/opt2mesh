@@ -46,19 +46,19 @@ class OPT2MeshPipeline(ABC):
     """
 
     def __init__(
-            self,
-            iterations=50,
-            level=0.5,
-            spacing=1,
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        iterations=50,
+        level=0.5,
+        spacing=1,
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         self.iterations: int = iterations
         self.level: float = level
@@ -116,13 +116,13 @@ class OPT2MeshPipeline(ABC):
         occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
 
         assert (
-                0 <= occupancy_map.min()
+            0 <= occupancy_map.min()
         ), f"The occupancy map values should be between 0 and 1, currently: {occupancy_map.min()}"
         assert (
-                occupancy_map.max() <= 1
+            occupancy_map.max() <= 1
         ), f"The occupancy map values should be between 0 and 1, currently: {occupancy_map.max()}"
         assert (
-                len(occupancy_map.shape) == 3
+            len(occupancy_map.shape) == 3
         ), f"The occupancy map values should be a 3D array, currently: {len(occupancy_map.shape)}"
 
         logging.info(f"Occupancy map info")
@@ -204,7 +204,6 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  Vertices: {len(decimated_mesh.vertices)}")
         logging.info(f"  Faces: {len(decimated_mesh.faces)}")
 
-
         logging.info(f"Mesh repairing")
         final_mesh = self._mesh_repairing(decimated_mesh)
         logging.info(f"Final mesh")
@@ -216,9 +215,7 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Saved final mesh in: {final_mesh_file}")
 
         logging.info("Statistics of final simplified mesh:")
-        stats = self.get_mesh_statistics(
-            final_mesh.vertices, final_mesh.faces
-        )
+        stats = self.get_mesh_statistics(final_mesh.vertices, final_mesh.faces)
         for k, v in stats.items():
             logging.info(f"{k}: {v}")
 
@@ -304,25 +301,25 @@ class OPT2MeshPipeline(ABC):
 
 class GACPipeline(OPT2MeshPipeline):
     def __init__(
-            self,
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            iterations=50,
-            level=0.5,
-            spacing=1,
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            # GAC specifics
-            smoothing=1,
-            threshold="auto",
-            balloon=1,
-            alpha=1000,
-            sigma=5,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=50,
+        level=0.5,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        # GAC specifics
+        smoothing=1,
+        threshold="auto",
+        balloon=1,
+        alpha=1000,
+        sigma=5,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -410,24 +407,24 @@ class GACPipeline(OPT2MeshPipeline):
 
 class ACWEPipeline(OPT2MeshPipeline):
     def __init__(
-            self,
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            iterations=150,
-            level=0.5,
-            spacing=1,
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            # ACWE specific
-            on_halves=False,
-            smoothing=1,
-            lambda1=3,
-            lambda2=1,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=150,
+        level=0.5,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        # ACWE specific
+        on_halves=False,
+        smoothing=1,
+        lambda1=3,
+        lambda2=1,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
 
         super().__init__(
@@ -663,12 +660,12 @@ class ACWEPipeline(OPT2MeshPipeline):
 
         # The full segmentation surface
         occupancy_map = (
-                x_front_reshaped
-                + x_back_reshaped
-                + y_back_reshaped
-                + y_front_reshaped
-                + z_back_reshaped
-                + z_front_reshaped
+            x_front_reshaped
+            + x_back_reshaped
+            + y_back_reshaped
+            + y_front_reshaped
+            + z_back_reshaped
+            + z_front_reshaped
         ).clip(0, 1)
 
         if self.save_temp:
@@ -694,23 +691,23 @@ class AutoContextPipeline(OPT2MeshPipeline):
     """
 
     def __init__(
-            self,
-            # Autocontext specific
-            project,
-            use_probabilities=True,
-            #
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            iterations=150,
-            level=0.5,
-            spacing=1,
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        # Autocontext specific
+        project,
+        use_probabilities=True,
+        #
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=150,
+        level=0.5,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -848,26 +845,26 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
     """
 
     def __init__(
-            self,
-            # AutoContextSpecific
-            project,
-            # ACWE specifics
-            smoothing,
-            lambda1,
-            lambda2,
-            ###
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            iterations=150,
-            level=0.5,
-            spacing=1,
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        # AutoContextSpecific
+        project,
+        # ACWE specifics
+        smoothing,
+        lambda1,
+        lambda2,
+        ###
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=150,
+        level=0.5,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -947,25 +944,25 @@ class UNetPipeline(OPT2MeshPipeline):
     """
 
     def __init__(
-            self,
-            # UNet (2D) specifics
-            model_file,
-            scale_factor=0.5,
-            bilinear=False,
-            ###
-            level=0.5,
-            ###
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            iterations=150,
-            spacing=1,
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        # UNet (2D) specifics
+        model_file,
+        scale_factor=0.5,
+        bilinear=False,
+        ###
+        level=0.5,
+        ###
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=150,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -985,7 +982,6 @@ class UNetPipeline(OPT2MeshPipeline):
         self.model_file = model_file
         self.scale_factor = scale_factor
         self.bilinear = bilinear
-
 
     def _predict(self, net, full_img, device):
         net.eval()
@@ -1074,27 +1070,27 @@ class UNet3DPipeline(OPT2MeshPipeline):
     """
 
     def __init__(
-            self,
-            # UNet (3D) specifics
-            model_file,
-            config_file,
-            patch_halo=None,
-            stride_shape=None,
-            f_maps=None,
-            ###
-            level=0.5,
-            ###
-            gradient_direction="descent",
-            step_size=1,
-            timing=True,
-            detail="high",
-            iterations=150,
-            spacing=1,
-            save_temp=False,
-            on_slices=False,
-            n_jobs=-1,
-            segment_occupancy_map=False,
-            save_occupancy_map=False,
+        self,
+        # UNet (3D) specifics
+        model_file,
+        config_file,
+        patch_halo=None,
+        stride_shape=None,
+        f_maps=None,
+        ###
+        level=0.5,
+        ###
+        gradient_direction="descent",
+        step_size=1,
+        timing=True,
+        detail="high",
+        iterations=150,
+        spacing=1,
+        save_temp=False,
+        on_slices=False,
+        n_jobs=-1,
+        segment_occupancy_map=False,
+        save_occupancy_map=False,
     ):
         super().__init__(
             iterations=iterations,
@@ -1215,10 +1211,10 @@ class UNet3DPipeline(OPT2MeshPipeline):
         logging.info(f"Loading model from {self.model_file}...")
         self.__load_checkpoint(self.model_file, model)
 
-        device = self.config['device']
-        if torch.cuda.device_count() > 1 and not device.type == 'cpu':
+        device = self.config["device"]
+        if torch.cuda.device_count() > 1 and not device.type == "cpu":
             model = torch.nn.DataParallel(model)
-            logging.info(f'Using {torch.cuda.device_count()} GPUs for prediction')
+            logging.info(f"Using {torch.cuda.device_count()} GPUs for prediction")
 
         logging.info(f"Sending the model to '{device}'")
         model = model.to(device)

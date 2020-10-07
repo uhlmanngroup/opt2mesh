@@ -35,9 +35,8 @@ if __name__ == "__main__":
 
         plt.axis("off")
         plt.tight_layout()
-        ax = plt.imshow(c, cmap='RdBu', vmin=-1.2, vmax=1.2)
+        ax = plt.imshow(c, cmap="RdBu", vmin=-1.2, vmax=1.2)
         plt.colorbar(ax)
         filename = args.C + "_" + str(slice_index).zfill(4) + ".png"
         plt.savefig(filename, bbox_inches="tight", pad_inches=0)
         plt.close("all")
-

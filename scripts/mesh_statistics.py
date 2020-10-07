@@ -13,7 +13,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
 
     # Argument
-    parser.add_argument("meshes_folder", help="Folder containing STL files of the batch of jobs.")
+    parser.add_argument(
+        "meshes_folder", help="Folder containing STL files of the batch of jobs."
+    )
     parser.add_argument("out_folder", help="Out folder for this run")
 
     return parser.parse_args()
@@ -44,7 +46,7 @@ def get_statistics(mesh_file):
 if __name__ == "__main__":
     args = parse_args()
 
-    mesh_files = sorted(list(Path(args.meshes_folder).rglob('*.stl')))
+    mesh_files = sorted(list(Path(args.meshes_folder).rglob("*.stl")))
 
     os.makedirs(args.out_folder, exist_ok=True)
 
@@ -60,9 +62,8 @@ if __name__ == "__main__":
 
     basename = args.meshes_folder.split(os.sep)[-1]
 
-    df = pd.DataFrame(list_dicts).set_index('mesh_name')
+    df = pd.DataFrame(list_dicts).set_index("mesh_name")
     out_file = os.path.join(args.out_folder, f"{basename}.csv")
     df.to_csv(out_file)
     print(df)
     print(f"Mesh statistics of {args.meshes_folder} saved in", out_file)
-

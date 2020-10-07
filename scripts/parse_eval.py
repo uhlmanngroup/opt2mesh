@@ -33,16 +33,20 @@ hd = [
 scores_names = simples + hd
 
 
-def parse_expe_text(text:str):
-    text = text.replace('\t', ' ')
+def parse_expe_text(text: str):
+    text = text.replace("\t", " ")
     examples_text = text.split("Metrics for")[1:]
 
     scores_hashmaps = []
     for ex in examples_text:
         lines = ex.split("\n")
         ex_scores = dict()
-        ex_scores['Example'] = lines[0].split(os.sep)[-1].replace("_clahe_median_denoised_occupancy_map.tif", "")
-        print(ex_scores['Example'])
+        ex_scores["Example"] = (
+            lines[0]
+            .split(os.sep)[-1]
+            .replace("_clahe_median_denoised_occupancy_map.tif", "")
+        )
+        print(ex_scores["Example"])
         for sn in scores_names:
             score_text = list(filter(lambda x: sn in x, lines))[0]
             # SEGVOL  = 7554643       segmented volume (in voxel) → 7554643
@@ -66,7 +70,11 @@ if __name__ == "__main__":
     # Print LaTeX table with the mean
     mean_df = df.mean(axis=0)
     mean_df.name = "Mean"
-    print(pd.concat([df, df.mean(axis=1)], axis=1).to_latex(index=True, float_format="%.4f"))
+    print(
+        pd.concat([df, df.mean(axis=1)], axis=1).to_latex(
+            index=True, float_format="%.4f"
+        )
+    )
 
 # Example of output of EvaluateSegmentation
 """
