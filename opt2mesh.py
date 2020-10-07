@@ -199,25 +199,17 @@ def parse_args():
     return parser.parse_args()
 
 
-def now_string():
-    """
-    Return a string of the current datetime.
-
-    :return:
-    """
-    return datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-
-
 def main():
     args = parse_args()
 
-    # We first get informations about the context of execution
+    # We first get information about the context of execution
 
     # Env variables set by LSF:
     # https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.2/lsf_config_ref/lsf_envars_job_exec.html
     job_id = os.getenv("LSB_JOBID", str(uuid.uuid1())[:8])
     job_batch_name = os.getenv("LSB_JOBNAME", "unknown_job_batch_name")
-    job_out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string())
+    now_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    job_out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string)
     code_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
     git_log_command = f"git --git-dir={code_dir}/.git --work-tree={code_dir} log"
     last_commit_message = os.popen(f"{git_log_command} -1").read().strip()
