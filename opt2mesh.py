@@ -8,15 +8,10 @@ import uuid
 import yaml
 from datetime import datetime
 
-from pipeline import (
-    ACWEPipeline,
-    GACPipeline,
-    AutoContextPipeline,
-    AutoContextACWEPipeline,
-    UNetPipeline,
-    UNet3DPipeline,
-    DirectMeshingPipeline,
-)
+from pipeline.active_contours import ACWEPipeline, GACPipeline
+from pipeline.ilastik import AutoContextPipeline, AutoContextACWEPipeline
+from pipeline.unet import UNetPipeline, UNet3DPipeline
+from pipeline.base import DirectMeshingPipeline
 
 
 def parse_args():
@@ -297,7 +292,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
@@ -318,7 +312,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
@@ -342,7 +335,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
@@ -364,7 +356,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
@@ -385,7 +376,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
@@ -407,7 +397,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
@@ -422,7 +411,6 @@ def main():
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
-            timing=args.timing,
             detail=args.detail,
             save_temp=args.save_temp,
             on_slices=args.on_slices,
