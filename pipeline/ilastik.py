@@ -35,22 +35,16 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         level=0.5,
         spacing=1,
         save_temp=False,
-        on_slices=False,
-        n_jobs=-1,
         segment_occupancy_map=False,
         save_occupancy_map=False,
     ):
         super().__init__(
-            iterations=iterations,
             level=level,
             spacing=spacing,
             gradient_direction=gradient_direction,
             step_size=step_size,
-
             detail=detail,
             save_temp=save_temp,
-            on_slices=on_slices,
-            n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
         )
@@ -60,12 +54,10 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             use_probabilities=True,
             gradient_direction="descent",
             step_size=step_size,
-
             detail=detail,
             save_temp=save_temp,
-            on_slices=on_slices,
-            n_jobs=n_jobs,
         )
+        self.iterations = iterations
         self.smoothing = smoothing
         self.lambda1 = lambda1
         self.lambda2 = lambda2
@@ -124,25 +116,19 @@ class AutoContextPipeline(OPT2MeshPipeline):
         gradient_direction="descent",
         step_size=1,
         detail="high",
-        iterations=150,
         level=0.5,
         spacing=1,
         save_temp=False,
-        on_slices=False,
-        n_jobs=-1,
         segment_occupancy_map=False,
         save_occupancy_map=False,
     ):
         super().__init__(
-            iterations=iterations,
             level=level,
             spacing=spacing,
             gradient_direction=gradient_direction,
             step_size=step_size,
             detail=detail,
             save_temp=save_temp,
-            on_slices=on_slices,
-            n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
         )

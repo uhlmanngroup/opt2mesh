@@ -29,27 +29,21 @@ class OPT2MeshPipeline(ABC):
 
     def __init__(
         self,
-        iterations=50,
         level=0.5,
         spacing=1,
         gradient_direction="descent",
         step_size=1,
         detail="high",
         save_temp=False,
-        on_slices=False,
-        n_jobs=-1,
         segment_occupancy_map=False,
         save_occupancy_map=False,
     ):
-        self.iterations: int = iterations
         self.level: float = level
         self.spacing: int = spacing
         self.gradient_direction: str = gradient_direction
         self.step_size: int = step_size
         self.detail: str = detail
         self.save_temp: bool = save_temp
-        self.on_slices: bool = on_slices
-        self.n_jobs: int = n_jobs
         self.segment_occupancy_map: bool = segment_occupancy_map
         self.save_occupancy_map: bool = save_occupancy_map
 

@@ -287,40 +287,42 @@ def main():
 
     if args.method.lower() == "gac":
         opt2mesh_pipeline = GACPipeline(
+            # GAC specifics
             iterations=args.iterations,
-            level=args.level,
-            spacing=args.spacing,
-            gradient_direction=args.gradient_direction,
-            step_size=args.step_size,
-            detail=args.detail,
-            save_temp=args.save_temp,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
-            # GAC specifics
             smoothing=args.smoothing,
             threshold=args.threshold,
             balloon=args.balloon,
             alpha=args.alpha,
             sigma=args.sigma,
-            segment_occupancy_map=args.segment_occupancy_map,
-            save_occupancy_map=args.save_occupancy_map,
-        )
-    elif args.method.lower() == "acwe":
-        opt2mesh_pipeline = ACWEPipeline(
-            iterations=args.iterations,
+            ###
             level=args.level,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
+            segment_occupancy_map=args.segment_occupancy_map,
+            save_occupancy_map=args.save_occupancy_map,
+        )
+    elif args.method.lower() == "acwe":
+        opt2mesh_pipeline = ACWEPipeline(
+            # ACWE specifics
+            iterations=args.iterations,
             on_slices=args.on_slices,
             n_jobs=args.n_jobs,
-            # ACWE specifics
             on_halves=args.on_halves,
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,
+            #
+            level=args.level,
+            spacing=args.spacing,
+            gradient_direction=args.gradient_direction,
+            step_size=args.step_size,
+            detail=args.detail,
+            save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
         )
@@ -330,15 +332,12 @@ def main():
             project=args.autocontext,
             use_probabilities=args.use_probabilities,
             ###
-            iterations=args.iterations,
             level=args.level,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            on_slices=args.on_slices,
-            n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
         )
@@ -350,16 +349,14 @@ def main():
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,
-            ###
             iterations=args.iterations,
+            ###
             level=args.level,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            on_slices=args.on_slices,
-            n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
         )
@@ -372,14 +369,11 @@ def main():
             ###
             level=args.level,
             ###
-            iterations=args.iterations,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            on_slices=args.on_slices,
-            n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
         )
@@ -393,28 +387,22 @@ def main():
             f_maps=args.f_maps,
             ###
             level=args.level,
-            iterations=args.iterations,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            on_slices=args.on_slices,
-            n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "direct":
         opt2mesh_pipeline = DirectMeshingPipeline(
             level=args.level,
-            iterations=args.iterations,
             spacing=args.spacing,
             gradient_direction=args.gradient_direction,
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            on_slices=args.on_slices,
-            n_jobs=args.n_jobs,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
         )

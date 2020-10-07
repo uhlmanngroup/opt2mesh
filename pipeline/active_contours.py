@@ -16,13 +16,13 @@ class GACPipeline(OPT2MeshPipeline):
         gradient_direction="descent",
         step_size=1,
         detail="high",
-        iterations=50,
         level=0.5,
         spacing=1,
         save_temp=False,
+        # GAC specifics
+        iterations=50,
         on_slices=False,
         n_jobs=-1,
-        # GAC specifics
         smoothing=1,
         threshold="auto",
         balloon=1,
@@ -32,19 +32,19 @@ class GACPipeline(OPT2MeshPipeline):
         save_occupancy_map=False,
     ):
         super().__init__(
-            iterations=iterations,
             level=level,
             spacing=spacing,
             gradient_direction=gradient_direction,
             step_size=step_size,
             detail=detail,
             save_temp=save_temp,
-            on_slices=on_slices,
-            n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
         )
 
+        self.iterations: int = iterations
+        self.on_slices: bool = on_slices
+        self.n_jobs: int = n_jobs
         self.smoothing = smoothing
         self.threshold = threshold
         self.balloon = balloon
@@ -120,13 +120,13 @@ class ACWEPipeline(OPT2MeshPipeline):
         gradient_direction="descent",
         step_size=1,
         detail="high",
-        iterations=150,
         level=0.5,
         spacing=1,
         save_temp=False,
+        # ACWE specific
+        iterations=150,
         on_slices=False,
         n_jobs=-1,
-        # ACWE specific
         on_halves=False,
         smoothing=1,
         lambda1=3,
@@ -136,19 +136,18 @@ class ACWEPipeline(OPT2MeshPipeline):
     ):
 
         super().__init__(
-            iterations=iterations,
             level=level,
             spacing=spacing,
             gradient_direction=gradient_direction,
             step_size=step_size,
             detail=detail,
             save_temp=save_temp,
-            on_slices=on_slices,
-            n_jobs=n_jobs,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
         )
-
+        self.iterations: int = iterations
+        self.on_slices: bool = on_slices
+        self.n_jobs: int = n_jobs
         self.on_halves: bool = on_halves
         self.lambda1: int = lambda1
         self.lambda2: int = lambda2
