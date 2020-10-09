@@ -6,11 +6,10 @@ import h5py
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from skimage import io
-from skimage.morphology import dilation, erosion
+from skimage.morphology import dilation, erosion, flood_fill
 
 from pipeline import morphsnakes as ms
 from pipeline.base import OPT2MeshPipeline
-from scripts.preprocessing import to_hdf5, _fill_binary_image
 
 
 class AutoContextACWEPipeline(OPT2MeshPipeline):
@@ -154,7 +153,10 @@ class AutoContextPipeline(OPT2MeshPipeline):
         basename = tif_file.split(os.sep)[-1].split(".")[0]
         file_basename = f"{base_out_file}/autocontext/{basename}"
         os.makedirs(f"{base_out_file}/autocontext/", exist_ok=True)
-        h5_file = to_hdf5(opt_data, file_basename=file_basename)
+        h5_file = f"{file_basename}.h5"
+        hf = h5py.File(h5_file, "w")
+        hf.create_dataset("dataset", data=opt_data, chunks=True)
+        hf.close()
         logging.info(f"Dumped hdf5 dataset to {h5_file}")
 
         return h5_file
@@ -173,7 +175,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             erosion(dilation(gaussian_filter(interior_segmentation, sigma=0.1)))
         ).astype(np.uint8)
         for i in range(improved_seg_data.shape[0]):
-            improved_seg_data[i, :, :] = _fill_binary_image(improved_seg_data[i, :, :])
+            improved_seg_data[i, :, :] = 255 - flood_fill(improved_seg_data[i, :, :], (1, 1), 255)
 
         return improved_seg_data
 
