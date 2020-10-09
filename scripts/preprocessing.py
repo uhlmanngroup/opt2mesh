@@ -13,13 +13,12 @@ import argparse
 import logging
 import os
 
-import cv2
 import h5py
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.ndimage import gaussian_filter
 from skimage import io, restoration, filters, exposure
-from skimage.morphology import erosion, dilation
+from skimage.morphology import erosion, dilation, flood_fill
 from skimage.restoration import estimate_sigma
 
 
@@ -256,63 +255,9 @@ def full(opt_data, file_basename):
 
 
 def _fill_binary_image(im_slice):
-    # Copy the thresholded image.
-    im_floodfill = im_slice.copy()
-
-    # Mask used to flood filling.
-    # Notice the size needs to be 2 pixels than the image.
-    h, w = im_slice.shape[:2]
-    mask = np.zeros((h + 2, w + 2), np.uint8)
-
-    # Floodfill from point (0, 0)
-    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
-
-    # Invert floodfilled image
-    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-
-    # Combine the two images to get the foreground.
-    im_out = im_slice | im_floodfill_inv
-
-    return im_out
-
-
-def _morphological_post_processing(im_slice):
-    """
-    Experimental: clean the segmentation using morphological operations.
-
-    @param im_slice: 2D slice images
-    @return:
-    """
-    erode_shape = (3, 3)
-    dilate_shape = (3, 3)
-    postprocessed_slice = (
-        cv2.dilate(
-            cv2.erode(
-                cv2.GaussianBlur(im_slice, ksize=(3, 3), sigmaX=1, sigmaY=1),
-                np.ones(erode_shape),
-            ),
-            np.ones(dilate_shape),
-        )
-        > 255 / 2
-    ).astype(np.uint8)
-
-    return postprocessed_slice
-
-
-def _post_process_binary_slice(im_slice, n_step=1):
-    """
-    Perform some erosion and dilation and then.
-
-    Fill the inside of a binary image.
-
-    @param im_slice: 2D slice images
-    @return:
-    """
-    im_out = im_slice
-    for _ in range(n_step):
-        im_out = _morphological_post_processing(_fill_binary_image(im_out))
-
-    return im_out
+    im_floodfill = flood_fill(im_slice, (1,1), 255)
+    binary_image = 255 - im_floodfill
+    return binary_image
 
 
 def clean_seg(segmentation_data, file_basename):
