@@ -53,9 +53,7 @@ __author__ = "P. Márquez Neila <p.mneila@upm.es>"
 from itertools import cycle
 
 import numpy as np
-import logging
 from scipy import ndimage as ndi
-from guppy import hpy
 
 __all__ = [
     "morphological_chan_vese",
@@ -394,15 +392,7 @@ def morphological_chan_vese(
            Transactions on Pattern Analysis and Machine Intelligence (PAMI),
            2014, DOI 10.1109/TPAMI.2013.106
     """
-    h = hpy()
-
-    logging.info("Start of morphological_chan_vese")
-    logging.info(str(h.heap()))
-
     init_level_set = _init_level_set(init_level_set, image.shape)
-
-    logging.info("After init level_set")
-    logging.info(str(h.heap()))
 
     _check_input(image, init_level_set)
 
@@ -411,9 +401,6 @@ def morphological_chan_vese(
     iter_callback(u)
 
     for _ in range(iterations):
-
-        logging.info(f"Iteration {_}")
-        logging.info(str(h.heap()))
 
         # inside = u > 0
         # outside = u <= 0
@@ -523,16 +510,8 @@ def morphological_geodesic_active_contour(
            Transactions on Pattern Analysis and Machine Intelligence (PAMI),
            2014, DOI 10.1109/TPAMI.2013.106
     """
-    h = hpy()
-
-    logging.info("Start of morphological_geodesic_active_contour")
-    logging.info(str(h.heap()))
-
     image = gimage
     init_level_set = _init_level_set(init_level_set, image.shape)
-
-    logging.info("After init level_set")
-    logging.info(str(h.heap()))
 
     _check_input(image, init_level_set)
 
@@ -550,9 +529,6 @@ def morphological_geodesic_active_contour(
     iter_callback(u)
 
     for _ in range(iterations):
-
-        logging.info(f"Iteration {_}")
-        logging.info(str(h.heap()))
 
         # Balloon
         if balloon > 0:

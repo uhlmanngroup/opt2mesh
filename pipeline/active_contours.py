@@ -2,7 +2,6 @@ import logging
 import time
 
 import numpy as np
-from guppy import hpy
 from joblib import Parallel, delayed
 from skimage import io
 
@@ -254,10 +253,6 @@ class ACWEPipeline(OPT2MeshPipeline):
         :param base_out_file:
         """
 
-        h = hpy()
-        logging.info("Before loading the data")
-        logging.info(str(h.heap()))
-
         Parallel(n_jobs=self.n_jobs, backend="multiprocessing")(
             delayed(self.__acwe_on_one_half(tif_stack_file, base_out_file, suffix))
             for suffix in [
@@ -276,10 +271,6 @@ class ACWEPipeline(OPT2MeshPipeline):
 
         :param tif_stack_file: path to the TIF stack to process
         """
-
-        h = hpy()
-        logging.info("Before loading the data")
-        logging.info(str(h.heap()))
 
         opt_data = io.imread(tif_stack_file)
         occupancy_map = np.zeros(opt_data.shape)
