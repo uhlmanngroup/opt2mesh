@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
     mesh_files = glob(os.path.join(sys.argv[1], "**/*.stl"))
     for mf in mesh_files:
+        dict_mesh = dict()
         mesh = pymesh.load_mesh(mf)
         v, f = mesh.vertices, mesh.faces
         f = np.asarray(f, dtype=np.int32)
@@ -20,9 +21,21 @@ if __name__ == "__main__":
         print(f"Testing {base_name}")
         try:
             l = -igl.cotmatrix(v, f)
-            print(f" ✅ COT matrix passed")
+        except Exception as e:
+            print(f" ❌ COT matrix test failed")
+            print("Exception:", e)
+        else:
+            print(f" ✅ COT matrix test passed")
+
+        try:
             m = igl.massmatrix(v, f, igl.MASSMATRIX_TYPE_VORONOI)
-            print(f" ✅ Mass matrix passed")
+        except Exception as e:
+            print(f" ❌ Mass matrix test failed")
+            print("Exception:", e)
+        else:
+            print(f" ✅ Mass matrix test passed")
+
+        try:
             ind = np.arange(0, v.shape[0], dtype=np.int32)
             g = np.stack(
                 [
@@ -30,9 +43,8 @@ if __name__ == "__main__":
                     for i in ind
                 ]
             )
-            print(f" ✅ Geodesic matrix passed")
         except Exception as e:
-            print(f" ❌ {base_name} failed")
+            print(f" ❌ Geodesic matrix test failed")
             print("Exception:", e)
         else:
-            print(f"✅ {base_name} passed")
+            print(f" ✅ Geodesic matrix test passed")
