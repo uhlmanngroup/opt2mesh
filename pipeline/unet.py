@@ -98,7 +98,6 @@ class UNetPipeline(OPT2MeshPipeline):
         start = time.time()
         img = io.imread(tif_file)
 
-        # TODO: adapt cropping on the long run
         first, last = 0, 511
         img = img[first:last, first:last, first:last]
 
@@ -250,12 +249,11 @@ class UNet3DPipeline(OPT2MeshPipeline):
         return output_file
 
     def _extract_occupancy_map(self, tif_file, base_out_file):
-        logging.info(f"Running 3D UNet on the 3 axis")
+        logging.info(f"Running 3D UNet")
 
         # Dumping file to disk
         opt_data = io.imread(tif_file)
 
-        # TODO: adapt cropping on the long run
         first, last = 0, 511
         opt_data = opt_data[first:last, first:last, first:last]
 

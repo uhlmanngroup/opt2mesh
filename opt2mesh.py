@@ -8,14 +8,10 @@ import uuid
 import yaml
 from datetime import datetime
 
-from pipeline.active_contours import ACWEPipeline, GACPipeline
-from pipeline.ilastik import AutoContextPipeline, AutoContextACWEPipeline
-from pipeline.unet import UNetPipeline, UNet3DPipeline
-from pipeline.base import DirectMeshingPipeline
-
-
 def parse_args():
-    parser = argparse.ArgumentParser(description="Extract a mesh from a OPT scan")
+    parser = argparse.ArgumentParser(prog='opt2mesh',
+                                     description="Extract a mesh from a OPT scan",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # Argument
     parser.add_argument("in_tif", help="Input OPT scan as tif stack (3D image)")
@@ -124,7 +120,7 @@ def parse_args():
     parser.add_argument(
         "--scale",
         type=float,
-        help="UNet: Scale factor for the input images",
+        help="UNet (2D): Scale factor for the input images",
         default=0.5,
     )
     parser.add_argument(
@@ -196,7 +192,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
     # We first get information about the context of execution
 
     # Env variables set by LSF:
@@ -286,6 +281,7 @@ def main():
     ###
 
     if args.method.lower() == "gac":
+        from pipeline.active_contours import GACPipeline
         opt2mesh_pipeline = GACPipeline(
             # GAC specifics
             iterations=args.iterations,
@@ -307,6 +303,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "acwe":
+        from pipeline.active_contours import ACWEPipeline
         opt2mesh_pipeline = ACWEPipeline(
             # ACWE specifics
             iterations=args.iterations,
@@ -327,6 +324,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "autocontext":
+        from pipeline.ilastik import AutoContextPipeline
         opt2mesh_pipeline = AutoContextPipeline(
             # AutoContextSpecific
             project=args.autocontext,
@@ -342,6 +340,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "autocontext_acwe":
+        from pipeline.ilastik import AutoContextACWEPipeline
         opt2mesh_pipeline = AutoContextACWEPipeline(
             # AutoContextSpecific
             project=args.autocontext,
@@ -361,6 +360,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "2d_unet":
+        from pipeline.unet import UNetPipeline
         opt2mesh_pipeline = UNetPipeline(
             # UNet specifics
             model_file=args.pytorch_model,
@@ -378,6 +378,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "3d_unet":
+        from pipeline.unet import UNet3DPipeline
         opt2mesh_pipeline = UNet3DPipeline(
             # UNet specifics
             model_file=args.pytorch_model,
@@ -396,6 +397,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
         )
     elif args.method.lower() == "direct":
+        from pipeline.base import DirectMeshingPipeline
         opt2mesh_pipeline = DirectMeshingPipeline(
             level=args.level,
             spacing=args.spacing,
