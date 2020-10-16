@@ -2,9 +2,9 @@
 
 ### Installation step
 
-Create a virtual environment, then run:
+Create a conda virtual environment and install the package:
 ```bash
-$ pip install -r requirements.txt
+$ conda env create -f environment.yml
 $ python setup.py install
 ```
 
