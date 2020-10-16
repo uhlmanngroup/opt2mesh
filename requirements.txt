@@ -3,7 +3,7 @@ joblib==0.17.0
 numpy==1.19.2
 pandas==1.1.3
 pyaml==20.4.0
-pymesh==1.0.2
+-e git+git://github.com/PyMesh/PyMesh.git@384ba882b7558ba6e8653ed263c419226c22bddf#egg=pymesh2
 pymeshfix==0.14.1
 scikit-image==0.17.2
 scipy==1.5.2
