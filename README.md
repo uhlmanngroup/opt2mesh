@@ -2,9 +2,12 @@
 
 ### Installation step
 
-Create a conda virtual environment and install the package:
+ - Clone the repository.
+ - Put the models in the `models` folder.
+ - Create a conda virtual environment and install the package:
 ```bash
 $ conda env create -f environment.yml
+$ conda activate opt2mesh
 $ python setup.py install
 ```
 
