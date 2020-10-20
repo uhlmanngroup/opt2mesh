@@ -4,6 +4,7 @@ import uuid
 from abc import ABC, abstractmethod
 
 import h5py
+import igl
 import numpy as np
 import pymesh
 import pymeshfix
@@ -188,9 +189,31 @@ class OPT2MeshPipeline(ABC):
         pymesh.save_mesh_raw(final_mesh_file, final_mesh.vertices, final_mesh.faces)
         logging.info(f"Saved final mesh in: {final_mesh_file}")
 
-        logging.info("Statistics of final simplified mesh:")
-        stats = self.get_mesh_statistics(final_mesh.vertices, final_mesh.faces)
-        for k, v in stats.items():
+        mesh_info = self.get_mesh_statistics(final_mesh.vertices, final_mesh.faces)
+
+        v = final_mesh.vertices
+        f = np.asarray(final_mesh.faces, dtype=np.int32)
+        try:
+            -igl.cotmatrix(v, f)
+        except Exception as e:
+            print(f" ❌ COT matrix test failed")
+            mesh_info["cot_matrix_test"] = False
+            print("Exception:", e)
+        else:
+            mesh_info["cot_matrix_test"] = True
+            print(f" ✅ COT matrix test passed")
+        try:
+            igl.massmatrix(v, f, igl.MASSMATRIX_TYPE_VORONOI)
+        except Exception as e:
+            print(f" ❌ Mass matrix test failed")
+            mesh_info["mass_matrix_test"] = False
+            print("Exception:", e)
+        else:
+            mesh_info["mass_matrix_test"] = True
+            print(f" ✅ Mass matrix test passed")
+
+        logging.info("Information of the output mesh:")
+        for k, v in mesh_info.items():
             logging.info(f"{k}: {v}")
 
         logging.info(f"Pipeline {self.__class__.__name__} done")
