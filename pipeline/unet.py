@@ -99,19 +99,18 @@ class UNetPipeline(OPT2MeshPipeline):
 
         return full_mask
 
-    def _extract_occupancy_map(self, tif_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process, base_out_file):
         logging.info(f"Running 2D UNet on the 3 axis")
         start = time.time()
-        img = io.imread(tif_file)
 
         first, last = 0, 511
-        img = img[first:last, first:last, first:last]
+        opt2process = opt2process[first:last, first:last, first:last]
 
-        pred_x = np.zeros(img.shape)
-        pred_y = np.zeros(img.shape)
-        pred_z = np.zeros(img.shape)
+        pred_x = np.zeros(opt2process.shape)
+        pred_y = np.zeros(opt2process.shape)
+        pred_z = np.zeros(opt2process.shape)
 
-        h, w, d = img.shape
+        h, w, d = opt2process.shape
 
         net = UNet(n_channels=1, n_classes=1, bilinear=self.bilinear)
 
@@ -125,21 +124,21 @@ class UNetPipeline(OPT2MeshPipeline):
         for x in range(h):
             logging.info(f"Slice x: {x}/{h}")
             pred_x[x, :, :] = self._predict(
-                net=net, full_img=Image.fromarray(img[x, :, :]), device=device
+                net=net, full_img=Image.fromarray(opt2process[x, :, :]), device=device
             )
 
         logging.info(f"Prediction w.r.t axis y")
         for y in range(w):
             logging.info(f"Slice y: {y}/{w}")
             pred_y[:, y, :] = self._predict(
-                net=net, full_img=Image.fromarray(img[:, y, :]), device=device
+                net=net, full_img=Image.fromarray(opt2process[:, y, :]), device=device
             )
 
         logging.info(f"Prediction w.r.t axis z")
         for z in range(d):
             logging.info(f"Slice z: {z}/{d}")
             pred_z[:, :, z] = self._predict(
-                net=net, full_img=Image.fromarray(img[:, :, z]), device=device
+                net=net, full_img=Image.fromarray(opt2process[:, :, z]), device=device
             )
 
         occupancy_map = (pred_x + pred_y + pred_z) / 3
@@ -266,25 +265,20 @@ class UNet3DPipeline(OPT2MeshPipeline):
         )
         return output_file
 
-    def _extract_occupancy_map(self, tif_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process, base_out_file):
         logging.info(f"Running 3D UNet")
 
-        # Dumping file to disk
-        opt_data = io.imread(tif_file)
-
         first, last = 0, 511
-        opt_data = opt_data[first:last, first:last, first:last]
-
-        basename = tif_file.split(os.sep)[-1].split(".")[0]
+        opt2process = opt2process[first:last, first:last, first:last]
 
         h5_dir = f"{base_out_file}/h5"
         os.makedirs(h5_dir, exist_ok=True)
-        h5_file = f"{h5_dir}/{basename}.h5"
+        h5_file = f"{h5_dir}/opt2process.h5"
 
         hf = h5py.File(h5_file, "w")
-        logging.info(f"Converting {tif_file} to {h5_file}")
+        logging.info(f"Converting to {h5_file}")
         data_set_name = self.config["loaders"]["raw_internal_path"]
-        hf.create_dataset(data_set_name, data=opt_data, chunks=True)
+        hf.create_dataset(data_set_name, data=opt2process, chunks=True)
         hf.close()
 
         logging.info(f"Adding {h5_dir} as the file path for predictions")

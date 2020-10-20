@@ -17,12 +17,8 @@ def parse_args():
     )
 
     # Argument
-    parser.add_argument(
-        "in_tif", help="Input OPT scan as tif stack (3D image)"
-    )
-    parser.add_argument(
-        "out_folder", help="General output folder for this run"
-    )
+    parser.add_argument("input_file", help="Input OPT scan as tif stack (3D image)")
+    parser.add_argument("out_folder", help="General output folder for this run")
     parser.add_argument(
         "--method",
         help="Surface extraction method",
@@ -272,7 +268,7 @@ def main():
     context = dict()
     context["job_id"] = job_id
     context["job_batch_name"] = job_batch_name
-    context["input_file"] = args.in_tif
+    context["input_file"] = args.input_file
     context["out_folder"] = job_out_folder
     context["git_commit"] = last_commit
     context["vsc_context"] = last_commit_message
@@ -462,10 +458,10 @@ def main():
         raise RuntimeError(f"Method {args.method} is not recognised")
 
     logging.info(f"Starting pipeline {opt2mesh_pipeline.__class__.__name__}")
-    logging.info(f"  Input TIF stack: {args.in_tif}")
+    logging.info(f"  Input TIF stack: {args.input_file}")
     logging.info(f"  Out folder: {job_out_folder}")
     _, _, mesh_info = opt2mesh_pipeline.run(
-        tif_stack_file=args.in_tif, out_folder=job_out_folder
+        opt_file=args.input_file, out_folder=job_out_folder
     )
     logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name__}")
 

@@ -66,7 +66,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         self.lambda1 = lambda1
         self.lambda2 = lambda2
 
-    def _extract_occupancy_map(self, tif_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process, base_out_file):
         """
         See AutoContextACWEPipeline docstring.
 
@@ -77,7 +77,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         logging.info(f"Running Morphological Chan Vese on full")
         start = time.time()
         occupancy_map = self.autocontext_pipeline._extract_occupancy_map(
-            tif_file, base_out_file
+            opt2process, base_out_file
         )
         end = time.time()
         logging.info(
@@ -153,22 +153,16 @@ class AutoContextPipeline(OPT2MeshPipeline):
             # TODO: tune this
             self.level = 0.90
 
-    def _dump_hdf5_on_disk(self, tif_file, base_out_file):
+    def _dump_hdf5_on_disk(self, opt2process, base_out_file):
         """
         Convert a tif file to a hdf5 file.
-
-        @param tif_file: path to the tif file
-        @param base_out_file: base name for the output file
-        @return: the path to the file created
         """
-        logging.info(f"Converting {tif_file} to hdf5")
-        opt_data = io.imread(tif_file)
-        basename = tif_file.split(os.sep)[-1].split(".")[0]
-        file_basename = f"{base_out_file}/autocontext/{basename}"
+        logging.info(f"Converting to hdf5")
+        file_basename = f"{base_out_file}/autocontext/opt2process"
         os.makedirs(f"{base_out_file}/autocontext/", exist_ok=True)
         h5_file = f"{file_basename}.h5"
         hf = h5py.File(h5_file, "w")
-        hf.create_dataset("dataset", data=opt_data, chunks=True)
+        hf.create_dataset("dataset", data=opt2process, chunks=True)
         hf.close()
         logging.info(f"Dumped hdf5 dataset to {h5_file}")
 
@@ -206,7 +200,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
         drange = '"(0,255)"'
         dtype = "uint8"
         output_filename_format = ilastik_output_folder + "{nickname}_pred.h5 "
-        in_files = self._dump_hdf5_on_disk(tif_file, base_out_file)
+        in_files = self._dump_hdf5_on_disk(opt2process, base_out_file)
 
         # Note: one may need some config to have ilastik accessible in PATH
         command = "ilastik "
@@ -222,9 +216,6 @@ class AutoContextPipeline(OPT2MeshPipeline):
             command += f"--export_drange={drange} "
             command += f"--pipeline_result_drange={dtype} "
         command += in_files
-
-        # To have a dedicated file for Ilastik's standard output
-        command += f" | tee {ilastik_output_folder + 'ilastik_cli_call.log'}"
 
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
