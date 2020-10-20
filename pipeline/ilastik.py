@@ -37,6 +37,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False,
     ):
         super().__init__(
             level=level,
@@ -48,6 +49,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
 
         self.autocontext_pipeline = AutoContextPipeline(
@@ -57,6 +59,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             step_size=step_size,
             detail=detail,
             save_temp=save_temp,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
         self.iterations = iterations
         self.smoothing = smoothing
@@ -127,6 +130,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False
     ):
         super().__init__(
             level=level,
@@ -138,6 +142,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
 
         self.project: str = project

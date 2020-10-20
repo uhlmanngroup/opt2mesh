@@ -40,6 +40,7 @@ class OPT2MeshPipeline(ABC):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False,
     ):
         self.level: float = level
         self.spacing: int = spacing
@@ -50,10 +51,14 @@ class OPT2MeshPipeline(ABC):
         self.segment_occupancy_map: bool = segment_occupancy_map
         self.save_occupancy_map: bool = save_occupancy_map
         self.align_mesh: bool = align_mesh
+        self.preprocess_opt_scan: bool = preprocess_opt_scan
 
     @abstractmethod
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         raise NotImplementedError()
+
+    def preprocess_opt_scan(self, opt_scan: np.ndarray) -> np.ndarray:
+        return opt_scan
 
     def _get_mesh_statistics(self, v, f):
         """
@@ -86,9 +91,16 @@ class OPT2MeshPipeline(ABC):
     def run(self, tif_stack_file, out_folder):
         os.makedirs(out_folder, exist_ok=True)
 
+        raw_opt = io.imread(tif_stack_file)
+
+        if self.preprocess_opt_scan:
+            logging.info(f"Preprocessing OPT scan")
+            opt2process = self._extract_occupancy_map(raw_opt)
+        else:
+            opt2process = raw_opt
+
         # path/to/file.name.ext file.name
         basename = ".".join(tif_stack_file.split(os.sep)[-1].split(".")[:-1])
-
         base_out_file = os.path.join(out_folder, basename)
 
         logging.info(f"→ Image segmentation")

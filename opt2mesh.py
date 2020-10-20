@@ -57,6 +57,9 @@ def parse_args():
         help="Align the mesh on the original OPT scan orientation",
         action="store_true",
     )
+    parser.add_argument(
+        "--preprocess_opt_scan", help="Preprocess the OPT scan", action="store_true"
+    )
 
     parser.add_argument(
         "--timing", help="Print timing info", action="store_true"
@@ -344,6 +347,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "acwe":
         from pipeline.active_contours import ACWEPipeline
@@ -367,6 +371,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "autocontext":
         from pipeline.ilastik import AutoContextPipeline
@@ -385,6 +390,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "autocontext_acwe":
         from pipeline.ilastik import AutoContextACWEPipeline
@@ -407,6 +413,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "2d_unet":
         from pipeline.unet import UNetPipeline
@@ -427,6 +434,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "3d_unet":
         from pipeline.unet import UNet3DPipeline
@@ -448,6 +456,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "direct":
         from pipeline.base import DirectMeshingPipeline
@@ -462,6 +471,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")

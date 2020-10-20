@@ -47,6 +47,7 @@ class UNetPipeline(OPT2MeshPipeline):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False,
     ):
         super().__init__(
             level=level,
@@ -58,6 +59,7 @@ class UNetPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
 
         self.model_file = model_file
@@ -169,6 +171,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False,
     ):
         super().__init__(
             level=level,
@@ -180,6 +183,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
 
         self.model_file = model_file
