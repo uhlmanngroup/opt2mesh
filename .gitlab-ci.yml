@@ -1,0 +1,10 @@
+image: continuumio/miniconda3:latest
+
+testbuild :
+  stage: build
+  script:
+    - conda env create -f environment.yml
+    - conda activate opt2mesh
+    - python setup.py install
+    - pip install pytest
+    - cd tests && pytest .
