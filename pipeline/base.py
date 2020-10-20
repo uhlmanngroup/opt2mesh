@@ -52,7 +52,7 @@ class OPT2MeshPipeline(ABC):
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
         raise NotImplementedError()
 
-    def get_mesh_statistics(self, v, f):
+    def _get_mesh_statistics(self, v, f):
         """
         Return the statistics of a mesh as a python dictionary
 
@@ -85,9 +85,7 @@ class OPT2MeshPipeline(ABC):
 
         base_out_file = os.path.join(out_folder, basename)
 
-        logging.info(f"Input file: {tif_stack_file}")
-
-        logging.info(f"Extracting occupancy map")
+        logging.info(f"→ Image segmentation")
         occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
 
         assert (
@@ -101,9 +99,9 @@ class OPT2MeshPipeline(ABC):
         ), f"The occupancy map values should be a 3D array, currently: {len(occupancy_map.shape)}"
 
         logging.info(f"Occupancy map info")
-        logging.info(f"    min        : {occupancy_map.min()}")
-        logging.info(f"    max        : {occupancy_map.max()}")
-        logging.info(f"    shape      : {occupancy_map.shape}")
+        logging.info(f"  min        : {occupancy_map.min()}")
+        logging.info(f"  max        : {occupancy_map.max()}")
+        logging.info(f"  shape      : {occupancy_map.shape}")
 
         if self.segment_occupancy_map:
             logging.info(f"Segmenting occupancy map info on level: {self.level}")
@@ -113,9 +111,9 @@ class OPT2MeshPipeline(ABC):
             # Create a segmented occupancy map with 2 homogeneous values
             occupancy_map = (self.level + 10e-3) * (occupancy_map != 2)
             logging.info(f"Segmented occupancy map info")
-            logging.info(f"    min        : {occupancy_map.min()}")
-            logging.info(f"    max        : {occupancy_map.max()}")
-            logging.info(f"    shape      : {occupancy_map.shape}")
+            logging.info(f"  min        : {occupancy_map.min()}")
+            logging.info(f"  max        : {occupancy_map.max()}")
+            logging.info(f"  shape      : {occupancy_map.shape}")
 
         if self.save_occupancy_map:
             surface_file = base_out_file + "_occupancy_map.tif"
@@ -123,10 +121,10 @@ class OPT2MeshPipeline(ABC):
             logging.info(f"Saving extracted occupancy map in: {surface_file}")
             io.imsave(surface_file, occupancy_map_int)
 
-        logging.info(f"Extracting mesh from occupancy map")
-        logging.info(f"   Level      : {self.level}")
-        logging.info(f"   Spacing    : {self.spacing}")
-        logging.info(f"   Step-size  : {self.step_size}")
+        logging.info(f"→ Isosurface extraction")
+        logging.info(f"  Level      : {self.level}")
+        logging.info(f"  Spacing    : {self.spacing}")
+        logging.info(f"  Step-size  : {self.step_size}")
 
         v, f, normals, values = measure.marching_cubes(
             occupancy_map,
@@ -150,7 +148,7 @@ class OPT2MeshPipeline(ABC):
 
         mesh = pymesh.meshio.form_mesh(v, f)
 
-        logging.info(f"Splitting mesh in connected components")
+        logging.info(f"→ Splitting mesh in connected components")
         meshes = pymesh.separate_mesh(mesh, connectivity_type="auto")
         logging.info(f"  {len(meshes)} connected components")
         logging.info("")
@@ -159,13 +157,13 @@ class OPT2MeshPipeline(ABC):
             vi = m.vertices
             fi = m.faces
 
-            logging.info(f"{i + 1}th connected component ")
+            logging.info(f"Connected component #{i+1}")
             logging.info(f"  Vertices: {len(vi)}")
-            logging.info(f"  Faces: {len(fi)}")
+            logging.info(f"  Faces   : {len(fi)}")
             logging.info("")
             if self.save_temp:
                 cc_mesh_file = extracted_mesh_file.replace(".stl", f"_{i}.stl")
-                logging.info(f"Saving connected components #{i}: {cc_mesh_file}")
+                logging.info(f"Saving connected component #{i}: {cc_mesh_file}")
                 pymesh.save_mesh_raw(cc_mesh_file, vi, fi)
 
         # Taking the main mesh
@@ -173,51 +171,101 @@ class OPT2MeshPipeline(ABC):
         id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
         mesh_to_simplify = meshes[id_main_component]
 
-        logging.info(f"Mesh decimation")
+        logging.info(f"→ Mesh decimation")
         decimated_mesh = self._mesh_decimation(mesh_to_simplify)
         logging.info(f"Decimated mesh")
         logging.info(f"  Vertices: {len(decimated_mesh.vertices)}")
-        logging.info(f"  Faces: {len(decimated_mesh.faces)}")
+        logging.info(f"  Faces   : {len(decimated_mesh.faces)}")
 
-        logging.info(f"Mesh repairing")
+        logging.info(f"→ Mesh repairing")
         final_mesh = self._mesh_repairing(decimated_mesh)
         logging.info(f"Final mesh")
         logging.info(f"  Vertices: {len(final_mesh.vertices)}")
-        logging.info(f"  Faces: {len(final_mesh.faces)}")
+        logging.info(f"  Faces   : {len(final_mesh.faces)}")
 
         final_mesh_file = base_out_file + "_final_mesh.stl"
         pymesh.save_mesh_raw(final_mesh_file, final_mesh.vertices, final_mesh.faces)
         logging.info(f"Saved final mesh in: {final_mesh_file}")
 
-        mesh_info = self.get_mesh_statistics(final_mesh.vertices, final_mesh.faces)
-
         v = final_mesh.vertices
         f = np.asarray(final_mesh.faces, dtype=np.int32)
+        mesh_info = self._get_mesh_quality_info(v, f)
+
+        logging.info("Information of the output mesh:")
+        for k, v in mesh_info.items():
+            logging.info(f"   {k}: {v}")
+
+        logging.info(f"Pipeline {self.__class__.__name__} done")
+        return final_mesh.vertices, final_mesh.faces, mesh_info
+
+    def _get_mesh_quality_info(self, v: np.ndarray, f: np.ndarray):
+        """
+        Return a mesh statistics and passing tests for a mesh.
+        """
+        mesh_info = self._get_mesh_statistics(v, f)
+
+        # Test for the mesh usability for shape analysis methods
         try:
             -igl.cotmatrix(v, f)
         except Exception as e:
             print(f" ❌ COT matrix test failed")
-            mesh_info["cot_matrix_test"] = False
+            mesh_info["cot_matrix_test"] = "Failed"
             print("Exception:", e)
         else:
-            mesh_info["cot_matrix_test"] = True
-            print(f" ✅ COT matrix test passed")
+            mesh_info["cot_matrix_test"] = "Passed"
         try:
             igl.massmatrix(v, f, igl.MASSMATRIX_TYPE_VORONOI)
         except Exception as e:
             print(f" ❌ Mass matrix test failed")
-            mesh_info["mass_matrix_test"] = False
+            mesh_info["mass_matrix_test"] = "Failed"
             print("Exception:", e)
         else:
-            mesh_info["mass_matrix_test"] = True
-            print(f" ✅ Mass matrix test passed")
+            mesh_info["mass_matrix_test"] = "Passed"
 
-        logging.info("Information of the output mesh:")
-        for k, v in mesh_info.items():
-            logging.info(f"{k}: {v}")
+        # We only test mesh with a small number of vertices
+        n_vertices = v.shape[0]
+        if n_vertices < 3000:
+            try:
+                ind = np.arange(0, n_vertices, dtype=np.int32)
+                np.stack(
+                    [
+                        igl.exact_geodesic(v, f, np.array([i], dtype=np.int32), ind)
+                        for i in ind
+                    ]
+                )
+            except Exception as e:
+                print(f" ❌ Geodesic matrix test failed")
+                mesh_info["geodesic_matrix_test"] = "Failed"
+                print("Exception:", e)
+            else:
+                print(f" ✅ Geodesic matrix test passed")
+                mesh_info["geodesic_matrix_test"] = "Passed"
+        else:
+            mesh_info["geodesic_matrix_test"] = "Not ran"
 
-        logging.info(f"Pipeline {self.__class__.__name__} done")
-        return final_mesh.vertices, final_mesh.faces
+        mesh_correctness_info = [
+            "polygon_polyhedron",
+            "triangular_mesh",
+            "cot_matrix_test",
+            "mass_matrix_test",
+            "self_intersecting",
+            "non_manifold_vertices",
+            "degenerated_faces",
+            "mesh_closed",
+            "number_of_components",
+            "number_of_borders",
+            "genus",
+        ]
+
+        reordered_mesh_info = dict()
+        reordered_mesh_info["mesh_correctness"] = {
+            info: mesh_info[info] for info in mesh_correctness_info
+        }
+        reordered_mesh_info["mesh_statistics"] = {
+            k: v for k, v in mesh_info.items() if k not in mesh_correctness_info
+        }
+
+        return reordered_mesh_info
 
     def _mesh_decimation(self, mesh):
         """
