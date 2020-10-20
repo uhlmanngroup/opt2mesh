@@ -107,18 +107,6 @@ def parse_args():
 
     # Active contour without edges Morphosnakes parameters
     parser.add_argument(
-        "--on_halves",
-        help="Adapt pipeline to be run the processing on "
-        "halves instead on the full input tif stack",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--on_slices",
-        help="Adapt pipeline to be run the processing on "
-        "slices instead on the full input tif stack",
-        action="store_true",
-    )
-    parser.add_argument(
         "--lambda1",
         type=float,
         default=3,
@@ -330,7 +318,6 @@ def main():
         opt2mesh_pipeline = GACPipeline(
             # GAC specifics
             iterations=args.iterations,
-            on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             smoothing=args.smoothing,
             threshold=args.threshold,
@@ -355,9 +342,7 @@ def main():
         opt2mesh_pipeline = ACWEPipeline(
             # ACWE specifics
             iterations=args.iterations,
-            on_slices=args.on_slices,
             n_jobs=args.n_jobs,
-            on_halves=args.on_halves,
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,
