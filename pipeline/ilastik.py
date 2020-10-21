@@ -5,22 +5,32 @@ import time
 import h5py
 import numpy as np
 from scipy.ndimage import gaussian_filter
-from skimage import io
 from skimage.morphology import dilation, erosion, flood_fill
 
 from pipeline import morphsnakes as ms
 from pipeline.base import OPT2MeshPipeline
 
+# NOTE: as of now, there's no way to easily access Ilastik from python
+# We rely on a simple system call with arguments to the executable but this is cumbersome.
+# A python API is being introduced for prediction: https://github.com/ilastik/ilastik/pull/2303
+# If this gets in, this would simplify the following implementation _a lot_ with something like this:
+#
+#     from ilastik.experimental.api import from_project_file
+#     pipeline = from_project_file("./MyProjectPixel.ilp")
+#     test_res = pipeline.predict(test_arr)
+#
+
 
 class AutoContextACWEPipeline(OPT2MeshPipeline):
     """
-    Use AutoContext to extract the occupancy map (probabilities)
-    then runs ACWE on the occupancy map to extract the surface.
+    Use AutoContext workflow from Ilastik to segment the object
+    the occupancy map (probabilities), then runs ACWE on the
+    occupancy map to extract the surface.
     """
 
     def __init__(
         self,
-        # AutoContextSpecific
+        # AutoContext specifics
         project,
         # ACWE specifics
         smoothing,
@@ -69,10 +79,6 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
     def _extract_occupancy_map(self, opt2process, base_out_file):
         """
         See AutoContextACWEPipeline docstring.
-
-        @param tif_file:
-        @param base_out_file:
-        @return:
         """
         logging.info(f"Running Morphological Chan Vese on full")
         start = time.time()
@@ -108,11 +114,14 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
 
 class AutoContextPipeline(OPT2MeshPipeline):
     """
-    Use ilastik for the segmentation using the headless mode.
+    Use AutoContext workflow from Ilastik to segment the object
+    the occupancy map (probabilities).
+
+    The path leading to the Ilastik project needs to be specified
+    when constructing the object.
 
     All the options and some current problems are specified here:
-
-    https://www.ilastik.org/documentation/basics/headless
+     - https://www.ilastik.org/documentation/basics/headless
     """
 
     def __init__(
@@ -203,6 +212,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
         in_files = self._dump_hdf5_on_disk(opt2process, base_out_file)
 
         # Note: one may need some config to have ilastik accessible in PATH
+        # NOTE (executable)
         command = "ilastik "
         command += "--headless "
         command += f"--project={self.project} "

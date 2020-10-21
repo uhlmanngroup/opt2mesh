@@ -1,8 +1,6 @@
 import logging
 import time
 
-from skimage import io
-
 from pipeline import morphsnakes as ms
 from pipeline.base import OPT2MeshPipeline
 
@@ -67,7 +65,6 @@ class GACPipeline(OPT2MeshPipeline):
 
         start = time.time()
 
-        # MorphGAC
         occupancy_map = ms.morphological_geodesic_active_contour(
             gradient_image,
             iterations=self.iterations,

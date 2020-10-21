@@ -26,8 +26,10 @@ class UNetPipeline(OPT2MeshPipeline):
     Predictions are stacked together to get occupancy maps and are then
     averaged to get a better estimated occupancy map.
 
-    Code adapted from:
+    Models are trained using this code from:
      - https://github.com/milesial/Pytorch-UNet
+    adapted under this repository:
+     - https://gitlab.ebi.ac.uk/jerphanion/Pytorch-UNet
 
     """
 
@@ -149,7 +151,12 @@ class UNetPipeline(OPT2MeshPipeline):
 
 class UNet3DPipeline(OPT2MeshPipeline):
     """
-    Use a 3D UNet to get occupancy map.
+    Segment the image using a 3D UNet.
+
+    Models are trained using this code from:
+     - https://github.com/wolny/pytorch-3dunet
+    adapted under this repository:
+     - https://gitlab.ebi.ac.uk/jerphanion/pytorch-3dunet/
     """
 
     def __init__(
@@ -271,6 +278,10 @@ class UNet3DPipeline(OPT2MeshPipeline):
         first, last = 0, 511
         opt2process = opt2process[first:last, first:last, first:last]
 
+        # The implementation of UNet takes h5 files as input, we convert
+        # the data here to match this format.
+        # Some dynamic modification of the configuration is performed to
+        # correctly load the data.
         h5_dir = f"{base_out_file}/h5"
         os.makedirs(h5_dir, exist_ok=True)
         h5_file = f"{h5_dir}/opt2process.h5"
