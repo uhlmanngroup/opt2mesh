@@ -244,7 +244,7 @@ def main():
     context["cli_call"] = cli_call
 
     mesh_info_file = os.path.join(job_out_folder, f"{job_id}_context.yml")
-    # Context is dump at the end again
+
     with open(mesh_info_file, "w") as fp:
         yaml.dump(context, fp, sort_keys=False)
 
