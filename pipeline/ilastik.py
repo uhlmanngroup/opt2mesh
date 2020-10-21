@@ -162,9 +162,11 @@ class AutoContextPipeline(OPT2MeshPipeline):
             # TODO: tune this
             self.level = 0.90
 
-    def _dump_hdf5_on_disk(self, opt2process, base_out_file):
+    def _dump_hdf5_on_disk(self, opt2process: np.ndarray, base_out_file: str) -> str:
         """
-        Convert a tif file to a hdf5 file.
+        Ilastik needs to have a hfd5 file as an input.
+
+        Dump the scan on the disk as a hdf5 file and return the path.
         """
         logging.info(f"Converting to hdf5")
         file_basename = f"{base_out_file}/autocontext/opt2process"
@@ -177,29 +179,22 @@ class AutoContextPipeline(OPT2MeshPipeline):
 
         return h5_file
 
-    def _post_processing(self, interior_segmentation):
+    def _post_processing(self, interior_segmentation: np.ndarray):
         """
         The result might be noisy after the prediction with Autocontext.
         Hence, we perform some morphological operations on the segmentation
         data.
-
-        @param interior_segmentation: 3D np.array of the segmentation
-
-        @return:
         """
         improved_seg_data = dilation(
             erosion(
                 dilation(gaussian_filter(interior_segmentation, sigma=0.1))
             )
         ).astype(np.uint8)
-        for i in range(improved_seg_data.shape[0]):
-            improved_seg_data[i, :, :] = 255 - flood_fill(
-                improved_seg_data[i, :, :], (1, 1), 255
-            )
+        improved_seg_data = 255 - flood_fill(improved_seg_data, (1, 1, 1), 255)
 
         return improved_seg_data
 
-    def _extract_occupancy_map(self, tif_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
 
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
 
@@ -254,13 +249,6 @@ class AutoContextPipeline(OPT2MeshPipeline):
             occupancy_map = self._post_processing(noisy_occupancy_map)
         else:
             occupancy_map = noisy_occupancy_map
-
-        if self.save_temp:
-            filename = segmentation_file.replace(".h5", f"_occupancy_map.tif")
-            logging.info(f"Saving occupancy map in {filename}")
-            hf = h5py.File(filename, "w")
-            hf.create_dataset("exported_data", data=occupancy_map, chunks=True)
-            hf.close()
 
         logging.info(f"Done extracting the occupancy map with Autocontext")
 

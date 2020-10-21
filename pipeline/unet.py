@@ -237,18 +237,9 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
         self.config = config
 
-    def __load_checkpoint(self, checkpoint_path, model, optimizer=None):
+    def __load_checkpoint(self, checkpoint_path: str, model: torch.nn.Module, optimizer: torch.optim.Optimizer=None):
         """Loads model and training parameters from a given checkpoint_path
         If optimizer is provided, loads optimizer's state_dict of as well.
-
-        Args:
-            checkpoint_path (string): path to the checkpoint to be loaded
-            model (torch.nn.Module): model into which the parameters are to be copied
-            optimizer (torch.optim.Optimizer) optional: optimizer instance into
-                which the parameters are to be copied
-
-        Returns:
-            state
         """
         if not os.path.exists(checkpoint_path):
             raise IOError(f"Checkpoint '{checkpoint_path}' does not exist")

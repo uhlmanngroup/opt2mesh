@@ -54,23 +54,32 @@ class OPT2MeshPipeline(ABC):
         self.preprocess_opt_scan: bool = preprocess_opt_scan
 
     @abstractmethod
-    def _extract_occupancy_map(self, opt2process, base_out_file):
+    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
         raise NotImplementedError()
 
-    def __preprocessing(self, opt_scan: np.ndarray) -> np.ndarray:
+    def _preprocessing(self, opt_scan: np.ndarray) -> np.ndarray:
+        """
+        Perform a preprocessing with contrast adjustment and denoising.
+
+        This step is made optional in the pipeline.
+
+        Constrast Limited Adaptive Histogram Equalization is used for
+        the constrast correction.
+
+        Median Filtering is used for the denoising.
+
+        """
         logging.info(f"Performing full preprocessing")
 
-        logging.info("Contrast Limited Adaptive Histogram Equalization")
         opt_data_adapt_eq = exposure.equalize_adapthist(opt_scan, clip_limit=0.03)
         opt_data_adapt_eq = (opt_data_adapt_eq * 255).astype(np.uint8)
 
-        logging.info("Median filtering")
         denoised_opt_data = filters.median(opt_data_adapt_eq)
 
         logging.info(f"Cropping volume")
         return denoised_opt_data
 
-    def _get_mesh_statistics(self, v, f):
+    def _get_mesh_statistics(self, v:np.ndarray, f:np.ndarray) -> dict:
         """
         Return the statistics of a mesh as a python dictionary
 
@@ -101,19 +110,23 @@ class OPT2MeshPipeline(ABC):
 
         return mesh_statistics
 
-    def run(self, opt_file, out_folder):
-        os.makedirs(out_folder, exist_ok=True)
-
+    def _load_opt_scan(self, opt_file: str) -> np.ndarray:
         if ".h5" in opt_file:
             hf = h5py.File(opt_file, "r")
             key = list(hf.keys())[0]
             raw_opt = np.array(hf[key])
         elif ".tif" in opt_file:
             raw_opt = io.imread(opt_file)
+        return raw_opt
+
+    def run(self, opt_file, out_folder):
+        os.makedirs(out_folder, exist_ok=True)
+
+        raw_opt = self._load_opt_scan(opt_file)
 
         if self.preprocess_opt_scan:
             logging.info(f"Preprocessing OPT scan")
-            opt2process = self.__preprocessing(raw_opt)
+            opt2process = self._preprocessing(raw_opt)
         else:
             opt2process = raw_opt
 
@@ -430,7 +443,7 @@ class OPT2MeshPipeline(ABC):
         return final_mesh
 
     @staticmethod
-    def _mesh_repairing(mesh):
+    def _mesh_repairing(mesh: pymesh.Mesh):
         """
         Fix the mesh to get to a 2-manifold:
          - no self-intersection
