@@ -175,7 +175,9 @@ class AutoContextPipeline(OPT2MeshPipeline):
             erosion(dilation(gaussian_filter(interior_segmentation, sigma=0.1)))
         ).astype(np.uint8)
         for i in range(improved_seg_data.shape[0]):
-            improved_seg_data[i, :, :] = 255 - flood_fill(improved_seg_data[i, :, :], (1, 1), 255)
+            improved_seg_data[i, :, :] = 255 - flood_fill(
+                improved_seg_data[i, :, :], (1, 1), 255
+            )
 
         return improved_seg_data
 

@@ -179,7 +179,9 @@ class UNet3DPipeline(OPT2MeshPipeline):
         self.model_file = model_file
 
         if config_file is None:
-            global_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir)
+            global_dir = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), os.path.pardir
+            )
             config_file = os.path.join(global_dir, "unet3d", "config.yml")
 
         config = yaml.safe_load(open(config_file, "r"))

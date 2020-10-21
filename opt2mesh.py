@@ -8,10 +8,13 @@ import uuid
 import yaml
 from datetime import datetime
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(prog='opt2mesh',
-                                     description="Extract a mesh from a OPT scan",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        prog="opt2mesh",
+        description="Extract a mesh from a OPT scan",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     # Argument
     parser.add_argument("in_tif", help="Input OPT scan as tif stack (3D image)")
@@ -240,20 +243,14 @@ def main():
     context["vsc_context"] = last_commit_message
     context["cli_call"] = cli_call
 
-    context["arguments"]: dict = vars(args)
+    mesh_info_file = os.path.join(job_out_folder, f"{job_id}_context.yml")
 
-    job_informations = os.path.join(job_out_folder, f"{job_id}_context.yml")
-
-    with open(job_informations, "w") as fp:
+    with open(mesh_info_file, "w") as fp:
         yaml.dump(context, fp, sort_keys=False)
 
     # Logging the context
     logging.info("CLI call:")
     logging.info(cli_call)
-
-    logging.info("Arguments got ")
-    for arg, value in vars(args).items():
-        logging.info(f"  {arg}: {value}")
 
     logging.info("LSF environnement:")
     # Env variables set by LSF:
@@ -282,6 +279,7 @@ def main():
 
     if args.method.lower() == "gac":
         from pipeline.active_contours import GACPipeline
+
         opt2mesh_pipeline = GACPipeline(
             # GAC specifics
             iterations=args.iterations,
@@ -304,6 +302,7 @@ def main():
         )
     elif args.method.lower() == "acwe":
         from pipeline.active_contours import ACWEPipeline
+
         opt2mesh_pipeline = ACWEPipeline(
             # ACWE specifics
             iterations=args.iterations,
@@ -325,6 +324,7 @@ def main():
         )
     elif args.method.lower() == "autocontext":
         from pipeline.ilastik import AutoContextPipeline
+
         opt2mesh_pipeline = AutoContextPipeline(
             # AutoContextSpecific
             project=args.autocontext,
@@ -341,6 +341,7 @@ def main():
         )
     elif args.method.lower() == "autocontext_acwe":
         from pipeline.ilastik import AutoContextACWEPipeline
+
         opt2mesh_pipeline = AutoContextACWEPipeline(
             # AutoContextSpecific
             project=args.autocontext,
@@ -361,6 +362,7 @@ def main():
         )
     elif args.method.lower() == "2d_unet":
         from pipeline.unet import UNetPipeline
+
         opt2mesh_pipeline = UNetPipeline(
             # UNet specifics
             model_file=args.pytorch_model,
@@ -379,6 +381,7 @@ def main():
         )
     elif args.method.lower() == "3d_unet":
         from pipeline.unet import UNet3DPipeline
+
         opt2mesh_pipeline = UNet3DPipeline(
             # UNet specifics
             model_file=args.pytorch_model,
@@ -398,6 +401,7 @@ def main():
         )
     elif args.method.lower() == "direct":
         from pipeline.base import DirectMeshingPipeline
+
         opt2mesh_pipeline = DirectMeshingPipeline(
             level=args.level,
             spacing=args.spacing,
@@ -414,8 +418,15 @@ def main():
     logging.info(f"Starting pipeline {opt2mesh_pipeline.__class__.__name__}")
     logging.info(f"  Input TIF stack: {args.in_tif}")
     logging.info(f"  Out folder: {job_out_folder}")
-    opt2mesh_pipeline.run(tif_stack_file=args.in_tif, out_folder=job_out_folder)
+    _, _, mesh_info = opt2mesh_pipeline.run(
+        tif_stack_file=args.in_tif, out_folder=job_out_folder
+    )
     logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name__}")
+
+    mesh_info_file = os.path.join(job_out_folder, f"{job_id}_mesh_quality.yml")
+    logging.info(f"Saving mesh information in {mesh_info_file}")
+    with open(mesh_info_file, "w") as fp:
+        yaml.dump(mesh_info, fp, sort_keys=False)
 
 
 if __name__ == "__main__":
