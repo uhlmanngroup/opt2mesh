@@ -38,6 +38,7 @@ class OPT2MeshPipeline(ABC):
         save_temp=False,
         segment_occupancy_map=False,
         save_occupancy_map=False,
+        align_mesh=False
     ):
         self.level: float = level
         self.spacing: int = spacing
@@ -47,6 +48,7 @@ class OPT2MeshPipeline(ABC):
         self.save_temp: bool = save_temp
         self.segment_occupancy_map: bool = segment_occupancy_map
         self.save_occupancy_map: bool = save_occupancy_map
+        self.align_mesh: bool = align_mesh
 
     @abstractmethod
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
@@ -140,6 +142,15 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Extracted mesh")
         logging.info(f"  Vertices: {len(v)}")
         logging.info(f"  Faces: {len(f)}")
+
+        if self.align_mesh:
+            # For some reasons, the mesh which is extracted using
+            # the marching cubes implementation is not matching the original
+            # orientation.
+            logging.info("Aligning the mesh on the original OPT scan orientation")
+            from scipy.spatial.transform import Rotation
+            rotation_mat = Rotation.from_euler('y', 90, degrees=True)
+            v = v @ rotation_mat.as_matrix().T
 
         if self.save_temp:
             extracted_mesh_file = base_out_file + "_extracted_mesh.stl"

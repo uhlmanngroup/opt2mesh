@@ -29,6 +29,7 @@ class GACPipeline(OPT2MeshPipeline):
         sigma=5,
         segment_occupancy_map=False,
         save_occupancy_map=False,
+        align_mesh=False,
     ):
         super().__init__(
             level=level,
@@ -39,6 +40,7 @@ class GACPipeline(OPT2MeshPipeline):
             save_temp=save_temp,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
+            align_mesh=align_mesh,
         )
 
         self.iterations: int = iterations
@@ -132,6 +134,7 @@ class ACWEPipeline(OPT2MeshPipeline):
         lambda2=1,
         segment_occupancy_map=False,
         save_occupancy_map=False,
+        align_mesh=False,
     ):
 
         super().__init__(
@@ -143,6 +146,7 @@ class ACWEPipeline(OPT2MeshPipeline):
             save_temp=save_temp,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
+            align_mesh=align_mesh
         )
         self.iterations: int = iterations
         self.on_slices: bool = on_slices

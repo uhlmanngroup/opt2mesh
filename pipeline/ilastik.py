@@ -36,6 +36,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         save_temp=False,
         segment_occupancy_map=False,
         save_occupancy_map=False,
+        align_mesh=False,
     ):
         super().__init__(
             level=level,
@@ -46,6 +47,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             save_temp=save_temp,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
+            align_mesh=align_mesh,
         )
 
         self.autocontext_pipeline = AutoContextPipeline(
@@ -120,6 +122,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
         save_temp=False,
         segment_occupancy_map=False,
         save_occupancy_map=False,
+        align_mesh=False,
     ):
         super().__init__(
             level=level,
@@ -130,6 +133,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             save_temp=save_temp,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
+            align_mesh=align_mesh,
         )
 
         self.project: str = project
