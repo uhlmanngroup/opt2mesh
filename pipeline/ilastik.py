@@ -77,7 +77,9 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             tif_file, base_out_file
         )
         end = time.time()
-        logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
+        logging.info(
+            f"Done Morphological Chan Vese on full in {(end - start)}s"
+        )
 
         # Initialization of the level-set.
         init_ls = ms.ellipsoid_level_set(occupancy_map.shape)
@@ -94,7 +96,9 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             lambda2=self.lambda2,
         )
         end = time.time()
-        logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
+        logging.info(
+            f"Done Morphological Chan Vese on full in {(end - start)}s"
+        )
 
         return occupancy_map
 
@@ -176,7 +180,9 @@ class AutoContextPipeline(OPT2MeshPipeline):
         @return:
         """
         improved_seg_data = dilation(
-            erosion(dilation(gaussian_filter(interior_segmentation, sigma=0.1)))
+            erosion(
+                dilation(gaussian_filter(interior_segmentation, sigma=0.1))
+            )
         ).astype(np.uint8)
         for i in range(improved_seg_data.shape[0]):
             improved_seg_data[i, :, :] = 255 - flood_fill(

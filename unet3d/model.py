@@ -63,7 +63,9 @@ class Abstract3DUNet(nn.Module):
         self.testing = testing
 
         if isinstance(f_maps, int):
-            f_maps = number_of_features_per_level(f_maps, num_levels=num_levels)
+            f_maps = number_of_features_per_level(
+                f_maps, num_levels=num_levels
+            )
 
         # create encoder path consisting of Encoder modules. Depth of the encoder is equal to `len(f_maps)`
         encoders = []

@@ -70,13 +70,17 @@ class GACPipeline(OPT2MeshPipeline):
             init_ls = ms.ellipsoid_level_set(gradient_image[0].shape)
 
             start = time.time()
-            logging.info(f"Starting Morphological Geodesic Active Contour on slices")
+            logging.info(
+                f"Starting Morphological Geodesic Active Contour on slices"
+            )
             for i, slice in enumerate(gradient_image):
                 logging.info(
                     f"Running Morphological Geodesic Active Contour on slice {i}"
                 )
 
-                occupancy_map[i, :, :] = ms.morphological_geodesic_active_contour(
+                occupancy_map[
+                    i, :, :
+                ] = ms.morphological_geodesic_active_contour(
                     slice,
                     iterations=self.iterations,
                     init_level_set=init_ls,
@@ -93,7 +97,9 @@ class GACPipeline(OPT2MeshPipeline):
             # Initialization of the level-set.
             init_ls = ms.ellipsoid_level_set(opt_data.shape)
 
-            logging.info(f"Running Morphological Geodesic Active Contour on full")
+            logging.info(
+                f"Running Morphological Geodesic Active Contour on full"
+            )
 
             start = time.time()
 
@@ -146,7 +152,7 @@ class ACWEPipeline(OPT2MeshPipeline):
             save_temp=save_temp,
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
-            align_mesh=align_mesh
+            align_mesh=align_mesh,
         )
         self.iterations: int = iterations
         self.on_slices: bool = on_slices
@@ -188,7 +194,9 @@ class ACWEPipeline(OPT2MeshPipeline):
                 lambda2=self.lambda2,
             )
             end = time.time()
-            logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
+            logging.info(
+                f"Done Morphological Chan Vese on full in {(end - start)}s"
+            )
             del opt_data, init_ls
 
         return occupancy_map
@@ -239,7 +247,9 @@ class ACWEPipeline(OPT2MeshPipeline):
         )
 
         end = time.time()
-        logging.info(f"Done Morphological Chan Vese on {suffix} in {(end - start)}s")
+        logging.info(
+            f"Done Morphological Chan Vese on {suffix} in {(end - start)}s"
+        )
 
         half_surface_file = base_out_file + f"_{suffix}.tif"
 
@@ -258,7 +268,9 @@ class ACWEPipeline(OPT2MeshPipeline):
         """
 
         Parallel(n_jobs=self.n_jobs, backend="multiprocessing")(
-            delayed(self.__acwe_on_one_half(tif_stack_file, base_out_file, suffix))
+            delayed(
+                self.__acwe_on_one_half(tif_stack_file, base_out_file, suffix)
+            )
             for suffix in [
                 "x_front",
                 "x_back",
@@ -296,7 +308,9 @@ class ACWEPipeline(OPT2MeshPipeline):
             )
 
         end = time.time()
-        logging.info(f"Done Morphological Chan Vese on slices in {(end - start)}s")
+        logging.info(
+            f"Done Morphological Chan Vese on slices in {(end - start)}s"
+        )
 
         return occupancy_map
 
@@ -370,13 +384,19 @@ class ACWEPipeline(OPT2MeshPipeline):
         ).clip(0, 1)
 
         if self.save_temp:
-            io.imsave(base_out_file + "_x_front_reshaped.tif", x_front_reshaped)
+            io.imsave(
+                base_out_file + "_x_front_reshaped.tif", x_front_reshaped
+            )
             io.imsave(base_out_file + "_x_back_reshaped.tif", x_back_reshaped)
 
-            io.imsave(base_out_file + "_y_front_reshaped.tif", y_front_reshaped)
+            io.imsave(
+                base_out_file + "_y_front_reshaped.tif", y_front_reshaped
+            )
             io.imsave(base_out_file + "_y_back_reshaped.tif", y_back_reshaped)
 
-            io.imsave(base_out_file + "_z_front_reshaped.tif", z_front_reshaped)
+            io.imsave(
+                base_out_file + "_z_front_reshaped.tif", z_front_reshaped
+            )
             io.imsave(base_out_file + "_z_back_reshaped.tif", z_back_reshaped)
 
         return occupancy_map

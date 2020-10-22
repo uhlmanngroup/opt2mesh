@@ -67,7 +67,9 @@ class UNetPipeline(OPT2MeshPipeline):
     def _predict(self, net, full_img, device):
         net.eval()
 
-        img = torch.from_numpy(BasicDataset.preprocess(full_img, self.scale_factor))
+        img = torch.from_numpy(
+            BasicDataset.preprocess(full_img, self.scale_factor)
+        )
 
         img = img.unsqueeze(0)
         img = img.to(device=device, dtype=torch.float32)
@@ -202,8 +204,12 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
         if stride_shape is not None:
             t_stride = (stride_shape, stride_shape, stride_shape)
-            logging.info(f"Override Configuration: use stride_shape={t_stride} ")
-            config["loaders"]["test"]["slice_builder"]["stride_shape"] = t_stride
+            logging.info(
+                f"Override Configuration: use stride_shape={t_stride} "
+            )
+            config["loaders"]["test"]["slice_builder"][
+                "stride_shape"
+            ] = t_stride
 
         # Get a device to train on
         device_str = config.get("device", None)
@@ -245,7 +251,9 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
         return state
 
-    def __get_output_file(self, dataset, suffix="_predictions", output_dir=None):
+    def __get_output_file(
+        self, dataset, suffix="_predictions", output_dir=None
+    ):
         input_dir, file_name = os.path.split(dataset.file_path)
         if output_dir is None:
             output_dir = input_dir
@@ -288,7 +296,9 @@ class UNet3DPipeline(OPT2MeshPipeline):
         device = self.config["device"]
         if torch.cuda.device_count() > 1 and not device.type == "cpu":
             model = torch.nn.DataParallel(model)
-            logging.info(f"Using {torch.cuda.device_count()} GPUs for prediction")
+            logging.info(
+                f"Using {torch.cuda.device_count()} GPUs for prediction"
+            )
 
         logging.info(f"Sending the model to '{device}'")
         model = model.to(device)
@@ -307,7 +317,11 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
             predictor_config = self.config.get("predictor", {})
             predictor = StandardPredictor(
-                model, test_loader, output_file, self.config, **predictor_config
+                model,
+                test_loader,
+                output_file,
+                self.config,
+                **predictor_config,
             )
 
             # Run the model prediction on the entire dataset

@@ -27,7 +27,10 @@ class RandomFlip:
         self.axis_prob = axis_prob
 
     def __call__(self, m):
-        assert m.ndim in [3, 4], "Supports only 3D (DxHxW) or 4D (CxDxHxW) images"
+        assert m.ndim in [
+            3,
+            4,
+        ], "Supports only 3D (DxHxW) or 4D (CxDxHxW) images"
 
         for axis in self.axes:
             if self.random_state.uniform() > self.axis_prob:
@@ -56,7 +59,10 @@ class RandomRotate90:
         self.axis = (1, 2)
 
     def __call__(self, m):
-        assert m.ndim in [3, 4], "Supports only 3D (DxHxW) or 4D (CxDxHxW) images"
+        assert m.ndim in [
+            3,
+            4,
+        ], "Supports only 3D (DxHxW) or 4D (CxDxHxW) images"
 
         # pick number of rotations at random
         k = self.random_state.randint(0, 4)
@@ -64,7 +70,9 @@ class RandomRotate90:
         if m.ndim == 3:
             m = np.rot90(m, k, self.axis)
         else:
-            channels = [np.rot90(m[c], k, self.axis) for c in range(m.shape[0])]
+            channels = [
+                np.rot90(m[c], k, self.axis) for c in range(m.shape[0])
+            ]
             m = np.stack(channels, axis=0)
 
         return m
@@ -98,7 +106,9 @@ class RandomRotate:
 
     def __call__(self, m):
         axis = self.axes[self.random_state.randint(len(self.axes))]
-        angle = self.random_state.randint(-self.angle_spectrum, self.angle_spectrum)
+        angle = self.random_state.randint(
+            -self.angle_spectrum, self.angle_spectrum
+        )
 
         if m.ndim == 3:
             m = rotate(
@@ -211,7 +221,9 @@ class ElasticDeformation:
 
             dy, dx = [
                 gaussian_filter(
-                    self.random_state.randn(*volume_shape), self.sigma, mode="reflect"
+                    self.random_state.randn(*volume_shape),
+                    self.sigma,
+                    mode="reflect",
                 )
                 * self.alpha
                 for _ in range(2)
@@ -219,7 +231,10 @@ class ElasticDeformation:
 
             z_dim, y_dim, x_dim = volume_shape
             z, y, x = np.meshgrid(
-                np.arange(z_dim), np.arange(y_dim), np.arange(x_dim), indexing="ij"
+                np.arange(z_dim),
+                np.arange(y_dim),
+                np.arange(x_dim),
+                indexing="ij",
             )
             indices = z + dz, y + dy, x + dx
 
@@ -229,7 +244,9 @@ class ElasticDeformation:
                 )
             else:
                 channels = [
-                    map_coordinates(c, indices, order=self.spline_order, mode="reflect")
+                    map_coordinates(
+                        c, indices, order=self.spline_order, mode="reflect"
+                    )
                     for c in m
                 ]
                 return np.stack(channels, axis=0)
@@ -245,7 +262,9 @@ def blur_boundary(boundary, sigma):
 
 
 class CropToFixed:
-    def __init__(self, random_state, size=(256, 256), centered=False, **kwargs):
+    def __init__(
+        self, random_state, size=(256, 256), centered=False, **kwargs
+    ):
         self.random_state = random_state
         self.crop_y, self.crop_x = size
         self.centered = centered
@@ -285,7 +304,9 @@ class CropToFixed:
             y_start, y_pad = _start_and_pad(self.crop_y, y)
             x_start, x_pad = _start_and_pad(self.crop_x, x)
 
-        result = m[:, y_start : y_start + self.crop_y, x_start : x_start + self.crop_x]
+        result = m[
+            :, y_start : y_start + self.crop_y, x_start : x_start + self.crop_x
+        ]
         return np.pad(result, pad_width=((0, 0), y_pad, x_pad), mode="reflect")
 
 
@@ -321,7 +342,8 @@ class AbstractLabelToBoundary:
 
         kernels = self.get_kernels()
         boundary_arr = [
-            np.where(np.abs(convolve(m, kernel)) > 0, 1, 0) for kernel in kernels
+            np.where(np.abs(convolve(m, kernel)) > 0, 1, 0)
+            for kernel in kernels
         ]
         channels = np.stack(boundary_arr)
         results = []
@@ -394,7 +416,9 @@ class StandardLabelToBoundary:
         results = []
         if self.foreground:
             foreground = (m > 0).astype("uint8")
-            results.append(_recover_ignore_index(foreground, m, self.ignore_index))
+            results.append(
+                _recover_ignore_index(foreground, m, self.ignore_index)
+            )
 
         results.append(_recover_ignore_index(boundaries, m, self.ignore_index))
 
@@ -406,7 +430,9 @@ class StandardLabelToBoundary:
 
 
 class BlobsWithBoundary:
-    def __init__(self, mode=None, append_label=False, blur=False, sigma=1, **kwargs):
+    def __init__(
+        self, mode=None, append_label=False, blur=False, sigma=1, **kwargs
+    ):
         if mode is None:
             mode = ["thick", "inner", "outer"]
         self.mode = mode
@@ -563,7 +589,9 @@ class LabelToZAffinities(AbstractLabelToBoundary):
     One specify the offsets (thickness) of the border. The boundary will be computed via the convolution operator.
     """
 
-    def __init__(self, offsets, ignore_index=None, append_label=False, **kwargs):
+    def __init__(
+        self, offsets, ignore_index=None, append_label=False, **kwargs
+    ):
         super().__init__(ignore_index=ignore_index, append_label=append_label)
 
         assert isinstance(offsets, list) or isinstance(
@@ -647,7 +675,9 @@ class FlyWingBoundary:
         results = [boundary]
 
         if self.thick_boundary:
-            t_boundary = find_boundaries(m, connectivity=1, mode="outer", background=0)
+            t_boundary = find_boundaries(
+                m, connectivity=1, mode="outer", background=0
+            )
             results.append(t_boundary)
 
         if self.lta is not None:
@@ -723,7 +753,11 @@ class Normalize:
 
 class AdditiveGaussianNoise:
     def __init__(
-        self, random_state, scale=(0.0, 1.0), execution_probability=0.1, **kwargs
+        self,
+        random_state,
+        scale=(0.0, 1.0),
+        execution_probability=0.1,
+        **kwargs,
     ):
         self.execution_probability = execution_probability
         self.random_state = random_state
@@ -764,7 +798,10 @@ class ToTensor:
         self.dtype = dtype
 
     def __call__(self, m):
-        assert m.ndim in [3, 4], "Supports only 3D (DxHxW) or 4D (CxDxHxW) images"
+        assert m.ndim in [
+            3,
+            4,
+        ], "Supports only 3D (DxHxW) or 4D (CxDxHxW) images"
         # add channel dimension
         if self.expand_dims and m.ndim == 3:
             m = np.expand_dims(m, axis=0)
@@ -842,7 +879,9 @@ class Transformer:
 
     def _create_transform(self, name):
         assert name in self.phase_config, f"Could not find {name} transform"
-        return Compose([self._create_augmentation(c) for c in self.phase_config[name]])
+        return Compose(
+            [self._create_augmentation(c) for c in self.phase_config[name]]
+        )
 
     def _create_augmentation(self, c):
         config = dict(self.config_base)
