@@ -153,7 +153,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
         self,
         # UNet (3D) specifics
         model_file,
-        config_file,
+        config_file=None,
         patch_halo=None,
         stride_shape=None,
         f_maps=None,

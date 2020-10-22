@@ -119,7 +119,7 @@ def parse_args():
     # UNet prediction parameters
     parser.add_argument(
         "--pytorch_model",
-        default=os.path.join("models", "3d_preprocessed.pytorch"),
+        default=None,
         metavar="FILE",
         help="UNet: Specify the file in which the model is stored",
     )
