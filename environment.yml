@@ -17,4 +17,5 @@ dependencies:
   - pip
   - pip:
     - pymeshfix==0.14.1
+    - pre-commit==2.7.1
 
