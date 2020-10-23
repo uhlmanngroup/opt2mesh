@@ -219,9 +219,9 @@ def parse_args():
     # Mesh simplification parameters
     parser.add_argument(
         "--detail",
-        help="Mesh simplification: Level of detail to preserve. "
+        help="Mesh decimation: Level of detail to preserve. "
         "Can be the target number of faces or a string in "
-        "['low', 'normal', 'high']",
+        "['low', 'normal', 'high', 'original']",
         default=3000,
         type=int_or_str,
     )
