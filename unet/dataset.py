@@ -17,7 +17,9 @@ class BasicDataset(Dataset):
         assert 0 < scale <= 1, "Scale must be between 0 and 1"
 
         self.ids = [
-            splitext(file)[0] for file in listdir(imgs_dir) if not file.startswith(".")
+            splitext(file)[0]
+            for file in listdir(imgs_dir)
+            if not file.startswith(".")
         ]
         logging.info(f"Creating dataset with {len(self.ids)} examples")
 

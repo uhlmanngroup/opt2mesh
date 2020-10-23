@@ -17,8 +17,12 @@ def parse_args():
     )
 
     # Argument
-    parser.add_argument("in_tif", help="Input OPT scan as tif stack (3D image)")
-    parser.add_argument("out_folder", help="General output folder for this run")
+    parser.add_argument(
+        "in_tif", help="Input OPT scan as tif stack (3D image)"
+    )
+    parser.add_argument(
+        "out_folder", help="General output folder for this run"
+    )
     parser.add_argument(
         "--method",
         help="Surface extraction method",
@@ -39,13 +43,24 @@ def parse_args():
         "--save_temp", help="Save temporary results", action="store_true"
     )
     parser.add_argument(
-        "--segment_occupancy_map", help="Segment the occupancy map", action="store_true"
+        "--segment_occupancy_map",
+        help="Segment the occupancy map",
+        action="store_true",
     )
     parser.add_argument(
-        "--save_occupancy_map", help="Save the occupancy map", action="store_true"
+        "--save_occupancy_map",
+        help="Save the occupancy map",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--align_mesh",
+        help="Align the mesh on the original OPT scan orientation",
+        action="store_true",
     )
 
-    parser.add_argument("--timing", help="Print timing info", action="store_true")
+    parser.add_argument(
+        "--timing", help="Print timing info", action="store_true"
+    )
     parser.add_argument(
         "--n_jobs",
         type=int,
@@ -55,7 +70,10 @@ def parse_args():
 
     # Active contour general parameters
     parser.add_argument(
-        "--iterations", type=int, default=150, help="ACWE & GAC: number of iterations"
+        "--iterations",
+        type=int,
+        default=150,
+        help="ACWE & GAC: number of iterations",
     )
     parser.add_argument(
         "--smoothing",
@@ -66,14 +84,22 @@ def parse_args():
 
     # Geodesic active contour parameters
     parser.add_argument(
-        "--threshold", help="GAC: number of smoothing iteration (µ)", default="auto"
+        "--threshold",
+        help="GAC: number of smoothing iteration (µ)",
+        default="auto",
     )
     parser.add_argument("--balloon", default=-1, help="GAC: ballon force")
     parser.add_argument(
-        "--alpha", type=int, default=1000, help="GAC: inverse gradient transform alpha"
+        "--alpha",
+        type=int,
+        default=1000,
+        help="GAC: inverse gradient transform alpha",
     )
     parser.add_argument(
-        "--sigma", type=float, default=5, help="GAC: inverse gradient transform sigma"
+        "--sigma",
+        type=float,
+        default=5,
+        help="GAC: inverse gradient transform sigma",
     )
 
     # Active contour without edges Morphosnakes parameters
@@ -104,7 +130,9 @@ def parse_args():
 
     # Auto-context segmentation parameters
     parser.add_argument(
-        "--autocontext", type=str, help="Autocontext: path to the Ilastik project"
+        "--autocontext",
+        type=str,
+        help="Autocontext: path to the Ilastik project",
     )
     parser.add_argument(
         "--use_probabilities",
@@ -116,7 +144,7 @@ def parse_args():
     # UNet prediction parameters
     parser.add_argument(
         "--pytorch_model",
-        default=os.path.join("models", "3d_preprocessed.pytorch"),
+        default=None,
         metavar="FILE",
         help="UNet: Specify the file in which the model is stored",
     )
@@ -202,11 +230,19 @@ def main():
     job_id = os.getenv("LSB_JOBID", str(uuid.uuid1())[:8])
     job_batch_name = os.getenv("LSB_JOBNAME", "unknown_job_batch_name")
     now_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    job_out_folder = os.path.join(args.out_folder, str(job_id) + "_" + now_string)
-    code_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-    git_log_command = f"git --git-dir={code_dir}/.git --work-tree={code_dir} log"
+    job_out_folder = os.path.join(
+        args.out_folder, str(job_id) + "_" + now_string
+    )
+    code_dir = os.path.abspath(
+        os.path.join(__file__, os.pardir, os.pardir, os.pardir)
+    )
+    git_log_command = (
+        f"git --git-dir={code_dir}/.git --work-tree={code_dir} log"
+    )
     last_commit_message = os.popen(f"{git_log_command} -1").read().strip()
-    last_commit = os.popen(f'{git_log_command} -1 --pretty="%h"').read().strip()
+    last_commit = (
+        os.popen(f'{git_log_command} -1 --pretty="%h"').read().strip()
+    )
     cli_call = " ".join(sys.argv)
 
     os.makedirs(job_out_folder)
@@ -299,6 +335,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     elif args.method.lower() == "acwe":
         from pipeline.active_contours import ACWEPipeline
@@ -321,6 +358,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     elif args.method.lower() == "autocontext":
         from pipeline.ilastik import AutoContextPipeline
@@ -338,6 +376,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     elif args.method.lower() == "autocontext_acwe":
         from pipeline.ilastik import AutoContextACWEPipeline
@@ -359,6 +398,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     elif args.method.lower() == "2d_unet":
         from pipeline.unet import UNetPipeline
@@ -378,6 +418,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     elif args.method.lower() == "3d_unet":
         from pipeline.unet import UNet3DPipeline
@@ -398,6 +439,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     elif args.method.lower() == "direct":
         from pipeline.base import DirectMeshingPipeline
@@ -411,6 +453,7 @@ def main():
             save_temp=args.save_temp,
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
+            align_mesh=args.align_mesh,
         )
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")

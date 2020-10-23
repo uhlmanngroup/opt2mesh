@@ -12,7 +12,6 @@ import unet3d.transforms as transforms
 from unet3d.datasets.utils import (
     ConfigDataset,
     calculate_stats,
-    logger,
     prediction_collate,
 )
 from unet3d.utils import get_logger
@@ -122,11 +121,14 @@ class AbstractHDF5Dataset(ConfigDataset):
                 for raw in self.raws:
                     if raw.ndim == 4:
                         channels = [
-                            np.pad(r, pad_width=pad_width, mode="reflect") for r in raw
+                            np.pad(r, pad_width=pad_width, mode="reflect")
+                            for r in raw
                         ]
                         padded_volume = np.stack(channels)
                     else:
-                        padded_volume = np.pad(raw, pad_width=pad_width, mode="reflect")
+                        padded_volume = np.pad(
+                            raw, pad_width=pad_width, mode="reflect"
+                        )
 
                     padded_volumes.append(padded_volume)
 
@@ -165,7 +167,10 @@ class AbstractHDF5Dataset(ConfigDataset):
     def fetch_and_check(self, input_file_h5, internal_paths):
         datasets = self.fetch_datasets(input_file_h5, internal_paths)
         # expand dims if 2d
-        fn = lambda ds: np.expand_dims(ds, axis=0) if ds.ndim == 2 else ds
+
+        def fn(ds):
+            return np.expand_dims(ds, axis=0) if ds.ndim == 2 else ds
+
         datasets = list(map(fn, datasets))
         return datasets
 
@@ -230,7 +235,10 @@ class AbstractHDF5Dataset(ConfigDataset):
             return volume.shape[1:]
 
         for raw, label in zip(raws, labels):
-            assert raw.ndim in [3, 4], "Raw dataset must be 3D (DxHxW) or 4D (CxDxHxW)"
+            assert raw.ndim in [
+                3,
+                4,
+            ], "Raw dataset must be 3D (DxHxW) or 4D (CxDxHxW)"
             assert label.ndim in [
                 3,
                 4,
@@ -264,7 +272,9 @@ class AbstractHDF5Dataset(ConfigDataset):
                     slice_builder_config=slice_builder_config,
                     transformer_config=transformer_config,
                     mirror_padding=dataset_config.get("mirror_padding", None),
-                    raw_internal_path=dataset_config.get("raw_internal_path", "raw"),
+                    raw_internal_path=dataset_config.get(
+                        "raw_internal_path", "raw"
+                    ),
                     label_internal_path=dataset_config.get(
                         "label_internal_path", "label"
                     ),
@@ -274,7 +284,9 @@ class AbstractHDF5Dataset(ConfigDataset):
                 )
                 datasets.append(dataset)
             except Exception:
-                logger.error(f"Skipping {phase} set: {file_path}", exc_info=True)
+                logger.error(
+                    f"Skipping {phase} set: {file_path}", exc_info=True
+                )
         return datasets
 
     @staticmethod
@@ -329,7 +341,10 @@ class StandardHDF5Dataset(AbstractHDF5Dataset):
 
     @staticmethod
     def fetch_datasets(input_file_h5, internal_paths):
-        return [input_file_h5[internal_path][...] for internal_path in internal_paths]
+        return [
+            input_file_h5[internal_path][...]
+            for internal_path in internal_paths
+        ]
 
 
 class LazyHDF5Dataset(AbstractHDF5Dataset):
@@ -383,7 +398,9 @@ class LazyHDF5Dataset(AbstractHDF5Dataset):
         for internal_path in internal_paths:
             if internal_path is not None:
                 assert "_uncompressed" not in internal_path
-                uncompressed_paths[internal_path] = f"_uncompressed_{internal_path}"
+                uncompressed_paths[
+                    internal_path
+                ] = f"_uncompressed_{internal_path}"
 
         with h5py.File(file_path, "r+") as f:
             for k, v in uncompressed_paths.items():
@@ -401,9 +418,12 @@ class LazyHDF5Dataset(AbstractHDF5Dataset):
     def fetch_datasets(input_file_h5, internal_paths):
         # convert to uncompressed
         internal_paths = [
-            f"_uncompressed_{internal_path}" for internal_path in internal_paths
+            f"_uncompressed_{internal_path}"
+            for internal_path in internal_paths
         ]
-        return [input_file_h5[internal_path] for internal_path in internal_paths]
+        return [
+            input_file_h5[internal_path] for internal_path in internal_paths
+        ]
 
     def ds_stats(self):
         # Do not calculate stats on the whole stacks when using lazy loader,
@@ -551,7 +571,9 @@ def get_train_loaders(config):
         loaders_config["val"]["file_paths"]
     ), "Train and validation 'file_paths' overlap. One cannot use validation data for training!"
 
-    train_datasets = dataset_class.create_datasets(loaders_config, phase="train")
+    train_datasets = dataset_class.create_datasets(
+        loaders_config, phase="train"
+    )
 
     val_datasets = dataset_class.create_datasets(loaders_config, phase="val")
 

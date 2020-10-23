@@ -6,10 +6,14 @@ from torch.nn import functional as F
 
 
 def conv3d(in_channels, out_channels, kernel_size, bias, padding):
-    return nn.Conv3d(in_channels, out_channels, kernel_size, padding=padding, bias=bias)
+    return nn.Conv3d(
+        in_channels, out_channels, kernel_size, padding=padding, bias=bias
+    )
 
 
-def create_conv(in_channels, out_channels, kernel_size, order, num_groups, padding):
+def create_conv(
+    in_channels, out_channels, kernel_size, order, num_groups, padding
+):
     """
     Create a list of modules with together constitute a single conv layer with non-linearity
     and optional batchnorm/groupnorm.
@@ -52,7 +56,11 @@ def create_conv(in_channels, out_channels, kernel_size, order, num_groups, paddi
                 (
                     "conv",
                     conv3d(
-                        in_channels, out_channels, kernel_size, bias, padding=padding
+                        in_channels,
+                        out_channels,
+                        kernel_size,
+                        bias,
+                        padding=padding,
                     ),
                 )
             )
@@ -73,7 +81,9 @@ def create_conv(in_channels, out_channels, kernel_size, order, num_groups, paddi
             modules.append(
                 (
                     "groupnorm",
-                    nn.GroupNorm(num_groups=num_groups, num_channels=num_channels),
+                    nn.GroupNorm(
+                        num_groups=num_groups, num_channels=num_channels
+                    ),
                 )
             )
         elif char == "b":
@@ -120,7 +130,12 @@ class SingleConv(nn.Sequential):
         super(SingleConv, self).__init__()
 
         for name, module in create_conv(
-            in_channels, out_channels, kernel_size, order, num_groups, padding=padding
+            in_channels,
+            out_channels,
+            kernel_size,
+            order,
+            num_groups,
+            padding=padding,
         ):
             self.add_module(name, module)
 
@@ -165,7 +180,10 @@ class DoubleConv(nn.Sequential):
             conv1_out_channels = out_channels // 2
             if conv1_out_channels < in_channels:
                 conv1_out_channels = in_channels
-            conv2_in_channels, conv2_out_channels = conv1_out_channels, out_channels
+            conv2_in_channels, conv2_out_channels = (
+                conv1_out_channels,
+                out_channels,
+            )
         else:
             # we're in the decoder path, decrease the number of channels in the 1st convolution
             conv1_in_channels, conv1_out_channels = in_channels, out_channels

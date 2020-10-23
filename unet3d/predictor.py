@@ -85,7 +85,9 @@ class StandardPredictor(_AbstractPredictor):
         )
 
         patch_halo = self.predictor_config.get("patch_halo", (8, 8, 8))
-        self._validate_halo(patch_halo, self.config["loaders"]["test"]["slice_builder"])
+        self._validate_halo(
+            patch_halo, self.config["loaders"]["test"]["slice_builder"]
+        )
         logger.info(f"Using patch_halo: {patch_halo}")
 
         # create destination H5 file
@@ -132,8 +134,12 @@ class StandardPredictor(_AbstractPredictor):
 
                         if prediction_channel is not None:
                             # use only the 'prediction_channel'
-                            logger.info(f"Using channel '{prediction_channel}'...")
-                            pred = np.expand_dims(pred[prediction_channel], axis=0)
+                            logger.info(
+                                f"Using channel '{prediction_channel}'..."
+                            )
+                            pred = np.expand_dims(
+                                pred[prediction_channel], axis=0
+                            )
 
                         logger.info(f"Saving predictions for slice:{index}...")
 
@@ -164,7 +170,8 @@ class StandardPredictor(_AbstractPredictor):
 
             if self.loader.dataset.mirror_padding is not None:
                 z_s, y_s, x_s = [
-                    _slice_from_pad(p) for p in self.loader.dataset.mirror_padding
+                    _slice_from_pad(p)
+                    for p in self.loader.dataset.mirror_padding
                 ]
 
                 logger.info(
@@ -175,10 +182,13 @@ class StandardPredictor(_AbstractPredictor):
 
         return prediction_map
 
-    def _allocate_prediction_maps(self, output_shape, output_heads, output_file):
+    def _allocate_prediction_maps(
+        self, output_shape, output_heads, output_file
+    ):
         # initialize the output prediction arrays
         prediction_maps = [
-            np.zeros(output_shape, dtype="float32") for _ in range(output_heads)
+            np.zeros(output_shape, dtype="float32")
+            for _ in range(output_heads)
         ]
         # initialize normalization mask in order to average out probabilities of overlapping patches
         normalization_masks = [

@@ -11,16 +11,60 @@ $ conda activate opt2mesh
 $ python setup.py install
 ```
 
-## Usage
+## CLI Usage
 
+You can access the method
 Simply run:
 
 ```bash
-$ opt2mesh opt_scan_as.tif
+$ opt2mesh opt_scan.tif /path/to/result/folder
 ```
 
-To have all the options, run:
+This will create a subfolder containing:
+ - the mesh extracted (`opt_scan.stl`)
+ - logs of the job ran
+ - information about the mesh correctness and quality
+
+You can store the result of the segmentation by using:
+
+```bash
+$ opt2mesh --save_occupancy_map opt_scan.tif
+```
+
+
+All the options are available using the help flag:
+```bash
+$ opt2mesh -h
+```
+
+## Segmentation methods
+
+Several methods for segmentation are available to identify the object in the image.
+See the `--method` flag:
+ - `acwe` uses morphological variant of Active Contours Without Edge.
+ - `gac` uses morphological variant of Geodesic Active Contours.
+ - `2d_unet` uses a 2D U-Net trained on this implementation.
+ - `3d_unet` uses a 3D U-Net trained on this implementation. You definitely require a GPU
+for this method.
+ - `direct` performs a direct meshing on a already OPT scan. This is the default one method.
+ 
+Each of those methods has its own set of parameters which can be set on the command line.
+See the help for more detail:
 
 ```bash
 $ opt2mesh -h
 ```
+
+### Introducing a custom segmentation method
+
+You can introduce your own segmentation method in the pipeline.
+
+To do this, you have to extend the base class `OPT2MeshPipeline` and to define the
+`_extract_occupancy_map` method.
+
+
+## Pretrained models
+
+Some models which have been pretrained (from OPT scans of embryos) for the
+`UNetPipeline` and the `UNet3DPipeline` are available in the `models` folder.
+You might need to install [Git LFS](https://git-lfs.github.com/) to download them using git.

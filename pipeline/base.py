@@ -38,6 +38,7 @@ class OPT2MeshPipeline(ABC):
         save_temp=False,
         segment_occupancy_map=False,
         save_occupancy_map=False,
+        align_mesh=False,
     ):
         self.level: float = level
         self.spacing: int = spacing
@@ -47,6 +48,7 @@ class OPT2MeshPipeline(ABC):
         self.save_temp: bool = save_temp
         self.segment_occupancy_map: bool = segment_occupancy_map
         self.save_occupancy_map: bool = save_occupancy_map
+        self.align_mesh: bool = align_mesh
 
     @abstractmethod
     def _extract_occupancy_map(self, tif_stack_file, base_out_file):
@@ -86,7 +88,9 @@ class OPT2MeshPipeline(ABC):
         base_out_file = os.path.join(out_folder, basename)
 
         logging.info(f"→ Image segmentation")
-        occupancy_map = self._extract_occupancy_map(tif_stack_file, base_out_file)
+        occupancy_map = self._extract_occupancy_map(
+            tif_stack_file, base_out_file
+        )
 
         assert (
             0 <= occupancy_map.min()
@@ -104,8 +108,12 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  shape      : {occupancy_map.shape}")
 
         if self.segment_occupancy_map:
-            logging.info(f"Segmenting occupancy map info on level: {self.level}")
-            occupancy_map = np.array(occupancy_map > self.level, dtype=np.uint8)
+            logging.info(
+                f"Segmenting occupancy map info on level: {self.level}"
+            )
+            occupancy_map = np.array(
+                occupancy_map > self.level, dtype=np.uint8
+            )
             # Remove inner part which are lower that the current level
             occupancy_map = flood_fill(occupancy_map, (1, 1, 1), 2)
             # Create a segmented occupancy map with 2 homogeneous values
@@ -141,6 +149,18 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  Vertices: {len(v)}")
         logging.info(f"  Faces: {len(f)}")
 
+        if self.align_mesh:
+            # For some reasons, the mesh which is extracted using
+            # the marching cubes implementation is not matching the original
+            # orientation.
+            logging.info(
+                "Aligning the mesh on the original OPT scan orientation"
+            )
+            from scipy.spatial.transform import Rotation
+
+            rotation_mat = Rotation.from_euler("y", 90, degrees=True)
+            v = v @ rotation_mat.as_matrix().T
+
         if self.save_temp:
             extracted_mesh_file = base_out_file + "_extracted_mesh.stl"
             logging.info(f"Saving extracted mesh in: {extracted_mesh_file}")
@@ -163,7 +183,9 @@ class OPT2MeshPipeline(ABC):
             logging.info("")
             if self.save_temp:
                 cc_mesh_file = extracted_mesh_file.replace(".stl", f"_{i}.stl")
-                logging.info(f"Saving connected component #{i}: {cc_mesh_file}")
+                logging.info(
+                    f"Saving connected component #{i}: {cc_mesh_file}"
+                )
                 pymesh.save_mesh_raw(cc_mesh_file, vi, fi)
 
         # Taking the main mesh
@@ -184,7 +206,9 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  Faces   : {len(final_mesh.faces)}")
 
         final_mesh_file = base_out_file + "_final_mesh.stl"
-        pymesh.save_mesh_raw(final_mesh_file, final_mesh.vertices, final_mesh.faces)
+        pymesh.save_mesh_raw(
+            final_mesh_file, final_mesh.vertices, final_mesh.faces
+        )
         logging.info(f"Saved final mesh in: {final_mesh_file}")
 
         v = final_mesh.vertices
@@ -229,7 +253,9 @@ class OPT2MeshPipeline(ABC):
                 ind = np.arange(0, n_vertices, dtype=np.int32)
                 np.stack(
                     [
-                        igl.exact_geodesic(v, f, np.array([i], dtype=np.int32), ind)
+                        igl.exact_geodesic(
+                            v, f, np.array([i], dtype=np.int32), ind
+                        )
                         for i in ind
                     ]
                 )
@@ -262,7 +288,9 @@ class OPT2MeshPipeline(ABC):
             info: mesh_info[info] for info in mesh_correctness_info
         }
         reordered_mesh_info["mesh_statistics"] = {
-            k: v for k, v in mesh_info.items() if k not in mesh_correctness_info
+            k: v
+            for k, v in mesh_info.items()
+            if k not in mesh_correctness_info
         }
 
         return reordered_mesh_info
@@ -287,7 +315,9 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Target resolution: {target_len} mm")
 
         count = 0
-        mesh, __ = pymesh.remove_degenerated_triangles(mesh, num_iterations=100)
+        mesh, __ = pymesh.remove_degenerated_triangles(
+            mesh, num_iterations=100
+        )
         mesh, __ = pymesh.split_long_edges(mesh, target_len)
         num_vertices = mesh.num_vertices
         while True:
