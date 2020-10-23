@@ -215,10 +215,6 @@ class OPT2MeshPipeline(ABC):
         f = np.asarray(final_mesh.faces, dtype=np.int32)
         mesh_info = self._get_mesh_quality_info(v, f)
 
-        logging.info("Information of the output mesh:")
-        for k, v in mesh_info.items():
-            logging.info(f"   {k}: {v}")
-
         logging.info(f"Pipeline {self.__class__.__name__} done")
         return final_mesh.vertices, final_mesh.faces, mesh_info
 

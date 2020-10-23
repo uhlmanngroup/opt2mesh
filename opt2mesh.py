@@ -474,6 +474,15 @@ def main():
     )
     logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name__}")
 
+    logging.info("Mesh correctness:")
+    for k, v in mesh_info["mesh_correctness"].items():
+        key = k.replace("_", " ").capitalize()
+        logging.info(f"   {key}: {v}")
+    logging.info("Mesh statistics:")
+    for k, v in mesh_info["mesh_correctness"].items():
+        key = k.replace("_", " ").capitalize()
+        logging.info(f"   {key}: {v}")
+
     mesh_info_file = os.path.join(job_out_folder, f"{job_id}_mesh_quality.yml")
     logging.info(f"Saving mesh information in {mesh_info_file}")
     with open(mesh_info_file, "w") as fp:
