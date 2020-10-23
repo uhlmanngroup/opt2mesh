@@ -34,7 +34,7 @@ class OPT2MeshPipeline(ABC):
         spacing=1,
         gradient_direction="descent",
         step_size=1,
-        detail="high",
+        detail=3000,
         save_temp=False,
         segment_occupancy_map=False,
         save_occupancy_map=False,
