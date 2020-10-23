@@ -34,7 +34,7 @@ class OPT2MeshPipeline(ABC):
         spacing=1,
         gradient_direction="descent",
         step_size=1,
-        detail="high",
+        detail=3000,
         save_temp=False,
         segment_occupancy_map=False,
         save_occupancy_map=False,
@@ -44,7 +44,7 @@ class OPT2MeshPipeline(ABC):
         self.spacing: int = spacing
         self.gradient_direction: str = gradient_direction
         self.step_size: int = step_size
-        self.detail: str = detail
+        self.detail = detail
         self.save_temp: bool = save_temp
         self.segment_occupancy_map: bool = segment_occupancy_map
         self.save_occupancy_map: bool = save_occupancy_map
@@ -215,10 +215,6 @@ class OPT2MeshPipeline(ABC):
         f = np.asarray(final_mesh.faces, dtype=np.int32)
         mesh_info = self._get_mesh_quality_info(v, f)
 
-        logging.info("Information of the output mesh:")
-        for k, v in mesh_info.items():
-            logging.info(f"   {k}: {v}")
-
         logging.info(f"Pipeline {self.__class__.__name__} done")
         return final_mesh.vertices, final_mesh.faces, mesh_info
 
@@ -295,22 +291,69 @@ class OPT2MeshPipeline(ABC):
 
         return reordered_mesh_info
 
-    def _mesh_decimation(self, mesh):
+    def _mesh_decimation(self, mesh: pymesh.Mesh) -> pymesh.Mesh:
         """
-        Remesh the input mesh to remove degeneracies and improve triangle quality.
+        Decimate the mesh by edges collapsing.
+        """
+
+        if self.detail == "original":
+            return mesh
+
+        v, f = mesh.vertices, mesh.faces
+        if isinstance(self.detail, int):
+            target_faces_number = self.detail
+        elif isinstance(self.detail, str):
+            # This is a simple adaptation for retro compatibility
+            # but this can be adapted.
+            # The original mesh can really be of high resolution
+            target_faces_number = {
+                "high": int(0.5 * mesh.num_faces),
+                "normal": int(0.1 * mesh.num_faces),
+                "low": 3000,
+            }[self.detail]
+        else:
+            raise RuntimeError(
+                "detail should be an integer or a string in ['low', 'normal', 'high']"
+            )
+
+        logging.info(f"Decimating the mesh to get {target_faces_number} faces")
+        if mesh.num_faces < target_faces_number:
+            logging.info(
+                f"No need for decimation; current number of faces: {mesh.num_faces}"
+            )
+            return mesh
+
+        succeeded, vp, fp, i_fp, i_vp = igl.decimate(v, f, target_faces_number)
+
+        if succeeded:
+            return pymesh.form_mesh(vp, fp)
+        else:
+            detail = (
+                self.detail
+                if self.detail in ["low", "normal", "high"]
+                else "low"
+            )
+            logging.info(
+                f"igl::decimate failed, reverting to previous method with detail={detail}"
+            )
+            return self._old_mesh_decimation(mesh, detail=detail)
+
+    def _old_mesh_decimation(
+        self, mesh: pymesh.Mesh, detail: str
+    ) -> pymesh.Mesh:
+        """
+        Decimate by alternatively collapsing small and large edges.
 
         Taken and adapted from:
         https://github.com/PyMesh/PyMesh/blob/master/scripts/fix_mesh.py
-
-        TODO: to adapt and calibrate
         """
         bbox_min, bbox_max = mesh.bbox
         diag_len = norm(bbox_max - bbox_min)
-        if self.detail == "normal":
+        if detail == "normal":
             target_len = diag_len * 5e-3
-        elif self.detail == "high":
+        elif detail == "high":
             target_len = diag_len * 2.5e-3
-        elif self.detail == "low":
+        elif detail == "low":
             target_len = diag_len * 1e-2
         logging.info(f"Target resolution: {target_len} mm")
 

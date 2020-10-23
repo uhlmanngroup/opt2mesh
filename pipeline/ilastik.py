@@ -29,7 +29,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         ###
         gradient_direction="descent",
         step_size=1,
-        detail="high",
+        detail=3000,
         iterations=150,
         level=0.5,
         spacing=1,
@@ -120,7 +120,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
         #
         gradient_direction="descent",
         step_size=1,
-        detail="high",
+        detail=3000,
         level=0.5,
         spacing=1,
         save_temp=False,

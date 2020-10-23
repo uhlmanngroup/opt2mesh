@@ -210,12 +210,20 @@ def parse_args():
         help="Marching Cubes: step size for marching cube",
     )
 
+    def int_or_str(value):
+        try:
+            return int(value)
+        except ValueError:
+            return value
+
     # Mesh simplification parameters
     parser.add_argument(
         "--detail",
-        help="Mesh simplification: Level of detail to preserve",
-        choices=["low", "normal", "high"],
-        default="normal",
+        help="Mesh decimation: Level of detail to preserve. "
+        "Can be the target number of faces or a string in "
+        "['low', 'normal', 'high', 'original']",
+        default=3000,
+        type=int_or_str,
     )
 
     return parser.parse_args()
@@ -465,6 +473,15 @@ def main():
         tif_stack_file=args.in_tif, out_folder=job_out_folder
     )
     logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name__}")
+
+    logging.info("Mesh correctness:")
+    for k, v in mesh_info["mesh_correctness"].items():
+        key = k.replace("_", " ").capitalize()
+        logging.info(f"   {key}: {v}")
+    logging.info("Mesh statistics:")
+    for k, v in mesh_info["mesh_correctness"].items():
+        key = k.replace("_", " ").capitalize()
+        logging.info(f"   {key}: {v}")
 
     mesh_info_file = os.path.join(job_out_folder, f"{job_id}_mesh_quality.yml")
     logging.info(f"Saving mesh information in {mesh_info_file}")
