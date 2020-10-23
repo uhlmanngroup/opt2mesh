@@ -210,12 +210,20 @@ def parse_args():
         help="Marching Cubes: step size for marching cube",
     )
 
+    def int_or_str(value):
+        try:
+            return int(value)
+        except ValueError:
+            return value
+
     # Mesh simplification parameters
     parser.add_argument(
         "--detail",
-        help="Mesh simplification: Level of detail to preserve",
-        choices=["low", "normal", "high"],
-        default="normal",
+        help="Mesh simplification: Level of detail to preserve. "
+        "Can be the target number of faces or a string in "
+        "['low', 'normal', 'high']",
+        default=3000,
+        type=int_or_str,
     )
 
     return parser.parse_args()
