@@ -1,5 +1,6 @@
 import logging
 import os
+import tempfile
 import uuid
 from abc import ABC, abstractmethod
 
@@ -63,11 +64,14 @@ class OPT2MeshPipeline(ABC):
         this is a quick hack as of now.
 
         """
-        mesh_file = os.path.join("/tmp", str(uuid.uuid4()) + ".stl")
-        pymesh.save_mesh_raw(mesh_file, v, f)
-        cout_mesh_statistics = (
-            os.popen(f"mesh_statistics -i {mesh_file}").read().split("\n")[:-1]
-        )
+        with tempfile.TemporaryDirectory as tmp:
+            mesh_file = os.path.join(tmp, "mesh.stl")
+            pymesh.save_mesh_raw(mesh_file, v, f)
+            cout_mesh_statistics = (
+                os.popen(f"mesh_statistics -i {mesh_file}")
+                .read()
+                .split("\n")[:-1]
+            )
         # cout_mesh statistics is a list of string of the form:
         # Name of statistic: value
         # here we parse it to get a dictionary of the item:
