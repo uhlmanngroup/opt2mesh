@@ -1,6 +1,6 @@
-""" Full assembly of the parts to form the complete network """
+### Code adapted from https://github.com/milesial/Pytorch-UNet, GPL v3.
 
-import torch.nn.functional as F
+""" Full assembly of the parts to form the complete network """
 
 from .unet_parts import *
 

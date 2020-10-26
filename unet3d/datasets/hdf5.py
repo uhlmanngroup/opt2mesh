@@ -1,3 +1,5 @@
+### Code adapted from https://github.com/wolny/pytorch-3dunet, MIT License.
+
 import glob
 import os
 from itertools import chain

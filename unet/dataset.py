@@ -1,3 +1,5 @@
+### Code adapted from https://github.com/milesial/Pytorch-UNet, GPL v3.
+
 from os.path import splitext
 from os import listdir
 import numpy as np

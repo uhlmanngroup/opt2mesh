@@ -5,22 +5,32 @@ import time
 import h5py
 import numpy as np
 from scipy.ndimage import gaussian_filter
-from skimage import io
 from skimage.morphology import dilation, erosion, flood_fill
 
 from pipeline import morphsnakes as ms
 from pipeline.base import OPT2MeshPipeline
 
+# NOTE: as of now, there's no way to easily access Ilastik from python
+# We rely on a simple system call with arguments to the executable but this is cumbersome.
+# A python API is being introduced for prediction: https://github.com/ilastik/ilastik/pull/2303
+# If this gets in, this would simplify the following implementation _a lot_ with something like this:
+#
+#     from ilastik.experimental.api import from_project_file
+#     pipeline = from_project_file("./MyProjectPixel.ilp")
+#     test_res = pipeline.predict(test_arr)
+#
+
 
 class AutoContextACWEPipeline(OPT2MeshPipeline):
     """
-    Use AutoContext to extract the occupancy map (probabilities)
-    then runs ACWE on the occupancy map to extract the surface.
+    Use AutoContext workflow from Ilastik to segment the object
+    the occupancy map (probabilities), then runs ACWE on the
+    occupancy map to extract the surface.
     """
 
     def __init__(
         self,
-        # AutoContextSpecific
+        # AutoContext specifics
         project,
         # ACWE specifics
         smoothing,
@@ -37,6 +47,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False,
     ):
         super().__init__(
             level=level,
@@ -48,6 +59,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
 
         self.autocontext_pipeline = AutoContextPipeline(
@@ -57,24 +69,21 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             step_size=step_size,
             detail=detail,
             save_temp=save_temp,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
         self.iterations = iterations
         self.smoothing = smoothing
         self.lambda1 = lambda1
         self.lambda2 = lambda2
 
-    def _extract_occupancy_map(self, tif_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process, base_out_file):
         """
         See AutoContextACWEPipeline docstring.
-
-        @param tif_file:
-        @param base_out_file:
-        @return:
         """
         logging.info(f"Running Morphological Chan Vese on full")
         start = time.time()
         occupancy_map = self.autocontext_pipeline._extract_occupancy_map(
-            tif_file, base_out_file
+            opt2process, base_out_file
         )
         end = time.time()
         logging.info(
@@ -105,11 +114,14 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
 
 class AutoContextPipeline(OPT2MeshPipeline):
     """
-    Use ilastik for the segmentation using the headless mode.
+    Use AutoContext workflow from Ilastik to segment the object
+    the occupancy map (probabilities).
+
+    The path leading to the Ilastik project needs to be specified
+    when constructing the object.
 
     All the options and some current problems are specified here:
-
-    https://www.ilastik.org/documentation/basics/headless
+     - https://www.ilastik.org/documentation/basics/headless
     """
 
     def __init__(
@@ -127,6 +139,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False
     ):
         super().__init__(
             level=level,
@@ -138,6 +151,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
+            preprocess_opt_scan=preprocess_opt_scan,
         )
 
         self.project: str = project
@@ -148,50 +162,39 @@ class AutoContextPipeline(OPT2MeshPipeline):
             # TODO: tune this
             self.level = 0.90
 
-    def _dump_hdf5_on_disk(self, tif_file, base_out_file):
+    def _dump_hdf5_on_disk(self, opt2process: np.ndarray, base_out_file: str) -> str:
         """
-        Convert a tif file to a hdf5 file.
+        Ilastik needs to have a hfd5 file as an input.
 
-        @param tif_file: path to the tif file
-        @param base_out_file: base name for the output file
-        @return: the path to the file created
+        Dump the scan on the disk as a hdf5 file and return the path.
         """
-        logging.info(f"Converting {tif_file} to hdf5")
-        opt_data = io.imread(tif_file)
-        basename = tif_file.split(os.sep)[-1].split(".")[0]
-        file_basename = f"{base_out_file}/autocontext/{basename}"
+        logging.info(f"Converting to hdf5")
+        file_basename = f"{base_out_file}/autocontext/opt2process"
         os.makedirs(f"{base_out_file}/autocontext/", exist_ok=True)
         h5_file = f"{file_basename}.h5"
         hf = h5py.File(h5_file, "w")
-        hf.create_dataset("dataset", data=opt_data, chunks=True)
+        hf.create_dataset("dataset", data=opt2process, chunks=True)
         hf.close()
         logging.info(f"Dumped hdf5 dataset to {h5_file}")
 
         return h5_file
 
-    def _post_processing(self, interior_segmentation):
+    def _post_processing(self, interior_segmentation: np.ndarray):
         """
         The result might be noisy after the prediction with Autocontext.
         Hence, we perform some morphological operations on the segmentation
         data.
-
-        @param interior_segmentation: 3D np.array of the segmentation
-
-        @return:
         """
         improved_seg_data = dilation(
             erosion(
                 dilation(gaussian_filter(interior_segmentation, sigma=0.1))
             )
         ).astype(np.uint8)
-        for i in range(improved_seg_data.shape[0]):
-            improved_seg_data[i, :, :] = 255 - flood_fill(
-                improved_seg_data[i, :, :], (1, 1), 255
-            )
+        improved_seg_data = 255 - flood_fill(improved_seg_data, (1, 1, 1), 255)
 
         return improved_seg_data
 
-    def _extract_occupancy_map(self, tif_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
 
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
 
@@ -201,9 +204,10 @@ class AutoContextPipeline(OPT2MeshPipeline):
         drange = '"(0,255)"'
         dtype = "uint8"
         output_filename_format = ilastik_output_folder + "{nickname}_pred.h5 "
-        in_files = self._dump_hdf5_on_disk(tif_file, base_out_file)
+        in_files = self._dump_hdf5_on_disk(opt2process, base_out_file)
 
         # Note: one may need some config to have ilastik accessible in PATH
+        # NOTE (executable)
         command = "ilastik "
         command += "--headless "
         command += f"--project={self.project} "
@@ -217,9 +221,6 @@ class AutoContextPipeline(OPT2MeshPipeline):
             command += f"--export_drange={drange} "
             command += f"--pipeline_result_drange={dtype} "
         command += in_files
-
-        # To have a dedicated file for Ilastik's standard output
-        command += f" | tee {ilastik_output_folder + 'ilastik_cli_call.log'}"
 
         logging.info("Lauching Ilastik")
         logging.info("CLI command:")
@@ -248,13 +249,6 @@ class AutoContextPipeline(OPT2MeshPipeline):
             occupancy_map = self._post_processing(noisy_occupancy_map)
         else:
             occupancy_map = noisy_occupancy_map
-
-        if self.save_temp:
-            filename = segmentation_file.replace(".h5", f"_occupancy_map.tif")
-            logging.info(f"Saving occupancy map in {filename}")
-            hf = h5py.File(filename, "w")
-            hf.create_dataset("exported_data", data=occupancy_map, chunks=True)
-            hf.close()
 
         logging.info(f"Done extracting the occupancy map with Autocontext")
 

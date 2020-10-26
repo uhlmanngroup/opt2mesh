@@ -10,7 +10,7 @@ import numpy as np
 import pymesh
 import pymeshfix
 from scipy.linalg import norm
-from skimage import io, measure
+from skimage import io, measure, exposure, filters
 from skimage.morphology import flood_fill
 
 
@@ -23,7 +23,7 @@ class OPT2MeshPipeline(ABC):
 
     This pipeline:
       Loads OPT scan
-      Segment embryo
+      Segment scan
       Extracts mesh
       Correct and simplify mesh
 
@@ -40,6 +40,7 @@ class OPT2MeshPipeline(ABC):
         segment_occupancy_map=False,
         save_occupancy_map=False,
         align_mesh=False,
+        preprocess_opt_scan=False,
     ):
         self.level: float = level
         self.spacing: int = spacing
@@ -50,12 +51,35 @@ class OPT2MeshPipeline(ABC):
         self.segment_occupancy_map: bool = segment_occupancy_map
         self.save_occupancy_map: bool = save_occupancy_map
         self.align_mesh: bool = align_mesh
+        self.preprocess_opt_scan: bool = preprocess_opt_scan
 
     @abstractmethod
-    def _extract_occupancy_map(self, tif_stack_file, base_out_file):
+    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
         raise NotImplementedError()
 
-    def _get_mesh_statistics(self, v, f):
+    def _preprocessing(self, opt_scan: np.ndarray) -> np.ndarray:
+        """
+        Perform a preprocessing with contrast adjustment and denoising.
+
+        This step is made optional in the pipeline.
+
+        Constrast Limited Adaptive Histogram Equalization is used for
+        the constrast correction.
+
+        Median Filtering is used for the denoising.
+
+        """
+        logging.info(f"Performing full preprocessing")
+
+        opt_data_adapt_eq = exposure.equalize_adapthist(opt_scan, clip_limit=0.03)
+        opt_data_adapt_eq = (opt_data_adapt_eq * 255).astype(np.uint8)
+
+        denoised_opt_data = filters.median(opt_data_adapt_eq)
+
+        logging.info(f"Cropping volume")
+        return denoised_opt_data
+
+    def _get_mesh_statistics(self, v:np.ndarray, f:np.ndarray) -> dict:
         """
         Return the statistics of a mesh as a python dictionary
 
@@ -63,10 +87,13 @@ class OPT2MeshPipeline(ABC):
         before PyMesh/PyMesh#247  being integrated in upstream
         this is a quick hack as of now.
 
+        This uses the mesh_statistics executable from this C++ code here:
+        https://gitlab.ebi.ac.uk/jerphanion/mesh-processing-pipeline/-/tree/master/src/cpp/pipeline
         """
         with tempfile.TemporaryDirectory as tmp:
             mesh_file = os.path.join(tmp, "mesh.stl")
             pymesh.save_mesh_raw(mesh_file, v, f)
+            # NOTE (executable)
             cout_mesh_statistics = (
                 os.popen(f"mesh_statistics -i {mesh_file}")
                 .read()
@@ -83,18 +110,32 @@ class OPT2MeshPipeline(ABC):
 
         return mesh_statistics
 
-    def run(self, tif_stack_file, out_folder):
+    def _load_opt_scan(self, opt_file: str) -> np.ndarray:
+        if ".h5" in opt_file:
+            hf = h5py.File(opt_file, "r")
+            key = list(hf.keys())[0]
+            raw_opt = np.array(hf[key])
+        elif ".tif" in opt_file:
+            raw_opt = io.imread(opt_file)
+        return raw_opt
+
+    def run(self, opt_file, out_folder):
         os.makedirs(out_folder, exist_ok=True)
 
-        # path/to/file.name.ext file.name
-        basename = ".".join(tif_stack_file.split(os.sep)[-1].split(".")[:-1])
+        raw_opt = self._load_opt_scan(opt_file)
 
+        if self.preprocess_opt_scan:
+            logging.info(f"Preprocessing OPT scan")
+            opt2process = self._preprocessing(raw_opt)
+        else:
+            opt2process = raw_opt
+
+        # path/to/file.name.ext file.name
+        basename = ".".join(opt_file.split(os.sep)[-1].split(".")[:-1])
         base_out_file = os.path.join(out_folder, basename)
 
         logging.info(f"→ Image segmentation")
-        occupancy_map = self._extract_occupancy_map(
-            tif_stack_file, base_out_file
-        )
+        occupancy_map = self._extract_occupancy_map(opt2process, base_out_file)
 
         assert (
             0 <= occupancy_map.min()
@@ -402,7 +443,7 @@ class OPT2MeshPipeline(ABC):
         return final_mesh
 
     @staticmethod
-    def _mesh_repairing(mesh):
+    def _mesh_repairing(mesh: pymesh.Mesh):
         """
         Fix the mesh to get to a 2-manifold:
          - no self-intersection
@@ -428,15 +469,8 @@ class DirectMeshingPipeline(OPT2MeshPipeline):
     of it then.
     """
 
-    def _extract_occupancy_map(self, file, base_out_file):
-
-        if ".h5" in file:
-            hf = h5py.File(file, "r")
-            key = list(hf.keys())[0]
-            occupancy_map = np.array(hf[key])
-        elif ".tif" in file:
-            occupancy_map = io.imread(file)
-
+    def _extract_occupancy_map(self, opt2process, base_out_file):
+        occupancy_map = opt2process
         if occupancy_map.max() > 1 and occupancy_map.dtype != np.float:
             # uint8 [[0,255]] to float32 [0,1] representation
             occupancy_map = occupancy_map / 255

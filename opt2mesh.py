@@ -17,12 +17,8 @@ def parse_args():
     )
 
     # Argument
-    parser.add_argument(
-        "in_tif", help="Input OPT scan as tif stack (3D image)"
-    )
-    parser.add_argument(
-        "out_folder", help="General output folder for this run"
-    )
+    parser.add_argument("input_file", help="Input OPT scan as tif stack (3D image)")
+    parser.add_argument("out_folder", help="General output folder for this run")
     parser.add_argument(
         "--method",
         help="Surface extraction method",
@@ -56,6 +52,9 @@ def parse_args():
         "--align_mesh",
         help="Align the mesh on the original OPT scan orientation",
         action="store_true",
+    )
+    parser.add_argument(
+        "--preprocess_opt_scan", help="Preprocess the OPT scan", action="store_true"
     )
 
     parser.add_argument(
@@ -103,18 +102,6 @@ def parse_args():
     )
 
     # Active contour without edges Morphosnakes parameters
-    parser.add_argument(
-        "--on_halves",
-        help="Adapt pipeline to be run the processing on "
-        "halves instead on the full input tif stack",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--on_slices",
-        help="Adapt pipeline to be run the processing on "
-        "slices instead on the full input tif stack",
-        action="store_true",
-    )
     parser.add_argument(
         "--lambda1",
         type=float,
@@ -281,7 +268,7 @@ def main():
     context = dict()
     context["job_id"] = job_id
     context["job_batch_name"] = job_batch_name
-    context["input_file"] = args.in_tif
+    context["input_file"] = args.input_file
     context["out_folder"] = job_out_folder
     context["git_commit"] = last_commit
     context["vsc_context"] = last_commit_message
@@ -327,7 +314,6 @@ def main():
         opt2mesh_pipeline = GACPipeline(
             # GAC specifics
             iterations=args.iterations,
-            on_slices=args.on_slices,
             n_jobs=args.n_jobs,
             smoothing=args.smoothing,
             threshold=args.threshold,
@@ -344,6 +330,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "acwe":
         from pipeline.active_contours import ACWEPipeline
@@ -351,9 +338,7 @@ def main():
         opt2mesh_pipeline = ACWEPipeline(
             # ACWE specifics
             iterations=args.iterations,
-            on_slices=args.on_slices,
             n_jobs=args.n_jobs,
-            on_halves=args.on_halves,
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,
@@ -367,6 +352,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "autocontext":
         from pipeline.ilastik import AutoContextPipeline
@@ -385,6 +371,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "autocontext_acwe":
         from pipeline.ilastik import AutoContextACWEPipeline
@@ -407,6 +394,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "2d_unet":
         from pipeline.unet import UNetPipeline
@@ -427,6 +415,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "3d_unet":
         from pipeline.unet import UNet3DPipeline
@@ -448,6 +437,7 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "direct":
         from pipeline.base import DirectMeshingPipeline
@@ -462,15 +452,16 @@ def main():
             segment_occupancy_map=args.segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
+            preprocess_opt_scan=args.preprocess_opt_scan,
         )
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")
 
     logging.info(f"Starting pipeline {opt2mesh_pipeline.__class__.__name__}")
-    logging.info(f"  Input TIF stack: {args.in_tif}")
+    logging.info(f"  Input TIF stack: {args.input_file}")
     logging.info(f"  Out folder: {job_out_folder}")
     _, _, mesh_info = opt2mesh_pipeline.run(
-        tif_stack_file=args.in_tif, out_folder=job_out_folder
+        opt_file=args.input_file, out_folder=job_out_folder
     )
     logging.info(f"End of pipeline {opt2mesh_pipeline.__class__.__name__}")
 
