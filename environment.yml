@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - pytorch
 dependencies:
+  - python==3.8
   - h5py==2.10.0
   - igl==2.2.0
   - joblib==0.17.0
