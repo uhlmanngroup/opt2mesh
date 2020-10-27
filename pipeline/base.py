@@ -262,8 +262,10 @@ class OPT2MeshPipeline(ABC):
         v, f = meshes[id_main_component]
 
         logging.info(f"→ Mesh decimation")
-        v, f = self._mesh_decimation(v, f)
-        logging.info(f"Decimated mesh")
+        v, f, succeeded = self._mesh_decimation(v, f)
+        logging.info(
+            "Decimated mesh" if succeeded else "Failed decimating mesh"
+        )
         logging.info(f"  Vertices: {len(v)}")
         logging.info(f"  Faces   : {len(f)}")
 
@@ -390,7 +392,7 @@ class OPT2MeshPipeline(ABC):
             logging.info(
                 f"No need for decimation; current number of faces: {f.shape[0]}"
             )
-            return v, f
+            return v, f, True
 
         succeeded, vp, fp, i_fp, i_vp = igl.decimate(v, f, target_faces_number)
 
