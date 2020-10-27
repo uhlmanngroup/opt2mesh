@@ -1,15 +1,12 @@
 import logging
 import os
 import tempfile
-import uuid
 from abc import ABC, abstractmethod
 
 import h5py
 import igl
 import numpy as np
-import pymesh
 import pymeshfix
-from scipy.linalg import norm
 from skimage import io, measure, exposure, filters
 from skimage.morphology import flood_fill
 
@@ -54,7 +51,9 @@ class OPT2MeshPipeline(ABC):
         self.preprocess_opt_scan: bool = preprocess_opt_scan
 
     @abstractmethod
-    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
+    def _extract_occupancy_map(
+        self, opt2process: np.ndarray, base_out_file: str
+    ) -> np.ndarray:
         raise NotImplementedError()
 
     def _preprocessing(self, opt_scan: np.ndarray) -> np.ndarray:
@@ -71,7 +70,9 @@ class OPT2MeshPipeline(ABC):
         """
         logging.info(f"Performing full preprocessing")
 
-        opt_data_adapt_eq = exposure.equalize_adapthist(opt_scan, clip_limit=0.03)
+        opt_data_adapt_eq = exposure.equalize_adapthist(
+            opt_scan, clip_limit=0.03
+        )
         opt_data_adapt_eq = (opt_data_adapt_eq * 255).astype(np.uint8)
 
         denoised_opt_data = filters.median(opt_data_adapt_eq)
@@ -79,7 +80,7 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Cropping volume")
         return denoised_opt_data
 
-    def _get_mesh_statistics(self, v:np.ndarray, f:np.ndarray) -> dict:
+    def _get_mesh_statistics(self, v: np.ndarray, f: np.ndarray) -> dict:
         """
         Return the statistics of a mesh as a python dictionary
 
@@ -90,9 +91,9 @@ class OPT2MeshPipeline(ABC):
         This uses the mesh_statistics executable from this C++ code here:
         https://gitlab.ebi.ac.uk/jerphanion/mesh-processing-pipeline/-/tree/master/src/cpp/pipeline
         """
-        with tempfile.TemporaryDirectory as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             mesh_file = os.path.join(tmp, "mesh.stl")
-            pymesh.save_mesh_raw(mesh_file, v, f)
+            igl.write_triangle_mesh(mesh_file, v, f)
             # NOTE (executable)
             cout_mesh_statistics = (
                 os.popen(f"mesh_statistics -i {mesh_file}")
@@ -118,6 +119,33 @@ class OPT2MeshPipeline(ABC):
         elif ".tif" in opt_file:
             raw_opt = io.imread(opt_file)
         return raw_opt
+
+    def _separate_mesh(self, v: np.ndarray, f: np.ndarray) -> list:
+        v, a, b, f = igl.remove_duplicate_vertices(v, f, epsilon=10e-7)
+
+        v_indices = igl.vertex_components(f)
+        f_indices = igl.face_components(f)
+
+        cc_indices = np.unique(v_indices)
+
+        meshes = list()
+
+        for cc_index in cc_indices:
+            v_cc = v[v_indices == cc_index, :]
+            f_cc = f[f_indices == cc_index, :]
+
+            (i_v_cc,) = np.where(v_indices == cc_index)
+            vertices_remapping = dict(zip(i_v_cc, range(len(i_v_cc))))
+
+            mp = np.vectorize(
+                lambda entry: vertices_remapping.get(entry, entry)
+            )
+
+            f_cc = mp(f_cc)
+
+            meshes.append((v_cc, f_cc))
+
+        return meshes
 
     def run(self, opt_file, out_folder):
         os.makedirs(out_folder, exist_ok=True)
@@ -209,19 +237,14 @@ class OPT2MeshPipeline(ABC):
         if self.save_temp:
             extracted_mesh_file = base_out_file + "_extracted_mesh.stl"
             logging.info(f"Saving extracted mesh in: {extracted_mesh_file}")
-            pymesh.save_mesh_raw(extracted_mesh_file, v, f)
-
-        mesh = pymesh.meshio.form_mesh(v, f)
+            igl.write_triangle_mesh(extracted_mesh_file, v, f)
 
         logging.info(f"→ Splitting mesh in connected components")
-        meshes = pymesh.separate_mesh(mesh, connectivity_type="auto")
+        meshes = self._separate_mesh(v, f)
         logging.info(f"  {len(meshes)} connected components")
         logging.info("")
 
-        for i, m in enumerate(meshes):
-            vi = m.vertices
-            fi = m.faces
-
+        for i, (vi, fi) in enumerate(meshes):
             logging.info(f"Connected component #{i+1}")
             logging.info(f"  Vertices: {len(vi)}")
             logging.info(f"  Faces   : {len(fi)}")
@@ -231,37 +254,38 @@ class OPT2MeshPipeline(ABC):
                 logging.info(
                     f"Saving connected component #{i}: {cc_mesh_file}"
                 )
-                pymesh.save_mesh_raw(cc_mesh_file, vi, fi)
+                igl.write_triangle_mesh(cc_mesh_file, vi, fi)
 
         # Taking the main mesh
         # Once again, we take the first connected component
-        id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
-        mesh_to_simplify = meshes[id_main_component]
+        id_main_component = np.argmax([vi.shape[0] for (vi, fi) in meshes])
+        v, f = meshes[id_main_component]
 
         logging.info(f"→ Mesh decimation")
-        decimated_mesh = self._mesh_decimation(mesh_to_simplify)
-        logging.info(f"Decimated mesh")
-        logging.info(f"  Vertices: {len(decimated_mesh.vertices)}")
-        logging.info(f"  Faces   : {len(decimated_mesh.faces)}")
+        v, f, succeeded = self._mesh_decimation(v, f)
+        logging.info(
+            "Decimated mesh" if succeeded else "Failed decimating mesh"
+        )
+        logging.info(f"  Vertices: {len(v)}")
+        logging.info(f"  Faces   : {len(f)}")
 
         logging.info(f"→ Mesh repairing")
-        final_mesh = self._mesh_repairing(decimated_mesh)
+        v, f = self._mesh_repairing(v, f)
+
+        f = np.asarray(f, dtype=np.int32)
+
         logging.info(f"Final mesh")
-        logging.info(f"  Vertices: {len(final_mesh.vertices)}")
-        logging.info(f"  Faces   : {len(final_mesh.faces)}")
+        logging.info(f"  Vertices: {len(v)}")
+        logging.info(f"  Faces   : {len(f)}")
 
         final_mesh_file = base_out_file + "_final_mesh.stl"
-        pymesh.save_mesh_raw(
-            final_mesh_file, final_mesh.vertices, final_mesh.faces
-        )
+        igl.write_triangle_mesh(final_mesh_file, v, f)
         logging.info(f"Saved final mesh in: {final_mesh_file}")
 
-        v = final_mesh.vertices
-        f = np.asarray(final_mesh.faces, dtype=np.int32)
         mesh_info = self._get_mesh_quality_info(v, f)
 
         logging.info(f"Pipeline {self.__class__.__name__} done")
-        return final_mesh.vertices, final_mesh.faces, mesh_info
+        return v, f, mesh_info
 
     def _get_mesh_quality_info(self, v: np.ndarray, f: np.ndarray):
         """
@@ -326,7 +350,8 @@ class OPT2MeshPipeline(ABC):
 
         reordered_mesh_info = dict()
         reordered_mesh_info["mesh_correctness"] = {
-            info: mesh_info[info] for info in mesh_correctness_info
+            info: mesh_info.get(info, "Not computed")
+            for info in mesh_correctness_info
         }
         reordered_mesh_info["mesh_statistics"] = {
             k: v
@@ -336,15 +361,16 @@ class OPT2MeshPipeline(ABC):
 
         return reordered_mesh_info
 
-    def _mesh_decimation(self, mesh: pymesh.Mesh) -> pymesh.Mesh:
+    def _mesh_decimation(
+        self, v: np.ndarray, f: np.ndarray
+    ) -> (np.array, np.array, bool):
         """
         Decimate the mesh by edges collapsing.
         """
 
         if self.detail == "original":
-            return mesh
+            return v, f, True
 
-        v, f = mesh.vertices, mesh.faces
         if isinstance(self.detail, int):
             target_faces_number = self.detail
         elif isinstance(self.detail, str):
@@ -352,8 +378,8 @@ class OPT2MeshPipeline(ABC):
             # but this can be adapted.
             # The original mesh can really be of high resolution
             target_faces_number = {
-                "high": int(0.5 * mesh.num_faces),
-                "normal": int(0.1 * mesh.num_faces),
+                "high": int(0.5 * f.shape[0]),
+                "normal": int(0.1 * f.shape[0]),
                 "low": 3000,
             }[self.detail]
         else:
@@ -362,105 +388,32 @@ class OPT2MeshPipeline(ABC):
             )
 
         logging.info(f"Decimating the mesh to get {target_faces_number} faces")
-        if mesh.num_faces < target_faces_number:
+        if f.shape[0] < target_faces_number:
             logging.info(
-                f"No need for decimation; current number of faces: {mesh.num_faces}"
+                f"No need for decimation; current number of faces: {f.shape[0]}"
             )
-            return mesh
+            return v, f, True
 
         succeeded, vp, fp, i_fp, i_vp = igl.decimate(v, f, target_faces_number)
 
-        if succeeded:
-            return pymesh.form_mesh(vp, fp)
-        else:
-            detail = (
-                self.detail
-                if self.detail in ["low", "normal", "high"]
-                else "low"
-            )
-            logging.info(
-                f"igl::decimate failed, reverting to previous method with detail={detail}"
-            )
-            return self._old_mesh_decimation(mesh, detail=detail)
-
-    def _old_mesh_decimation(
-        self, mesh: pymesh.Mesh, detail: str
-    ) -> pymesh.Mesh:
-        """
-        Decimate by alternatively collapsing small and large edges.
-
-        Taken and adapted from:
-        https://github.com/PyMesh/PyMesh/blob/master/scripts/fix_mesh.py
-        """
-        bbox_min, bbox_max = mesh.bbox
-        diag_len = norm(bbox_max - bbox_min)
-        if detail == "normal":
-            target_len = diag_len * 5e-3
-        elif detail == "high":
-            target_len = diag_len * 2.5e-3
-        elif detail == "low":
-            target_len = diag_len * 1e-2
-        logging.info(f"Target resolution: {target_len} mm")
-
-        count = 0
-        mesh, __ = pymesh.remove_degenerated_triangles(
-            mesh, num_iterations=100
-        )
-        mesh, __ = pymesh.split_long_edges(mesh, target_len)
-        num_vertices = mesh.num_vertices
-        while True:
-            mesh, __ = pymesh.collapse_short_edges(mesh, abs_threshold=1e-6)
-            mesh, __ = pymesh.collapse_short_edges(
-                mesh, abs_threshold=target_len, preserve_feature=True
-            )
-            mesh, __ = pymesh.remove_obtuse_triangles(
-                mesh, max_angle=150.0, max_iterations=100
-            )
-            if mesh.num_vertices == num_vertices:
-                break
-
-            num_vertices = mesh.num_vertices
-            logging.info("# Number of vertices: {}".format(num_vertices))
-            count += 1
-            if count > 5:
-                break
-
-        mesh = pymesh.resolve_self_intersection(mesh)
-        mesh, __ = pymesh.remove_duplicated_faces(mesh)
-        mesh = pymesh.compute_outer_hull(mesh)
-        mesh, __ = pymesh.remove_duplicated_faces(mesh)
-        mesh, __ = pymesh.remove_obtuse_triangles(
-            mesh, max_angle=179.0, max_iterations=5
-        )
-        mesh, __ = pymesh.remove_isolated_vertices(mesh)
-
-        meshes = pymesh.separate_mesh(mesh, connectivity_type="auto")
-
-        # Once again, we take the first connected component
-        id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
-        final_mesh = meshes[id_main_component]
-
-        return final_mesh
+        return vp, fp, succeeded
 
     @staticmethod
-    def _mesh_repairing(mesh: pymesh.Mesh):
+    def _mesh_repairing(
+        v: np.ndarray, f: np.ndarray
+    ) -> (np.ndarray, np.ndarray):
         """
         Fix the mesh to get to a 2-manifold:
          - no self-intersection
          - closed mesh
         """
-        #
-        v = np.copy(mesh.vertices)
-        f = np.copy(mesh.faces)
 
         logging.info(f"Fixing mesh")
         meshfix = pymeshfix.MeshFix(v, f)
         meshfix.repair()
         logging.info(f"Fixed mesh")
 
-        mesh = pymesh.meshio.form_mesh(meshfix.v, meshfix.f)
-
-        return mesh
+        return v, f
 
 
 class DirectMeshingPipeline(OPT2MeshPipeline):
