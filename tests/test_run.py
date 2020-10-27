@@ -19,7 +19,9 @@ def test_direct_meshing():
     with tempfile.TemporaryDirectory() as tmp:
         pipeline = DirectMeshingPipeline()
         pipeline.run(input_file_binary, tmp)
-        final_mesh_file = os.path.join(tmp, "MNS_M539_105_final_mesh.tif")
+        final_mesh_file = os.path.join(
+            tmp, "MNS_M539_105_binary_final_mesh.tif"
+        )
         assert os.path.isfile(
             final_mesh_file
         ), "The final mesh is not present in the results."
@@ -71,6 +73,7 @@ def test_direct_meshing_detail_str(detail):
     with tempfile.TemporaryDirectory() as tmp:
         pipeline = DirectMeshingPipeline(detail=detail)
         pipeline.run(input_file_binary, tmp)
-        v, f = igl.read_triangle_mesh(input_file_binary)
+        final_mesh_file = os.path.join(tmp, "MNS_M539_105_final_mesh.tif")
+        v, f = igl.read_triangle_mesh(final_mesh_file)
 
         assert len(f) <= detail
