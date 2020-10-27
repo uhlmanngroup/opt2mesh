@@ -39,7 +39,7 @@ def test_direct_meshing_save_occupancy_map():
         pipeline = DirectMeshingPipeline(save_occupancy_map=True)
         pipeline.run(input_file_binary, tmp)
         occupancy_map_file = os.path.join(
-            tmp, "MNS_M539_105_binary_extracted_mesh.stl"
+            tmp, "MNS_M539_105_occupancy_map.tif"
         )
         assert os.path.isfile(
             occupancy_map_file
