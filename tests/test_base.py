@@ -1,3 +1,4 @@
+import glob
 import os
 import tempfile
 
@@ -28,7 +29,8 @@ def test_direct_meshing():
 
 
 def test_direct_meshing_save_temp():
-    """ Temporary artifacts should be saved. """
+    """Temporary artifacts should be saved. In particular the raw extracted
+    mesh should and its connected components should be present."""
     input_file_binary = os.path.join(test_data_dir, "MNS_M539_105_binary.tif")
     with tempfile.TemporaryDirectory() as tmp:
         pipeline = DirectMeshingPipeline(save_temp=True)
@@ -39,6 +41,12 @@ def test_direct_meshing_save_temp():
         assert os.path.isfile(
             extracted_mesh_file
         ), "The extracted mesh is not present after having run the pipeline."
+        connected_components_files = glob.glob(
+            os.path.join(tmp, "MNS_M539_105_binary_extracted_mesh_*.stl")
+        )
+        assert (
+            len(connected_components_files) == 36
+        ), "There must be 36 connected components."
 
 
 def test_direct_meshing_save_occupancy_map():
