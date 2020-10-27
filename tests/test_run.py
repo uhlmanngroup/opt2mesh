@@ -1,8 +1,6 @@
 import os
 import tempfile
 
-from pipeline.unet import UNet3DPipeline, UNetPipeline
-
 from pipeline.base import DirectMeshingPipeline
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
@@ -19,17 +17,3 @@ def test_direct_meshing():
         pipeline.run(input_file_binary, tmp)
 
 
-def test_3dunet():
-    input_file = os.path.join(test_data_dir, "MNS_M539_105_preprocessed.tif")
-    model_file = os.path.join(models_dir, "3d_preprocessed.pytorch")
-    with tempfile.TemporaryDirectory() as tmp:
-        pipeline = UNet3DPipeline(model_file=model_file)
-        pipeline.run(input_file, tmp)
-
-
-def test_2dunet():
-    input_file = os.path.join(test_data_dir, "MNS_M539_105_preprocessed.tif")
-    model_file = os.path.join(models_dir, "2d_preprocessed.pytorch")
-    with tempfile.TemporaryDirectory() as tmp:
-        pipeline = UNetPipeline(model_file=model_file)
-        pipeline.run(input_file, tmp)
