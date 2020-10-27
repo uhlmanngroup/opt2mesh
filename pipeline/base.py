@@ -130,7 +130,7 @@ class OPT2MeshPipeline(ABC):
 
         meshes = list()
 
-        for cc_index in range(cc_indices):
+        for cc_index in cc_indices:
             v_cc = v[v_indices == cc_index, :]
             f_cc = f[f_indices == cc_index, :]
 
