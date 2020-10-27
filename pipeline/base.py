@@ -122,8 +122,31 @@ class OPT2MeshPipeline(ABC):
         return raw_opt
 
     def _separate_mesh(self, v: np.ndarray, f: np.ndarray) -> list:
-        mesh = pymesh.meshio.form_mesh(v, f)
-        return pymesh.separate_mesh(mesh)
+        v, a, b, f = igl.remove_duplicate_vertices(v, f, epsilon=10e-7)
+
+        v_indices = igl.vertex_components(f)
+        f_indices = igl.face_components(f)
+
+        cc_indices = np.unique(v_indices)
+
+        meshes = list()
+
+        for cc_index in range(cc_indices):
+            v_cc = v[v_indices == cc_index, :]
+            f_cc = f[f_indices == cc_index, :]
+
+            (i_v_cc,) = np.where(v_indices == cc_index)
+            vertices_remapping = dict(zip(i_v_cc, range(len(i_v_cc))))
+
+            mp = np.vectorize(
+                lambda entry: vertices_remapping.get(entry, entry)
+            )
+
+            f_cc = mp(f_cc)
+
+            meshes.append((v_cc, f_cc))
+
+        return meshes
 
     def run(self, opt_file, out_folder):
         os.makedirs(out_folder, exist_ok=True)
@@ -222,10 +245,7 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  {len(meshes)} connected components")
         logging.info("")
 
-        for i, m in enumerate(meshes):
-            vi = m.vertices
-            fi = m.faces
-
+        for i, (vi, fi) in enumerate(meshes):
             logging.info(f"Connected component #{i+1}")
             logging.info(f"  Vertices: {len(vi)}")
             logging.info(f"  Faces   : {len(fi)}")
@@ -239,11 +259,11 @@ class OPT2MeshPipeline(ABC):
 
         # Taking the main mesh
         # Once again, we take the first connected component
-        id_main_component = np.argmax([mesh.num_vertices for mesh in meshes])
-        mesh_to_simplify = meshes[id_main_component]
+        id_main_component = np.argmax([vi.shape[0] for (vi, fi) in meshes])
+        v, f = meshes[id_main_component]
 
         logging.info(f"→ Mesh decimation")
-        v, f = self._mesh_decimation(mesh_to_simplify.v, mesh_to_simplify.f)
+        v, f = self._mesh_decimation(v, f)
         logging.info(f"Decimated mesh")
         logging.info(f"  Vertices: {len(v)}")
         logging.info(f"  Faces   : {len(f)}")
