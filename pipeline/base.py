@@ -54,7 +54,9 @@ class OPT2MeshPipeline(ABC):
         self.preprocess_opt_scan: bool = preprocess_opt_scan
 
     @abstractmethod
-    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
+    def _extract_occupancy_map(
+        self, opt2process: np.ndarray, base_out_file: str
+    ) -> np.ndarray:
         raise NotImplementedError()
 
     def _preprocessing(self, opt_scan: np.ndarray) -> np.ndarray:
@@ -71,7 +73,9 @@ class OPT2MeshPipeline(ABC):
         """
         logging.info(f"Performing full preprocessing")
 
-        opt_data_adapt_eq = exposure.equalize_adapthist(opt_scan, clip_limit=0.03)
+        opt_data_adapt_eq = exposure.equalize_adapthist(
+            opt_scan, clip_limit=0.03
+        )
         opt_data_adapt_eq = (opt_data_adapt_eq * 255).astype(np.uint8)
 
         denoised_opt_data = filters.median(opt_data_adapt_eq)
@@ -79,7 +83,7 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Cropping volume")
         return denoised_opt_data
 
-    def _get_mesh_statistics(self, v:np.ndarray, f:np.ndarray) -> dict:
+    def _get_mesh_statistics(self, v: np.ndarray, f: np.ndarray) -> dict:
         """
         Return the statistics of a mesh as a python dictionary
 
@@ -326,7 +330,8 @@ class OPT2MeshPipeline(ABC):
 
         reordered_mesh_info = dict()
         reordered_mesh_info["mesh_correctness"] = {
-            info: mesh_info[info] for info in mesh_correctness_info
+            info: mesh_info.get(info, "Not computed")
+            for info in mesh_correctness_info
         }
         reordered_mesh_info["mesh_statistics"] = {
             k: v
