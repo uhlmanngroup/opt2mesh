@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 import h5py
 import igl
 import numpy as np
-import pymesh
 import pymeshfix
 from skimage import io, measure, exposure, filters
 from skimage.morphology import flood_fill
