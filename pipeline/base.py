@@ -94,7 +94,7 @@ class OPT2MeshPipeline(ABC):
         This uses the mesh_statistics executable from this C++ code here:
         https://gitlab.ebi.ac.uk/jerphanion/mesh-processing-pipeline/-/tree/master/src/cpp/pipeline
         """
-        with tempfile.TemporaryDirectory as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             mesh_file = os.path.join(tmp, "mesh.stl")
             pymesh.save_mesh_raw(mesh_file, v, f)
             # NOTE (executable)
