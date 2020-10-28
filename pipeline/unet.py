@@ -46,7 +46,7 @@ class UNetPipeline(OPT2MeshPipeline):
         detail=6000,
         spacing=1,
         save_temp=False,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
@@ -126,21 +126,27 @@ class UNetPipeline(OPT2MeshPipeline):
         for x in range(h):
             logging.info(f"Slice x: {x}/{h}")
             pred_x[x, :, :] = self._predict(
-                net=net, full_img=Image.fromarray(opt2process[x, :, :]), device=device
+                net=net,
+                full_img=Image.fromarray(opt2process[x, :, :]),
+                device=device,
             )
 
         logging.info(f"Prediction w.r.t axis y")
         for y in range(w):
             logging.info(f"Slice y: {y}/{w}")
             pred_y[:, y, :] = self._predict(
-                net=net, full_img=Image.fromarray(opt2process[:, y, :]), device=device
+                net=net,
+                full_img=Image.fromarray(opt2process[:, y, :]),
+                device=device,
             )
 
         logging.info(f"Prediction w.r.t axis z")
         for z in range(d):
             logging.info(f"Slice z: {z}/{d}")
             pred_z[:, :, z] = self._predict(
-                net=net, full_img=Image.fromarray(opt2process[:, :, z]), device=device
+                net=net,
+                full_img=Image.fromarray(opt2process[:, :, z]),
+                device=device,
             )
 
         occupancy_map = (pred_x + pred_y + pred_z) / 3
@@ -174,7 +180,7 @@ class UNet3DPipeline(OPT2MeshPipeline):
         detail=6000,
         spacing=1,
         save_temp=False,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
@@ -237,7 +243,12 @@ class UNet3DPipeline(OPT2MeshPipeline):
 
         self.config = config
 
-    def __load_checkpoint(self, checkpoint_path: str, model: torch.nn.Module, optimizer: torch.optim.Optimizer=None):
+    def __load_checkpoint(
+        self,
+        checkpoint_path: str,
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer = None,
+    ):
         """Loads model and training parameters from a given checkpoint_path
         If optimizer is provided, loads optimizer's state_dict of as well.
         """

@@ -44,7 +44,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         level=0.5,
         spacing=1,
         save_temp=False,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
@@ -136,10 +136,10 @@ class AutoContextPipeline(OPT2MeshPipeline):
         level=0.5,
         spacing=1,
         save_temp=False,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
-        preprocess_opt_scan=False
+        preprocess_opt_scan=False,
     ):
         super().__init__(
             level=level,
@@ -162,7 +162,9 @@ class AutoContextPipeline(OPT2MeshPipeline):
             # TODO: tune this
             self.level = 0.90
 
-    def _dump_hdf5_on_disk(self, opt2process: np.ndarray, base_out_file: str) -> str:
+    def _dump_hdf5_on_disk(
+        self, opt2process: np.ndarray, base_out_file: str
+    ) -> str:
         """
         Ilastik needs to have a hfd5 file as an input.
 
@@ -194,7 +196,9 @@ class AutoContextPipeline(OPT2MeshPipeline):
 
         return improved_seg_data
 
-    def _extract_occupancy_map(self, opt2process: np.ndarray, base_out_file: str) -> np.ndarray:
+    def _extract_occupancy_map(
+        self, opt2process: np.ndarray, base_out_file: str
+    ) -> np.ndarray:
 
         ilastik_output_folder = f"{base_out_file}/autocontext/predictions/"
 

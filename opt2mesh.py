@@ -17,8 +17,12 @@ def parse_args():
     )
 
     # Argument
-    parser.add_argument("input_file", help="Input OPT scan as tif stack (3D image)")
-    parser.add_argument("out_folder", help="General output folder for this run")
+    parser.add_argument(
+        "input_file", help="Input OPT scan as tif stack (3D image)"
+    )
+    parser.add_argument(
+        "out_folder", help="General output folder for this run"
+    )
     parser.add_argument(
         "--method",
         help="Surface extraction method",
@@ -39,7 +43,7 @@ def parse_args():
         "--save_temp", help="Save temporary results", action="store_true"
     )
     parser.add_argument(
-        "--segment_occupancy_map",
+        "--dont_segment_occupancy_map",
         help="Segment the occupancy map",
         action="store_true",
     )
@@ -54,7 +58,9 @@ def parse_args():
         action="store_true",
     )
     parser.add_argument(
-        "--preprocess_opt_scan", help="Preprocess the OPT scan", action="store_true"
+        "--preprocess_opt_scan",
+        help="Preprocess the OPT scan",
+        action="store_true",
     )
 
     parser.add_argument(
@@ -308,6 +314,8 @@ def main():
 
     ###
 
+    segment_occupancy_map = not args.dont_segment_occupancy_map
+
     if args.method.lower() == "gac":
         from pipeline.active_contours import GACPipeline
 
@@ -327,7 +335,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
@@ -349,7 +357,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
@@ -368,7 +376,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
@@ -391,7 +399,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
@@ -412,7 +420,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
@@ -434,7 +442,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
@@ -449,7 +457,7 @@ def main():
             step_size=args.step_size,
             detail=args.detail,
             save_temp=args.save_temp,
-            segment_occupancy_map=args.segment_occupancy_map,
+            segment_occupancy_map=segment_occupancy_map,
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,

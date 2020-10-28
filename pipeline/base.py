@@ -34,7 +34,7 @@ class OPT2MeshPipeline(ABC):
         step_size=1,
         detail=6000,
         save_temp=False,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,

@@ -22,7 +22,7 @@ class GACPipeline(OPT2MeshPipeline):
         balloon=1,
         alpha=1000,
         sigma=5,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
@@ -97,7 +97,7 @@ class ACWEPipeline(OPT2MeshPipeline):
         smoothing=1,
         lambda1=3,
         lambda2=1,
-        segment_occupancy_map=False,
+        segment_occupancy_map=True,
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
@@ -141,7 +141,9 @@ class ACWEPipeline(OPT2MeshPipeline):
         )
 
         end = time.time()
-        logging.info(f"Done Morphological Chan Vese on full in {(end - start)}s")
+        logging.info(
+            f"Done Morphological Chan Vese on full in {(end - start)}s"
+        )
         del opt2process, init_ls
 
         return occupancy_map
