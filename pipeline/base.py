@@ -181,6 +181,19 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"  shape      : {occupancy_map.shape}")
 
         if self.segment_occupancy_map:
+            if self.save_occupancy_map:
+                surface_file = (
+                    base_out_file + "_occupancy_map_before_segmentation.tif"
+                )
+                occupancy_map_int = np.array(
+                    occupancy_map * 255, dtype=np.uint8
+                )
+                logging.info(
+                    "Saving extracted occupancy before segmentation"
+                    f"in: {surface_file}"
+                )
+                io.imsave(surface_file, occupancy_map_int)
+
             logging.info(
                 f"Segmenting occupancy map info on level: {self.level}"
             )
