@@ -396,7 +396,12 @@ class OPT2MeshPipeline(ABC):
 
         succeeded, vp, fp, i_fp, i_vp = igl.decimate(v, f, target_faces_number)
 
-        return vp, fp, succeeded
+        if succeeded:
+            return vp, fp, succeeded
+        else:
+            # vp and fp are empty in this case sometimes
+            # hence we return the original arrays directly
+            return v, f, succeeded
 
     @staticmethod
     def _mesh_repairing(
@@ -413,7 +418,7 @@ class OPT2MeshPipeline(ABC):
         meshfix.repair()
         logging.info(f"Fixed mesh")
 
-        return v, f
+        return meshfix.v, meshfix.f
 
 
 class DirectMeshingPipeline(OPT2MeshPipeline):
