@@ -209,7 +209,7 @@ def parse_args():
         help="Mesh decimation: Level of detail to preserve. "
         "Can be the target number of faces or a string in "
         "['low', 'normal', 'high', 'original']",
-        default=3000,
+        default=6000,
         type=int_or_str,
     )
 
