@@ -359,6 +359,7 @@ class OPT2MeshPipeline(ABC):
             "number_of_components",
             "number_of_borders",
             "genus",
+            "geodesic_matrix_test",
         ]
 
         reordered_mesh_info = dict()
