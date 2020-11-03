@@ -45,8 +45,8 @@ def test_direct_meshing_save_temp():
             os.path.join(tmp, "MNS_M539_105_binary_extracted_mesh_*.stl")
         )
         assert (
-            len(connected_components_files) == 36
-        ), "There must be 36 connected components."
+            len(connected_components_files) == 13
+        ), "There must be 13 connected components."
 
 
 def test_direct_meshing_save_occupancy_map():

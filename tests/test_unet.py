@@ -21,7 +21,7 @@ def test_3dunet():
         pipeline = UNet3DPipeline(model_file=model_file)
         pipeline.run(input_file, tmp)
         final_mesh_file = os.path.join(
-            tmp, "MNS_M539_105_binary_final_mesh.tif"
+            tmp, "MNS_M539_105_preprocessed_final_mesh.stl"
         )
         assert os.path.isfile(
             final_mesh_file
@@ -36,7 +36,7 @@ def test_2dunet():
         pipeline = UNetPipeline(model_file=model_file)
         pipeline.run(input_file, tmp)
         final_mesh_file = os.path.join(
-            tmp, "MNS_M539_105_binary_final_mesh.tif"
+            tmp, "MNS_M539_105_preprocessed_final_mesh.stl"
         )
         assert os.path.isfile(
             final_mesh_file
