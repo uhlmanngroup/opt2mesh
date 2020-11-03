@@ -473,7 +473,7 @@ def main():
         key = k.replace("_", " ").capitalize()
         logging.info(f"   {key}: {v}")
     logging.info("Mesh statistics:")
-    for k, v in mesh_info["mesh_correctness"].items():
+    for k, v in mesh_info["mesh_statistics"].items():
         key = k.replace("_", " ").capitalize()
         logging.info(f"   {key}: {v}")
 
