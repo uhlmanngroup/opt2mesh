@@ -66,7 +66,7 @@ def parse_args():
         "--loops_to_remove",
         help="Select the loops to remove to get a genus 0 mesh. If None is provided, no loops is removed. "
         "This necessitates the ReebHanTun executable to be present in the path.",
-        type="str",
+        type=str,
         choices=[None, "handles", "tunnels"],
         default=None,
     )

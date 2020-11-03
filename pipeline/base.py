@@ -522,10 +522,12 @@ class OPT2MeshPipeline(ABC):
 
         def remap_face_vertices(face_line: str):
             """
-            We remap the face vertices
+            We remap the face vertices.
+
+            @param face_line: string of the form "3 id_a id_b id_c"
             """
             _, id_a, id_b, id_c = (
-                int(i) for i in face_line.replace("\n", "").split(" ")[:-1]
+                int(i) for i in face_line.replace("\n", "").split(" ")
             )
 
             ra, rb, rc = (
