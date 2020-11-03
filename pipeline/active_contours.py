@@ -31,9 +31,9 @@ class GACPipeline(OPT2MeshPipeline):
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
+        loops_to_remove=None,
         # GAC specifics
         iterations=50,
-        n_jobs=-1,
         smoothing=1,
         threshold="auto",
         balloon=1,
@@ -51,10 +51,10 @@ class GACPipeline(OPT2MeshPipeline):
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
             preprocess_opt_scan=preprocess_opt_scan,
+            loops_to_remove=loops_to_remove,
         )
 
         self.iterations: int = iterations
-        self.n_jobs: int = n_jobs
         self.smoothing = smoothing
         self.threshold = threshold
         self.balloon = balloon
@@ -118,9 +118,9 @@ class ACWEPipeline(OPT2MeshPipeline):
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
+        loops_to_remove=None,
         # ACWE specific
         iterations=150,
-        n_jobs=-1,
         smoothing=1,
         lambda1=3,
         lambda2=1,
@@ -137,9 +137,9 @@ class ACWEPipeline(OPT2MeshPipeline):
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
             preprocess_opt_scan=preprocess_opt_scan,
+            loops_to_remove=loops_to_remove,
         )
         self.iterations: int = iterations
-        self.n_jobs: int = n_jobs
         self.lambda1: int = lambda1
         self.lambda2: int = lambda2
         self.smoothing: int = smoothing

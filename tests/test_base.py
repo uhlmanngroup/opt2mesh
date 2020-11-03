@@ -87,3 +87,17 @@ def test_direct_meshing_detail_str(detail):
         v, f = igl.read_triangle_mesh(final_mesh_file)
 
         assert len(f) <= detail
+
+
+@pytest.mark.parametrize("loops_to_remove", ["handles", "tunnels"])
+def test_direct_meshing_with_topological_correction(loops_to_remove):
+    """The direct meshing pipeline should work with the topological correction
+    method."""
+    input_file_binary = os.path.join(test_data_dir, "MNS_M539_105_binary.tif")
+    with tempfile.TemporaryDirectory() as tmp:
+        pipeline = DirectMeshingPipeline(loops_to_remove=loops_to_remove)
+        pipeline.run(input_file_binary, tmp)
+        final_mesh_file = os.path.join(
+            tmp, "MNS_M539_105_binary_final_mesh.stl"
+        )
+        assert os.path.isfile(final_mesh_file)

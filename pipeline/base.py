@@ -1,7 +1,10 @@
 import logging
 import os
+import shutil
 import tempfile
 from abc import ABC, abstractmethod
+from itertools import chain
+from typing import List
 
 import h5py
 import igl
@@ -39,17 +42,14 @@ class OPT2MeshPipeline(ABC):
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
+        loops_to_remove=None,
     ):
         """
-            @param level: the iso-value to extract from the volume using marching cube
-                See skimage.measure.marching_cubes docstring for more information.
-            @param spacing: the spacing in the volume
-                See skimage.measure.marching_cubes docstring for more information.
-
-            spacing : length-3 tuple of floats
-            Voxel spacing in spatial dimensions corresponding to numpy array
-            indexing dimensions (M, N, P) as in `volume`.
-        gradient_direction : string
+        @param level: the iso-value to extract from the volume using marching cube
+            See skimage.measure.marching_cubes docstring for more information.
+        @param spacing: the spacing in the volume
+            See skimage.measure.marching_cubes docstring for more information.
+        @param gradient_direction: string
             Controls if the mesh was generated from an isosurface with gradient
             descent toward objects of interest (the default), or the opposite,
             considering the *left-hand* rule.
@@ -69,6 +69,7 @@ class OPT2MeshPipeline(ABC):
         self.save_occupancy_map: bool = save_occupancy_map
         self.align_mesh: bool = align_mesh
         self.preprocess_opt_scan: bool = preprocess_opt_scan
+        self.loops_to_remove: str = loops_to_remove
 
     @abstractmethod
     def _extract_occupancy_map(
@@ -327,6 +328,12 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"→ Mesh repairing")
         v, f = self._mesh_repairing(v, f)
 
+        if self.loops_to_remove is not None:
+            logging.info(f" → Topological correction of the mesh")
+            v, f = self.topological_correction(
+                v, f, method=self.loops_to_remove
+            )
+
         f = np.asarray(f, dtype=np.int32)
 
         logging.info(f"Final mesh")
@@ -352,18 +359,20 @@ class OPT2MeshPipeline(ABC):
         try:
             -igl.cotmatrix(v, f)
         except Exception as e:
-            print(f" ❌ COT matrix test failed")
+            logging.info(f" ❌ COT matrix test failed")
             mesh_info["cot_matrix_test"] = "Failed"
-            print("Exception:", e)
+            logging.info("Exception:", e)
         else:
+            logging.info(f" ✅ COT matrix test passed")
             mesh_info["cot_matrix_test"] = "Passed"
         try:
             igl.massmatrix(v, f, igl.MASSMATRIX_TYPE_VORONOI)
         except Exception as e:
-            print(f" ❌ Mass matrix test failed")
+            logging.info(f" ❌ Mass matrix test failed")
             mesh_info["mass_matrix_test"] = "Failed"
-            print("Exception:", e)
+            logging.info("Exception:", e)
         else:
+            logging.info(f" ✅ Mass matrix test passed")
             mesh_info["mass_matrix_test"] = "Passed"
 
         # We only test mesh with a small number of vertices
@@ -380,11 +389,11 @@ class OPT2MeshPipeline(ABC):
                     ]
                 )
             except Exception as e:
-                print(f" ❌ Geodesic matrix test failed")
+                logging.info(f" ❌ Geodesic matrix test failed")
                 mesh_info["geodesic_matrix_test"] = "Failed"
-                print("Exception:", e)
+                logging.info("Exception:", e)
             else:
-                print(f" ✅ Geodesic matrix test passed")
+                logging.info(f" ✅ Geodesic matrix test passed")
                 mesh_info["geodesic_matrix_test"] = "Passed"
         else:
             mesh_info["geodesic_matrix_test"] = "Not ran"
@@ -475,6 +484,220 @@ class OPT2MeshPipeline(ABC):
         logging.info(f"Fixed mesh")
 
         return meshfix.v, meshfix.f
+
+    @staticmethod
+    def __remove_loops(
+        vertices_lines: List[str],
+        faces_lines: List[str],
+        loops_vertices_indices: List[int],
+    ) -> (List[str], List[str]):
+        """
+        Remove vertices for a mesh information.
+
+        @param vertices_lines: list of string of the form "x y z"
+        @param faces_lines: list of string of the form "3 id_a, id_b, id_c" where id_i is the id of the ith vertex
+        @param loops_vertices_indices: list of indices of vertices associated to loops
+        """
+        # remove associated faces/edges:
+        vertex_to_remove_str = list(map(str, loops_vertices_indices))
+        vertices_to_keep_info = [
+            vertex_info
+            for i, vertex_info in enumerate(vertices_lines)
+            if i not in loops_vertices_indices
+        ]
+
+        def face_is_to_keep(line):
+            for v in vertex_to_remove_str:
+                if v in line:
+                    return False
+            return True
+
+        a = 0
+        n_vertices = len(vertices_lines)
+        dec_table = [0] * n_vertices
+        for v in range(n_vertices):
+            if v in loops_vertices_indices:
+                a += 1
+            dec_table[v] = v - a
+
+        new_vertices_mapping = dict(zip(list(range(n_vertices)), dec_table))
+
+        def remap_face_vertices(face_line: str):
+            """
+            We remap the face vertices.
+
+            @param face_line: string of the form "3 id_a id_b id_c"
+            """
+            _, id_a, id_b, id_c = (
+                int(i) for i in face_line.replace("\n", "").split(" ")
+            )
+
+            ra, rb, rc = (
+                new_vertices_mapping[id_a],
+                new_vertices_mapping[id_b],
+                new_vertices_mapping[id_c],
+            )
+
+            return f"3 {ra} {rb} {rc}\n"
+
+        faces_to_keep_info = list(filter(face_is_to_keep, faces_lines))
+
+        remapped_faces = list(map(remap_face_vertices, faces_to_keep_info))
+
+        return vertices_to_keep_info, remapped_faces
+
+    @staticmethod
+    def topological_correction(
+        v: np.array, f: np.array, method="handle"
+    ) -> (np.array, np.array):
+        """
+        Remove vertices and faces of loops associated to extra topological features
+        on the mesh.
+
+        Uses the ReebHanTun method to identify loops of handles and tunnels.
+        Then remove the associated vertices and faces of the handles (default)
+        or tunnels (if specified by use_tunnels).
+
+        @param: v: the array of vertices
+        @param: f: the array of faces
+        @param: method: method to use to remove loops.
+        """
+
+        # Using a temp directory for the input/output of the ReebHanTun executable
+
+        # NOTE (executable): ReebHanTun executable
+        reebhantun_executable = "ReebHanTun"
+        if not shutil.which(reebhantun_executable):
+            logging.warning(
+                f"The executable provided for the Reeb Han Tun method ({reebhantun_executable} is not present"
+                f"in the path. The mesh is returned as is."
+            )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            basename = "tempmesh"
+
+            # Convert to off because ReebHanTun needs such files as inputs
+            off_filename = os.path.join(tmpdir, f"{basename}.off")
+            igl.write_triangle_mesh(off_filename, v, f)
+            rht_input_mesh = off_filename
+
+            command = (
+                f"{reebhantun_executable} -I {rht_input_mesh} -O {basename}"
+            )
+
+            # This script outputs those two files here
+            loops_lop = f"loops_{basename}.lop"
+            loops_list = f"loops_{basename}.list"
+
+            while not (os.path.isfile(loops_lop)):
+                cout_rht = os.popen(command).read()
+                logging.info("ReebHanTun output:")
+                logging.info(cout_rht)
+
+                if " ---- MESH HAS GENUS 0!" in cout_rht:
+                    # No need to correct, we just return the mesh
+                    return v, f
+
+            # We just move them under the same temp directory to have it all sorted
+            os.popen(f"mv {loops_lop} {tmpdir}").read()
+            os.popen(f"mv {loops_list} {tmpdir}").read()
+
+            # This files stores the vertices indices associated to loops
+            with open(os.path.join(tmpdir, loops_lop), "r") as fp:
+                loops_lines = fp.readlines()
+
+            def extract_vertices_index(loop_line: str) -> List[int]:
+                """Conversion of string to list
+
+                For instance:
+                    loop_line: "handle loop 0size(4): 501,502,535,536,\n"
+                    vertices_indices: [501, 502, 535, 536]
+                """
+                vertices_indices = [
+                    int(s)
+                    for s in loop_line.replace("\n", "")
+                    .split(":")[-1]
+                    .split(",")[:-1]
+                ]
+                return vertices_indices
+
+            def is_handle_loop(loop_line: str) -> bool:
+                return loop_line.startswith("handle loop")
+
+            def is_tunnel_loop(loop_line: str) -> bool:
+                return loop_line.startswith("tunnel loop")
+
+            # We gather the loops there
+            handles_loops: List[List[int]] = list(
+                map(
+                    extract_vertices_index, filter(is_handle_loop, loops_lines)
+                )
+            )
+            tunnels_loops: List[List[int]] = list(
+                map(
+                    extract_vertices_index, filter(is_tunnel_loop, loops_lines)
+                )
+            )
+
+            # We flatten them
+            handles_vertices: List[int] = sorted(
+                set(chain.from_iterable(handles_loops))
+            )
+            tunnels_vertices: List[int] = sorted(
+                set(chain.from_iterable(tunnels_loops))
+            )
+
+            if method == "tunnels":
+                vertices_to_remove = tunnels_vertices
+            elif method == "handles":
+                vertices_to_remove = handles_vertices
+            else:
+                raise RuntimeError(f"Wrong method: {method}")
+
+            # Extract the information from the OFF format
+            with open(rht_input_mesh, "r") as fp:
+                off_lines = fp.readlines()
+                # Remove potential comment in the file
+                off_lines = list(
+                    filter(lambda x: not (x.startswith("#")), off_lines)
+                )
+
+            mesh_info_line = off_lines[1].split(" ")
+            n_vertices = int(mesh_info_line[0])
+            vertices_lines = off_lines[2 : n_vertices + 2]
+            faces_lines = off_lines[n_vertices + 2 :]
+
+            (
+                new_vertices_lines,
+                new_faces_lines,
+            ) = OPT2MeshPipeline.__remove_loops(
+                vertices_lines,
+                faces_lines,
+                loops_vertices_indices=vertices_to_remove,
+            )
+
+            # We just dump the mesh under the off format here before loading it again
+            new_off_lines = (
+                [
+                    "OFF\n",
+                    f"{len(new_vertices_lines)} {len(new_faces_lines)} 0\n",
+                ]
+                + new_vertices_lines
+                + new_faces_lines
+            )
+
+            fm = os.path.join(tmpdir, basename + "_t.off")
+
+            with open(fm, "w") as fp:
+                fp.writelines(new_off_lines)
+
+            v, f = igl.read_triangle_mesh(filename=fm)
+
+            # We finally fair the mesh
+            meshfix = pymeshfix.MeshFix(v, f)
+            meshfix.repair()
+
+            return meshfix.v, meshfix.f
 
 
 class DirectMeshingPipeline(OPT2MeshPipeline):

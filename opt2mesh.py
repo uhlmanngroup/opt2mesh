@@ -62,15 +62,13 @@ def parse_args():
         help="Preprocess the OPT scan",
         action="store_true",
     )
-
     parser.add_argument(
-        "--timing", help="Print timing info", action="store_true"
-    )
-    parser.add_argument(
-        "--n_jobs",
-        type=int,
-        default=0,
-        help="Number of jobs to use for parallel execution",
+        "--loops_to_remove",
+        help="Select the loops to remove to get a genus 0 mesh. If None is provided, no loops is removed. "
+        "This necessitates the ReebHanTun executable to be present in the path.",
+        type=str,
+        choices=[None, "handles", "tunnels"],
+        default=None,
     )
 
     # Active contour general parameters
@@ -301,14 +299,6 @@ def main():
     ]:
         logging.info(f"  {lsf_env_var}: {os.getenv(lsf_env_var, 'Not set')}")
 
-    # Adapt the number of jobs if not set
-    if args.n_jobs <= 0:
-        # LSB_BIND_CPU_LIST of the form: "13,23,24,71"
-        args.n_jobs = len(os.getenv("LSB_BIND_CPU_LIST", "").split(","))
-        logging.info(
-            f"Adapting the number of jobs to number of available CPU {args.n_jobs}"
-        )
-
     logging.info("VCS context:")
     logging.info(last_commit_message)
 
@@ -322,7 +312,6 @@ def main():
         opt2mesh_pipeline = GACPipeline(
             # GAC specifics
             iterations=args.iterations,
-            n_jobs=args.n_jobs,
             smoothing=args.smoothing,
             threshold=args.threshold,
             balloon=args.balloon,
@@ -339,6 +328,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "acwe":
         from pipeline.active_contours import ACWEPipeline
@@ -346,7 +336,6 @@ def main():
         opt2mesh_pipeline = ACWEPipeline(
             # ACWE specifics
             iterations=args.iterations,
-            n_jobs=args.n_jobs,
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,
@@ -361,6 +350,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "autocontext":
         from pipeline.ilastik import IlastikPipeline
@@ -380,6 +370,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "autocontext_acwe":
         from pipeline.ilastik import IlastikACWEPipeline
@@ -403,6 +394,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "2d_unet":
         from pipeline.unet import UNetPipeline
@@ -424,6 +416,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "3d_unet":
         from pipeline.unet import UNet3DPipeline
@@ -446,6 +439,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "direct":
         from pipeline.base import DirectMeshingPipeline
@@ -461,6 +455,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")
@@ -478,7 +473,7 @@ def main():
         key = k.replace("_", " ").capitalize()
         logging.info(f"   {key}: {v}")
     logging.info("Mesh statistics:")
-    for k, v in mesh_info["mesh_correctness"].items():
+    for k, v in mesh_info["mesh_statistics"].items():
         key = k.replace("_", " ").capitalize()
         logging.info(f"   {key}: {v}")
 
