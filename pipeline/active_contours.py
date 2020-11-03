@@ -6,6 +6,19 @@ from pipeline.base import OPT2MeshPipeline
 
 
 class GACPipeline(OPT2MeshPipeline):
+    """
+    Use the morphological Geodesic Active Contour [1] to segment the object
+    present in the scan.
+
+    The parameters have to be properly calibrated for this method
+    to work.
+
+    [1] A Morphological Approach to Curvature-based Evolution of Curves
+    and Surfaces, Pablo Márquez-Neila, Luis Baumela, Luis Álvarez.
+    In IEEE Transactions on Pattern Analysis and Machine Intelligence (PAMI),
+    2014, DOI:10.1109/TPAMI.2013.106
+    """
+
     def __init__(
         self,
         gradient_direction="descent",
@@ -14,6 +27,10 @@ class GACPipeline(OPT2MeshPipeline):
         level=0.5,
         spacing=1,
         save_temp=False,
+        segment_occupancy_map=True,
+        save_occupancy_map=False,
+        align_mesh=False,
+        preprocess_opt_scan=False,
         # GAC specifics
         iterations=50,
         n_jobs=-1,
@@ -22,10 +39,6 @@ class GACPipeline(OPT2MeshPipeline):
         balloon=1,
         alpha=1000,
         sigma=5,
-        segment_occupancy_map=True,
-        save_occupancy_map=False,
-        align_mesh=False,
-        preprocess_opt_scan=False,
     ):
         super().__init__(
             level=level,
@@ -83,6 +96,16 @@ class GACPipeline(OPT2MeshPipeline):
 
 
 class ACWEPipeline(OPT2MeshPipeline):
+    """
+    Use the morphological Active Contour Without Edges [1] to segment the
+    object present in the scan.
+
+    [1] A Morphological Approach to Curvature-based Evolution of Curves
+    and Surfaces, Pablo Márquez-Neila, Luis Baumela, Luis Álvarez.
+    In IEEE Transactions on Pattern Analysis and Machine Intelligence (PAMI),
+    2014, DOI:10.1109/TPAMI.2013.106
+    """
+
     def __init__(
         self,
         gradient_direction="descent",
@@ -91,16 +114,16 @@ class ACWEPipeline(OPT2MeshPipeline):
         level=0.5,
         spacing=1,
         save_temp=False,
+        segment_occupancy_map=True,
+        save_occupancy_map=False,
+        align_mesh=False,
+        preprocess_opt_scan=False,
         # ACWE specific
         iterations=150,
         n_jobs=-1,
         smoothing=1,
         lambda1=3,
         lambda2=1,
-        segment_occupancy_map=True,
-        save_occupancy_map=False,
-        align_mesh=False,
-        preprocess_opt_scan=False,
     ):
 
         super().__init__(

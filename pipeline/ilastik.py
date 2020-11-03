@@ -21,16 +21,16 @@ from pipeline.base import OPT2MeshPipeline
 #
 
 
-class AutoContextACWEPipeline(OPT2MeshPipeline):
+class IlastikACWEPipeline(OPT2MeshPipeline):
     """
-    Use AutoContext workflow from Ilastik to segment the object
+    Use an Ilastik workflow to segment the object
     the occupancy map (probabilities), then runs ACWE on the
     occupancy map to extract the surface.
     """
 
     def __init__(
         self,
-        # AutoContext specifics
+        # Ilastik specifics
         project,
         # ACWE specifics
         smoothing,
@@ -49,6 +49,17 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         align_mesh=False,
         preprocess_opt_scan=False,
     ):
+        """
+        See OPT2MeshPipeline.__init__ documentation for the other parameters
+        documentation.
+
+        See ACWEPipeline.__init__ documentation for the documentation of
+        smoothing, lambda1 and lambda2.
+
+        @param project: the path to the serialized pytorch model of the 2D U-Net to use
+        @param use_probabilities: use the probabilities of the predictions rather than
+        the segmentation made by the classifier for the meshing.
+        """
         super().__init__(
             level=level,
             spacing=spacing,
@@ -62,7 +73,7 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
             preprocess_opt_scan=preprocess_opt_scan,
         )
 
-        self.autocontext_pipeline = AutoContextPipeline(
+        self.autocontext_pipeline = IlastikPipeline(
             project=project,
             use_probabilities=True,
             gradient_direction="descent",
@@ -112,10 +123,10 @@ class AutoContextACWEPipeline(OPT2MeshPipeline):
         return occupancy_map
 
 
-class AutoContextPipeline(OPT2MeshPipeline):
+class IlastikPipeline(OPT2MeshPipeline):
     """
-    Use AutoContext workflow from Ilastik to segment the object
-    the occupancy map (probabilities).
+    Use an Ilastik workflow to segment the object in a the occupancy map
+    (probabilities).
 
     The path leading to the Ilastik project needs to be specified
     when constructing the object.
@@ -126,7 +137,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
 
     def __init__(
         self,
-        # Autocontext specific
+        # Ilastik specific
         project,
         use_probabilities=True,
         #
@@ -141,6 +152,14 @@ class AutoContextPipeline(OPT2MeshPipeline):
         align_mesh=False,
         preprocess_opt_scan=False,
     ):
+        """
+        See OPT2MeshPipeline.__init__ documentation for the other parameters
+        documentation.
+
+        @param project: the path to the serialized pytorch model of the 2D U-Net to use
+        @param use_probabilities: use the probabilities of the predictions rather than
+        the segmentation made by the classifier for the meshing.
+        """
         super().__init__(
             level=level,
             spacing=spacing,
@@ -160,6 +179,8 @@ class AutoContextPipeline(OPT2MeshPipeline):
 
         if self._use_probabilities:
             # TODO: tune this
+            # Empirically, surfaces are better extracted for higher
+            # probabilities
             self.level = 0.90
 
     def _dump_hdf5_on_disk(
@@ -218,6 +239,8 @@ class AutoContextPipeline(OPT2MeshPipeline):
         command += f"--output_format={output_format} "
         command += f"--output_filename_format={output_filename_format} "
         if self._use_probabilities:
+            # We work on the probabilities here instead of the output
+            # segmentation
             # TODO: change the number when using AutoContext with more stages here
             command += '--export_source="Probabilities Stage 2" '
         else:
@@ -226,7 +249,7 @@ class AutoContextPipeline(OPT2MeshPipeline):
             command += f"--pipeline_result_drange={dtype} "
         command += in_files
 
-        logging.info("Lauching Ilastik")
+        logging.info("Launching Ilastik")
         logging.info("CLI command:")
         logging.info(command)
 

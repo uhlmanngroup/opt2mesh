@@ -8,7 +8,6 @@ import numpy as np
 import torch
 import yaml
 from PIL import Image
-from skimage import io
 from torch.nn import functional as F
 from torchvision import transforms
 
@@ -51,6 +50,14 @@ class UNetPipeline(OPT2MeshPipeline):
         align_mesh=False,
         preprocess_opt_scan=False,
     ):
+        """
+        See OPT2MeshPipeline.__init__ documentation for the other parameters
+        documentation.
+
+        @param model_file: the path to the serialized pytorch model of the 2D U-Net to use
+        @param scale_factor: the scaling factor applied to image used for the training
+        @param bilinear: indicate if bilinear up-sampling was used for the training of the model
+        """
         super().__init__(
             level=level,
             spacing=spacing,
@@ -64,9 +71,9 @@ class UNetPipeline(OPT2MeshPipeline):
             preprocess_opt_scan=preprocess_opt_scan,
         )
 
-        self.model_file = model_file
-        self.scale_factor = scale_factor
-        self.bilinear = bilinear
+        self.model_file: str = model_file
+        self.scale_factor: float = scale_factor
+        self.bilinear: bool = bilinear
 
     def _predict(self, net, full_img, device):
         net.eval()
@@ -105,6 +112,7 @@ class UNetPipeline(OPT2MeshPipeline):
         logging.info(f"Running 2D UNet on the 3 axis")
         start = time.time()
 
+        # TODO: this is used for the current data set that we have.
         first, last = 0, 511
         opt2process = opt2process[first:last, first:last, first:last]
 
@@ -168,11 +176,11 @@ class UNet3DPipeline(OPT2MeshPipeline):
     def __init__(
         self,
         # UNet (3D) specifics
-        model_file,
-        config_file=None,
-        patch_halo=None,
-        stride_shape=None,
-        f_maps=None,
+        model_file: str,
+        config_file: str = None,
+        patch_halo: int = None,
+        stride_shape: int = None,
+        f_maps: int = None,
         ###
         level=0.5,
         gradient_direction="descent",
@@ -185,6 +193,20 @@ class UNet3DPipeline(OPT2MeshPipeline):
         align_mesh=False,
         preprocess_opt_scan=False,
     ):
+        """
+        See OPT2MeshPipeline.__init__ documentation for the other parameters
+        documentation.
+
+        @param model_file: the path to the serialized pytorch model of the 3D U-Net to use
+        @param config_file: the path to the configuration file of the 3D U-Net
+            If specified, it overrides the default configuration file in (unet3D/config.yaml).
+        @param patch_halo: the size of the halo patch to use
+            If specified, it overrides the default value specified in the default config file.
+        @param stride_shape: the size of the stride to use, which is the spacing between the different 3D patches
+            If specified, it overrides the default value specified in the default config file.
+        @param f_maps: the number of feature maps to use
+            If specified, it overrides the default value specified in the default config file.
+        """
         super().__init__(
             level=level,
             spacing=spacing,
@@ -266,6 +288,9 @@ class UNet3DPipeline(OPT2MeshPipeline):
     def __get_output_file(
         self, dataset, suffix="_predictions", output_dir=None
     ):
+        """
+        This code is adapted from: https://github.com/wolny/pytorch-3dunet
+        """
         input_dir, file_name = os.path.split(dataset.file_path)
         if output_dir is None:
             output_dir = input_dir
@@ -275,6 +300,9 @@ class UNet3DPipeline(OPT2MeshPipeline):
         return output_file
 
     def _extract_occupancy_map(self, opt2process, base_out_file):
+        """
+        This code is adapted from: https://github.com/wolny/pytorch-3dunet
+        """
         logging.info(f"Running 3D UNet")
 
         first, last = 0, 511

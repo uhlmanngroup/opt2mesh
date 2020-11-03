@@ -19,10 +19,11 @@ class OPT2MeshPipeline(ABC):
     Output: STL file
 
     This pipeline:
-      Loads OPT scan
-      Segment scan
-      Extracts mesh
-      Correct and simplify mesh
+      Loads the OPT scan
+      Preprocesses the OPT scan (not by default)
+      Segments the OPT scan
+      Extracts the mesh using Lewiner's variant of Marching Cubes
+      Corrects and simplifies the mesh
 
     """
 
@@ -39,6 +40,25 @@ class OPT2MeshPipeline(ABC):
         align_mesh=False,
         preprocess_opt_scan=False,
     ):
+        """
+            @param level: the iso-value to extract from the volume using marching cube
+                See skimage.measure.marching_cubes docstring for more information.
+            @param spacing: the spacing in the volume
+                See skimage.measure.marching_cubes docstring for more information.
+
+            spacing : length-3 tuple of floats
+            Voxel spacing in spatial dimensions corresponding to numpy array
+            indexing dimensions (M, N, P) as in `volume`.
+        gradient_direction : string
+            Controls if the mesh was generated from an isosurface with gradient
+            descent toward objects of interest (the default), or the opposite,
+            considering the *left-hand* rule.
+            The two options are:
+            * descent : Object was greater than exterior
+            * ascent : Exterior was greater than object
+
+
+        """
         self.level: float = level
         self.spacing: int = spacing
         self.gradient_direction: str = gradient_direction
@@ -90,6 +110,9 @@ class OPT2MeshPipeline(ABC):
 
         This uses the mesh_statistics executable from this C++ code here:
         https://gitlab.ebi.ac.uk/jerphanion/mesh-processing-pipeline/-/tree/master/src/cpp/pipeline
+
+        @param v: array of vertices
+        @param f: array of faces
         """
         with tempfile.TemporaryDirectory() as tmp:
             mesh_file = os.path.join(tmp, "mesh.stl")
@@ -121,6 +144,14 @@ class OPT2MeshPipeline(ABC):
         return raw_opt
 
     def _separate_mesh(self, v: np.ndarray, f: np.ndarray) -> list:
+        """
+        Separate the mesh in different connected components.
+
+        @param v: array of vertices
+        @param f: array of faces
+
+        Returns: a list of tuples of array of vertices and array of faces.
+        """
         v, a, b, f = igl.remove_duplicate_vertices(v, f, epsilon=10e-7)
 
         v_indices = igl.vertex_components(f)
@@ -147,7 +178,18 @@ class OPT2MeshPipeline(ABC):
 
         return meshes
 
-    def run(self, opt_file, out_folder):
+    def run(
+        self, opt_file: str, out_folder: str
+    ) -> (np.ndarray, np.ndarray, dict):
+        """
+        Run the pipeline and extract the mesh.
+
+        Returns the vertices and faces array as well as a dictionary
+        of the mesh information.
+
+        @param opt_file: the path to the OPT scan (as a tif file)
+        @param out_folder: the output folder to use to store results.
+        """
         os.makedirs(out_folder, exist_ok=True)
 
         raw_opt = self._load_opt_scan(opt_file)
@@ -302,7 +344,7 @@ class OPT2MeshPipeline(ABC):
 
     def _get_mesh_quality_info(self, v: np.ndarray, f: np.ndarray):
         """
-        Return a mesh statistics and passing tests for a mesh.
+        Return the mesh statistics and passing tests for a mesh.
         """
         mesh_info = self._get_mesh_statistics(v, f)
 
@@ -439,6 +481,9 @@ class DirectMeshingPipeline(OPT2MeshPipeline):
     """
     Directly mesh a raw file and perform the simplification
     of it then.
+
+    See OPT2MeshPipeline.__init__ documentation for the documentation
+    of the parameters constructor.
     """
 
     def _extract_occupancy_map(self, opt2process, base_out_file):

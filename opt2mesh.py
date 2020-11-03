@@ -363,9 +363,9 @@ def main():
             preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "autocontext":
-        from pipeline.ilastik import AutoContextPipeline
+        from pipeline.ilastik import IlastikPipeline
 
-        opt2mesh_pipeline = AutoContextPipeline(
+        opt2mesh_pipeline = IlastikPipeline(
             # AutoContextSpecific
             project=args.autocontext,
             use_probabilities=args.use_probabilities,
@@ -382,9 +382,9 @@ def main():
             preprocess_opt_scan=args.preprocess_opt_scan,
         )
     elif args.method.lower() == "autocontext_acwe":
-        from pipeline.ilastik import AutoContextACWEPipeline
+        from pipeline.ilastik import IlastikACWEPipeline
 
-        opt2mesh_pipeline = AutoContextACWEPipeline(
+        opt2mesh_pipeline = IlastikACWEPipeline(
             # AutoContextSpecific
             project=args.autocontext,
             # ACWE specifics
