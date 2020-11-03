@@ -48,6 +48,7 @@ class IlastikACWEPipeline(OPT2MeshPipeline):
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
+        loops_to_remove=None,
     ):
         """
         See OPT2MeshPipeline.__init__ documentation for the other parameters
@@ -71,6 +72,7 @@ class IlastikACWEPipeline(OPT2MeshPipeline):
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
             preprocess_opt_scan=preprocess_opt_scan,
+            loops_to_remove=loops_to_remove,
         )
 
         self.autocontext_pipeline = IlastikPipeline(
@@ -151,6 +153,7 @@ class IlastikPipeline(OPT2MeshPipeline):
         save_occupancy_map=False,
         align_mesh=False,
         preprocess_opt_scan=False,
+        loops_to_remove=None,
     ):
         """
         See OPT2MeshPipeline.__init__ documentation for the other parameters
@@ -171,6 +174,7 @@ class IlastikPipeline(OPT2MeshPipeline):
             save_occupancy_map=save_occupancy_map,
             align_mesh=align_mesh,
             preprocess_opt_scan=preprocess_opt_scan,
+            loops_to_remove=loops_to_remove,
         )
 
         self.project: str = project

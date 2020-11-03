@@ -62,15 +62,13 @@ def parse_args():
         help="Preprocess the OPT scan",
         action="store_true",
     )
-
     parser.add_argument(
-        "--timing", help="Print timing info", action="store_true"
-    )
-    parser.add_argument(
-        "--n_jobs",
-        type=int,
-        default=0,
-        help="Number of jobs to use for parallel execution",
+        "--loops_to_remove",
+        help="Select the loops to remove to get a genus 0 mesh. If None is provided, no loops is removed. "
+        "This necessitates the ReebHanTun executable to be present in the path.",
+        type="str",
+        choices=[None, "handles", "tunnels"],
+        default=None,
     )
 
     # Active contour general parameters
@@ -339,6 +337,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "acwe":
         from pipeline.active_contours import ACWEPipeline
@@ -361,6 +360,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "autocontext":
         from pipeline.ilastik import IlastikPipeline
@@ -380,6 +380,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "autocontext_acwe":
         from pipeline.ilastik import IlastikACWEPipeline
@@ -403,6 +404,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "2d_unet":
         from pipeline.unet import UNetPipeline
@@ -424,6 +426,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "3d_unet":
         from pipeline.unet import UNet3DPipeline
@@ -446,6 +449,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     elif args.method.lower() == "direct":
         from pipeline.base import DirectMeshingPipeline
@@ -461,6 +465,7 @@ def main():
             save_occupancy_map=args.save_occupancy_map,
             align_mesh=args.align_mesh,
             preprocess_opt_scan=args.preprocess_opt_scan,
+            loops_to_remove=args.loops_to_remove,
         )
     else:
         raise RuntimeError(f"Method {args.method} is not recognised")
