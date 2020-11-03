@@ -359,18 +359,20 @@ class OPT2MeshPipeline(ABC):
         try:
             -igl.cotmatrix(v, f)
         except Exception as e:
-            print(f" ❌ COT matrix test failed")
+            logging.info(f" ❌ COT matrix test failed")
             mesh_info["cot_matrix_test"] = "Failed"
-            print("Exception:", e)
+            logging.info("Exception:", e)
         else:
+            logging.info(f" ✅ COT matrix test passed")
             mesh_info["cot_matrix_test"] = "Passed"
         try:
             igl.massmatrix(v, f, igl.MASSMATRIX_TYPE_VORONOI)
         except Exception as e:
-            print(f" ❌ Mass matrix test failed")
+            logging.info(f" ❌ Mass matrix test failed")
             mesh_info["mass_matrix_test"] = "Failed"
-            print("Exception:", e)
+            logging.info("Exception:", e)
         else:
+            logging.info(f" ✅ Mass matrix test passed")
             mesh_info["mass_matrix_test"] = "Passed"
 
         # We only test mesh with a small number of vertices
@@ -387,11 +389,11 @@ class OPT2MeshPipeline(ABC):
                     ]
                 )
             except Exception as e:
-                print(f" ❌ Geodesic matrix test failed")
+                logging.info(f" ❌ Geodesic matrix test failed")
                 mesh_info["geodesic_matrix_test"] = "Failed"
-                print("Exception:", e)
+                logging.info("Exception:", e)
             else:
-                print(f" ✅ Geodesic matrix test passed")
+                logging.info(f" ✅ Geodesic matrix test passed")
                 mesh_info["geodesic_matrix_test"] = "Passed"
         else:
             mesh_info["geodesic_matrix_test"] = "Not ran"
