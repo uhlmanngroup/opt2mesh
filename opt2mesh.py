@@ -299,14 +299,6 @@ def main():
     ]:
         logging.info(f"  {lsf_env_var}: {os.getenv(lsf_env_var, 'Not set')}")
 
-    # Adapt the number of jobs if not set
-    if args.n_jobs <= 0:
-        # LSB_BIND_CPU_LIST of the form: "13,23,24,71"
-        args.n_jobs = len(os.getenv("LSB_BIND_CPU_LIST", "").split(","))
-        logging.info(
-            f"Adapting the number of jobs to number of available CPU {args.n_jobs}"
-        )
-
     logging.info("VCS context:")
     logging.info(last_commit_message)
 
@@ -320,7 +312,6 @@ def main():
         opt2mesh_pipeline = GACPipeline(
             # GAC specifics
             iterations=args.iterations,
-            n_jobs=args.n_jobs,
             smoothing=args.smoothing,
             threshold=args.threshold,
             balloon=args.balloon,
@@ -345,7 +336,6 @@ def main():
         opt2mesh_pipeline = ACWEPipeline(
             # ACWE specifics
             iterations=args.iterations,
-            n_jobs=args.n_jobs,
             smoothing=args.smoothing,
             lambda1=args.lambda1,
             lambda2=args.lambda2,

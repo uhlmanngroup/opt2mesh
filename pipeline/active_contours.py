@@ -34,7 +34,6 @@ class GACPipeline(OPT2MeshPipeline):
         loops_to_remove=None,
         # GAC specifics
         iterations=50,
-        n_jobs=-1,
         smoothing=1,
         threshold="auto",
         balloon=1,
@@ -56,7 +55,6 @@ class GACPipeline(OPT2MeshPipeline):
         )
 
         self.iterations: int = iterations
-        self.n_jobs: int = n_jobs
         self.smoothing = smoothing
         self.threshold = threshold
         self.balloon = balloon
@@ -142,7 +140,6 @@ class ACWEPipeline(OPT2MeshPipeline):
             loops_to_remove=loops_to_remove,
         )
         self.iterations: int = iterations
-        self.n_jobs: int = n_jobs
         self.lambda1: int = lambda1
         self.lambda2: int = lambda2
         self.smoothing: int = smoothing
