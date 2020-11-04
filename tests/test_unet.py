@@ -66,7 +66,7 @@ def test_2dunet_details(detail):
     input_file = os.path.join(test_data_dir, "MNS_M539_105_preprocessed.tif")
     model_file = os.path.join(models_dir, "2d_preprocessed.pytorch")
     with tempfile.TemporaryDirectory() as tmp:
-        pipeline = UNetPipeline(model_file=model_file, save_occupancy_map=True)
+        pipeline = UNetPipeline(model_file=model_file, detail=detail)
         pipeline.run(input_file, tmp)
         final_mesh_file = os.path.join(
             tmp, "MNS_M539_105_preprocessed_final_mesh.stl"
@@ -84,9 +84,7 @@ def test_3dunet_details(detail):
     input_file = os.path.join(test_data_dir, "MNS_M539_105_preprocessed.tif")
     model_file = os.path.join(models_dir, "3d_preprocessed.pytorch")
     with tempfile.TemporaryDirectory() as tmp:
-        pipeline = UNet3DPipeline(
-            model_file=model_file, save_occupancy_map=True
-        )
+        pipeline = UNet3DPipeline(model_file=model_file, detail=detail)
         pipeline.run(input_file, tmp)
         final_mesh_file = os.path.join(
             tmp, "MNS_M539_105_preprocessed_final_mesh.stl"
