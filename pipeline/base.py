@@ -569,9 +569,11 @@ class OPT2MeshPipeline(ABC):
         reebhantun_executable = "ReebHanTun"
         if not shutil.which(reebhantun_executable):
             logging.warning(
-                f"The executable provided for the Reeb Han Tun method ({reebhantun_executable} is not present"
+                "The executable provided for the Reeb Han Tun method "
+                f"({reebhantun_executable}) is not present "
                 f"in the path. The mesh is returned as is."
             )
+            return v, f
 
         with tempfile.TemporaryDirectory() as tmpdir:
             basename = "tempmesh"
