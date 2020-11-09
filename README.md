@@ -67,4 +67,6 @@ To do this, you have to extend the base class `OPT2MeshPipeline` and to define t
 
 Some models which have been pretrained (from OPT scans of embryos) for the
 `UNetPipeline` and the `UNet3DPipeline` are available in the `models` folder.
-You might need to install [Git LFS](https://git-lfs.github.com/) to download them using git.
+You need to install [Git LFS](https://git-lfs.github.com/) to download them using git.
+
+If Git LFS is not working, the models can be downloaded from here: https://oc.ebi.ac.uk/s/mVuDrBtROqTadhc 
