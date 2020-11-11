@@ -37,6 +37,17 @@ All the options are available using the help flag:
 $ opt2mesh -h
 ```
 
+⚠ If you get:
+```
+ModuleNotFoundError: No module named 'opt2mesh'
+```
+
+when running `opt2mesh` directly, just use:
+
+```bash
+$ python opt2mesh
+```
+
 ## Segmentation methods
 
 Several methods for segmentation are available to identify the object in the image.
