@@ -95,7 +95,9 @@ def test_direct_meshing_with_topological_correction(loops_to_remove):
     method."""
     input_file_binary = os.path.join(test_data_dir, "MNS_M539_105_binary.tif")
     with tempfile.TemporaryDirectory() as tmp:
-        pipeline = DirectMeshingPipeline(loops_to_remove=loops_to_remove)
+        pipeline = DirectMeshingPipeline(
+            loops_to_remove=loops_to_remove, detail=3000
+        )
         pipeline.run(input_file_binary, tmp)
         final_mesh_file = os.path.join(
             tmp, "MNS_M539_105_binary_final_mesh.stl"
