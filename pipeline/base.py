@@ -403,6 +403,7 @@ class OPT2MeshPipeline(ABC):
             "triangular_mesh",
             "cot_matrix_test",
             "mass_matrix_test",
+            "geodesic_matrix_test",
             "self_intersecting",
             "non_manifold_vertices",
             "degenerated_faces",
@@ -410,7 +411,6 @@ class OPT2MeshPipeline(ABC):
             "number_of_components",
             "number_of_borders",
             "genus",
-            "geodesic_matrix_test",
         ]
 
         reordered_mesh_info = dict()
