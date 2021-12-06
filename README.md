@@ -58,7 +58,7 @@ See the `--method` flag:
  - `3d_unet` uses a 3D U-Net trained on this implementation. You definitely require a GPU
 for this method.
  - `direct` performs a direct meshing on a already OPT scan. This is the default one method.
- 
+
 Each of those methods has its own set of parameters which can be set on the command line.
 See the help for more detail:
 
@@ -77,7 +77,4 @@ To do this, you have to extend the base class `OPT2MeshPipeline` and to define t
 ## Pretrained models
 
 Some models which have been pretrained (from OPT scans of embryos) for the
-`UNetPipeline` and the `UNet3DPipeline` are available in the `models` folder.
-You need to install [Git LFS](https://git-lfs.github.com/) to download them using git.
-
-If Git LFS is not working, the models can be downloaded from here: https://oc.ebi.ac.uk/s/mVuDrBtROqTadhc 
+`UNetPipeline` and the `UNet3DPipeline` are available here: https://oc.ebi.ac.uk/s/mVuDrBtROqTadhc
