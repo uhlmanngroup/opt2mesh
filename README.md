@@ -3,7 +3,9 @@
 ### Installation step
 
  - Clone the repository.
- - Put the models in the `models` folder.
+ - Put the models in the `models` folder
+    - Some models which have been pretrained (from OPT scans of embryos for the
+`UNetPipeline` and the `UNet3DPipeline` are available here: https://oc.ebi.ac.uk/s/mVuDrBtROqTadhc)
  - Create a conda virtual environment and install the package:
 ```bash
 $ conda env create -f environment.yml
@@ -73,8 +75,3 @@ You can introduce your own segmentation method in the pipeline.
 To do this, you have to extend the base class `OPT2MeshPipeline` and to define the
 `_extract_occupancy_map` method.
 
-
-## Pretrained models
-
-Some models which have been pretrained (from OPT scans of embryos) for the
-`UNetPipeline` and the `UNet3DPipeline` are available here: https://oc.ebi.ac.uk/s/mVuDrBtROqTadhc
