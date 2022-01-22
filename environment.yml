@@ -3,17 +3,17 @@ channels:
   - conda-forge
   - pytorch
 dependencies:
-  - python==3.8
+  - python==3.9
   - h5py==2.10.0
   - igl==2.2.0
-  - joblib==0.17.0
-  - numpy==1.19.2
+  - joblib==1.1.0
+  - numpy==1.22.0
   - pandas==1.1.3
   - pyaml==20.4.0
   - scikit-image==0.17.2
-  - scipy==1.5.2
-  - pytorch==1.6.0
-  - torchvision==0.7.0
+  - scipy==1.7.3
+  - pytorch==1.10.1
+  - torchvision==0.11.2
   - pip
   - pip:
     - pymeshfix==0.14.1
